@@ -1,24 +1,31 @@
 package ass.example.components.HouseScene;
 
+import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.component.Component;
-
 import static com.almasb.fxgl.dsl.FXGL.*;
 
 public class QuiltComponent extends Component {
+
+    private final Entity visualEntity;
 
     private final String messyTexture;
     private final String foldedTexture;
 
     private boolean folded = false;
 
-    public QuiltVisualComponent(String messyTexture, String foldedTexture) {
+    public QuiltComponent(
+            Entity visualEntity,
+            String messyTexture,
+            String foldedTexture
+    ) {
+        this.visualEntity = visualEntity;
         this.messyTexture = messyTexture;
         this.foldedTexture = foldedTexture;
     }
 
     @Override
     public void onAdded() {
-        showMessy();
+        setVisualTexture(messyTexture);
     }
 
     public void fold() {
@@ -27,18 +34,17 @@ public class QuiltComponent extends Component {
         }
 
         folded = true;
-        setTexture(foldedTexture);
 
-        System.out.println("Quilt folded");
+        setVisualTexture(foldedTexture);
+
+        set("quiltFolded", true);
+
+        entity.removeFromWorld();
     }
 
-    private void showMessy() {
-        setTexture(messyTexture);
-    }
-
-    private void setTexture(String texturePath) {
-        entity.getViewComponent().clearChildren();
-        entity.getViewComponent().addChild(texture(texturePath));
+    private void setVisualTexture(String texturePath) {
+        visualEntity.getViewComponent().clearChildren();
+        visualEntity.getViewComponent().addChild(texture(texturePath));
     }
 
     public boolean isFolded() {

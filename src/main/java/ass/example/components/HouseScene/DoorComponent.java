@@ -1,10 +1,11 @@
-package ass.example.components;
+package ass.example.components.HouseScene;
 
+import ass.example.core.SoundId;
 import com.almasb.fxgl.dsl.FXGL;
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.SpawnData;
 import com.almasb.fxgl.entity.component.Component;
-
+import ass.example.system.AudioSystem;
 import static com.almasb.fxgl.dsl.FXGL.*;
 
 public class DoorComponent extends Component {
@@ -20,8 +21,11 @@ public class DoorComponent extends Component {
     private final double colliderHeight;
 
     private boolean opened = false;
+    private Runnable onOpen = () -> {};
 
     private Entity collider;
+
+    private final AudioSystem audioSystem;
 
     public DoorComponent(
             String id,
@@ -30,7 +34,8 @@ public class DoorComponent extends Component {
             double colliderOffsetX,
             double colliderOffsetY,
             double colliderWidth,
-            double colliderHeight
+            double colliderHeight,
+            AudioSystem audioSystem
     ) {
         this.id = id;
         this.closedTexture = closedTexture;
@@ -39,6 +44,7 @@ public class DoorComponent extends Component {
         this.colliderOffsetY = colliderOffsetY;
         this.colliderWidth = colliderWidth;
         this.colliderHeight = colliderHeight;
+        this.audioSystem = audioSystem;
     }
 
     @Override
@@ -55,6 +61,10 @@ public class DoorComponent extends Component {
         }
     }
 
+    public void setOnOpen(Runnable onOpen) {
+        this.onOpen = onOpen != null ? onOpen : () -> {};
+    }
+
     public void open() {
         if (opened) {
             return;
@@ -63,12 +73,14 @@ public class DoorComponent extends Component {
         opened = true;
 
         setTexture(openTexture);
-        FXGL.play("door_open.wav");
+        audioSystem.playSFX(SoundId.DOOR_OPEN);
 
         if (collider != null) {
             collider.removeFromWorld();
             collider = null;
         }
+
+        onOpen.run();
     }
 
     public void close() {
@@ -80,7 +92,7 @@ public class DoorComponent extends Component {
 
         setTexture(closedTexture);
         createCollider();
-        FXGL.play("door_close.wav");
+        audioSystem.playSFX(SoundId.DOOR_CLOSE);
     }
 
     private void createCollider() {

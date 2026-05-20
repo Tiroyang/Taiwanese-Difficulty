@@ -1,4 +1,4 @@
-package ass.example.components;
+package ass.example.components.HouseScene;
 
 import com.almasb.fxgl.entity.component.Component;
 
