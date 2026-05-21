@@ -214,7 +214,7 @@ public class HouseScene {
         // quilt
         Entity quiltVisual = spawn("quilt", new SpawnData(0, 0));
         spawn("quilt_trigger", new SpawnData(2460, 500)
-                .put("quiltVisual", quiltVisual)
+                .put("visual", quiltVisual)
                 .put("defaultTexture", "Scene1/props/Quilt.png")
                 .put("foldedTexture", "Scene1/props/Quilt_folded.png")
                 .put("width", 120.0)
@@ -240,11 +240,26 @@ public class HouseScene {
                 .put("collider2OffsetX", 316.0)
                 .put("collider2OffsetY", -244.0)
                 .put("collider2Width", 6.0)
+                .put("collider2Width", 6.0)
                 .put("collider2Height", 254.0)
 
-                .put("playerZIndexOnBed", -2)
+                .put("playerZIndexOnBed", -3)
                 .put("normalPlayerZIndex", 0)
                 .put("deathReason", DeathReasons.JUMPING_ON_BED));
+
+        // water
+        Entity waterVisual = spawn("water", new SpawnData(0, 0));
+        spawn("water_trigger", new SpawnData(2672, 528)
+                .put("visual", waterVisual)
+                .put("player", player)
+                .put("deathSystem", deathSystem)
+                .put("texture", "Scene1/props/Water.png")
+                .put("width", 16.0)
+                .put("height", 28.0)
+                .put("interactRange", 130.0)
+                .put("promptOnEntity", true)
+                .put("promptOffsetY", 40.0)
+                .put("audioSystem", audioSystem));
 
         // VISUALS
         spawn("cabinet", 0, 0);

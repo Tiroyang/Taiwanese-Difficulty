@@ -5,8 +5,12 @@ import com.almasb.fxgl.entity.SpawnData;
 import com.almasb.fxgl.entity.component.Component;
 import com.almasb.fxgl.physics.PhysicsComponent;
 import javafx.geometry.Point2D;
+import javafx.geometry.Pos;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 
 import static com.almasb.fxgl.dsl.FXGL.*;
 
@@ -21,6 +25,8 @@ public class PlayerComponent extends Component {
     private final Image standImage;
     private final Image[] walkRightImages;
     private final Image[] walkLeftImages;
+    private final Image[] dashLeftImages;
+    private final Image[] dashRightImages;
     private final Image deadImage;
 
     // Control State
@@ -72,6 +78,22 @@ public class PlayerComponent extends Component {
     // 短跳削弱
     private final double cutJumpPower = 0.45;
 
+    // 衝刺狀態
+    private boolean dashing = false;
+    private double dashTimer = 0;
+    private double dashCooldownTimer = 0;
+
+    private final double dashDuration = 2;
+    private final double dashCooldown = 5;
+    private final double dashSpeedScale = 1.5;
+
+    // 衝刺 UI
+    private StackPane dashChargeBox;
+    private Rectangle dashChargeFill;
+
+    private final double dashChargeWidth = 110;
+    private final double dashChargeHeight = 16;
+
     // groundSensor是一個獨立Entity，放在玩家腳底，用來判斷玩家是否踩在地上。
     private Entity groundSensor;
 
@@ -92,12 +114,16 @@ public class PlayerComponent extends Component {
             Image standImage,
             Image[] walkRightImages,
             Image[] walkLeftImages,
+            Image[] dashRightImages,
+            Image[] dashLeftImages,
             Image deadImage
     ) {
         this.playerView = playerView;
         this.standImage = standImage;
         this.walkRightImages = walkRightImages;
         this.walkLeftImages = walkLeftImages;
+        this.dashRightImages = dashRightImages;
+        this.dashLeftImages = dashLeftImages;
         this.deadImage = deadImage;
     }
 
@@ -105,11 +131,56 @@ public class PlayerComponent extends Component {
     @Override
     public void onAdded() {
         createGroundSensor();
-        showStandImage();
+        createDashChargeUI();
+
+        visualState = PlayerVisualState.STAND;
+        setPlayerImage(standImage);
+    }
+
+    private void createDashChargeUI() {
+        Rectangle background = new Rectangle(dashChargeWidth, dashChargeHeight);
+        background.setArcWidth(6);
+        background.setArcHeight(6);
+        background.setFill(Color.rgb(20, 20, 20, 0.75));
+        background.setStroke(Color.WHITE);
+        background.setStrokeWidth(1.5);
+
+        dashChargeFill = new Rectangle(dashChargeWidth, dashChargeHeight);
+        dashChargeFill.setArcWidth(6);
+        dashChargeFill.setArcHeight(6);
+        dashChargeFill.setFill(Color.rgb(255, 255, 255, 0.9));
+
+        dashChargeBox = new StackPane();
+        dashChargeBox.setPrefSize(dashChargeWidth, dashChargeHeight);
+        dashChargeBox.setAlignment(Pos.CENTER_LEFT);
+        dashChargeBox.getChildren().addAll(background, dashChargeFill);
+
+        dashChargeBox.setVisible(false);
+
+        addUINode(dashChargeBox, 1125, 36);
+    }
+
+    private void showDashChargeUI() {
+        if (dashChargeBox != null) {
+            dashChargeBox.setVisible(true);
+            dashChargeBox.setOpacity(1.0);
+        }
+
+        if (dashChargeFill != null) {
+            dashChargeFill.setWidth(0);
+        }
+    }
+
+    private void hideDashChargeUI() {
+        if (dashChargeBox != null) {
+            dashChargeBox.setVisible(false);
+        }
     }
 
     @Override
     public void onUpdate(double tpf) {
+        updateDash(tpf);
+
         if (controlEnabled) {
             updateMovement();
             updateVariableJump(tpf);
@@ -117,22 +188,65 @@ public class PlayerComponent extends Component {
         }
 
         updateGroundSensorPosition();
+        updateDashChargeUI();
     }
 
-    /**
-     * 根據目前按鍵狀態更新水平速度。
-     * A / 左鍵 → movingLeft = true
-     * D / 右鍵 → movingRight = true
-     * 同時按左右時，角色不移動。
-     */
+    private void updateDash(double tpf) {
+        if (dashCooldownTimer > 0) {
+            dashCooldownTimer -= tpf;
+
+            if (dashCooldownTimer < 0) {
+                dashCooldownTimer = 0;
+            }
+        }
+
+        if (!dashing) {
+            return;
+        }
+
+        dashTimer -= tpf;
+
+        if (dashTimer <= 0) {
+            dashing = false;
+            dashTimer = 0;
+            dashCooldownTimer = dashCooldown;
+        }
+    }
+
+    private void updateDashChargeUI() {
+        if (dashChargeBox == null || dashChargeFill == null) {
+            return;
+        }
+
+        if (!dashing && dashCooldownTimer <= 0) {
+            dashChargeFill.setWidth(dashChargeWidth);
+            hideDashChargeUI();
+            return;
+        }
+
+        dashChargeBox.setVisible(true);
+
+        double ratio;
+
+        if (dashing) {
+            ratio = 0;
+        } else {
+            ratio = 1.0 - dashCooldownTimer / dashCooldown;
+        }
+
+        ratio = Math.max(0, Math.min(1, ratio));
+
+        dashChargeFill.setWidth(dashChargeWidth * ratio);
+    }
+
     private void updateMovement() {
         double vx = 0;
 
         if (movingLeft && !movingRight) {
-            vx = -moveSpeed;
+            vx = -moveSpeed * (dashing ? dashSpeedScale : 1);
             currentDirection = Direction.LEFT;
         } else if (movingRight && !movingLeft) {
-            vx = moveSpeed;
+            vx = moveSpeed * (dashing ? dashSpeedScale : 1);
             currentDirection = Direction.RIGHT;
         } else {
             currentDirection = Direction.NONE;
@@ -173,42 +287,61 @@ public class PlayerComponent extends Component {
         movingRight = false;
     }
 
-    /**
-     * 根據 currentDirection 更新圖片。
-     * 不移動：stand
-     * 往右：walkr1 / walkr2 / walkr3
-     * 往左：walkl1 / walkl2 / walkl3
-     * 死亡狀態時，不被其他狀態覆蓋
-     */
+    public void dashPressed() {
+        if (!controlEnabled) {
+            return;
+        }
+
+        if (dashing) {
+            return;
+        }
+
+        if (dashCooldownTimer > 0) {
+            return;
+        }
+
+        if (currentDirection != Direction.RIGHT && currentDirection != Direction.LEFT) {
+            return;
+        }
+
+        dashing = true;
+        dashTimer = dashDuration;
+
+        showDashChargeUI();
+
+        walkAnimTimer = 0;
+        walkFrameIndex = 0;
+    }
+
     private void updateAnimation(double tpf) {
         if (visualState == PlayerVisualState.DEAD) {
             return;
         }
 
-        if (currentDirection == Direction.NONE) {
+        if (currentDirection == Direction.NONE && !dashing) {
             showStandImage();
-            resetWalkAnimation();
+            isWalking = false;
+            walkAnimTimer = 0;
+            walkFrameIndex = 0;
             return;
         }
 
-        Image[] currentWalkImages;
+        Image[] currentImages;
+        PlayerVisualState targetState;
 
         if (currentDirection == Direction.RIGHT) {
-            currentWalkImages = walkRightImages;
-
-            if (visualState != PlayerVisualState.WALK_RIGHT) {
-                visualState = PlayerVisualState.WALK_RIGHT;
-                resetWalkAnimation();
-                setPlayerImage(currentWalkImages[walkFrameIndex]);
-            }
+            currentImages = dashing ? dashRightImages : walkRightImages;
+            targetState = PlayerVisualState.WALK_RIGHT;
         } else {
-            currentWalkImages = walkLeftImages;
+            currentImages = dashing ? dashLeftImages : walkLeftImages;
+            targetState = PlayerVisualState.WALK_LEFT;
+        }
 
-            if (visualState != PlayerVisualState.WALK_LEFT) {
-                visualState = PlayerVisualState.WALK_LEFT;
-                resetWalkAnimation();
-                setPlayerImage(currentWalkImages[walkFrameIndex]);
-            }
+        if (visualState != targetState) {
+            visualState = targetState;
+            walkFrameIndex = 0;
+            walkAnimTimer = 0;
+            setPlayerImage(currentImages[walkFrameIndex]);
         }
 
         isWalking = true;
@@ -218,11 +351,11 @@ public class PlayerComponent extends Component {
             walkAnimTimer = 0;
 
             walkFrameIndex++;
-            if (walkFrameIndex >= currentWalkImages.length) {
+            if (walkFrameIndex >= currentImages.length) {
                 walkFrameIndex = 0;
             }
 
-            setPlayerImage(currentWalkImages[walkFrameIndex]);
+            setPlayerImage(currentImages[walkFrameIndex]);
         }
     }
 
@@ -259,15 +392,6 @@ public class PlayerComponent extends Component {
         playerView.setScaleX(1);
         playerView.setTranslateX(0);
         playerView.setImage(image);
-    }
-
-    /**
-     * 重製走路動畫
-     */
-    private void resetWalkAnimation() {
-        isWalking = false;
-        walkAnimTimer = 0;
-        walkFrameIndex = 0;
     }
 
     /**
@@ -438,7 +562,12 @@ public class PlayerComponent extends Component {
         isJumping = false;
         jumpHoldTimer = 0;
 
-        resetWalkAnimation();
+        dashing = false;
+        dashTimer = 0;
+
+        isWalking = false;
+        walkAnimTimer = 0;
+        walkFrameIndex = 0;
 
         if (physics != null) {
             physics.setVelocityX(0);
@@ -459,11 +588,17 @@ public class PlayerComponent extends Component {
         movingRight = false;
         currentDirection = Direction.NONE;
 
+        dashing = false;
+        dashTimer = 0;
+        dashCooldownTimer = 0;
+
         jumpHeld = false;
         isJumping = false;
         jumpHoldTimer = 0;
 
-        resetWalkAnimation();
+        isWalking = false;
+        walkAnimTimer = 0;
+        walkFrameIndex = 0;
 
         groundContacts = 0;
         onOneWayPlatform = false;

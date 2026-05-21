@@ -283,7 +283,7 @@ public class Main extends GameApplication {
                 e -> {
                     if (e.getCode() == KeyCode.SHIFT) {
 
-                        sceneManager.dropThroughOneWayPlatform();
+                        getPlayerComponent().dashPressed();
 
                         e.consume();
                     }

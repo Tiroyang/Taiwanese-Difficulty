@@ -1,16 +1,14 @@
 package ass.example.factories;
 
 import ass.example.Main;
-import ass.example.components.HouseScene.BedComponent;
-import ass.example.components.HouseScene.DoorComponent;
-import ass.example.components.HouseScene.QuiltComponent;
+import ass.example.components.HouseScene.*;
 import ass.example.components.InteractableComponent;
-import ass.example.components.HouseScene.ParallaxWindowComponent;
 import ass.example.components.LethalComponent;
 import ass.example.components.OneWayPlatformComponent;
 import ass.example.core.DeathReasons;
 import ass.example.core.EntityTypes;
 import ass.example.system.AudioSystem;
+import ass.example.system.DeathSystem;
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.EntityFactory;
 import com.almasb.fxgl.entity.SpawnData;
@@ -261,7 +259,7 @@ public class HouseFactory implements EntityFactory {
         String defaultTexture = "Scene1/props/Quilt.png";
         String foldedTexture = "Scene1/props/Quilt_folded.png";
 
-        Entity quiltVisual = data.get("quiltVisual");
+        Entity quiltVisual = data.get("visual");
 
         double width = data.get("width");
         double height = data.get("height");
@@ -282,7 +280,7 @@ public class HouseFactory implements EntityFactory {
                 .view(Main.devMode ? new Rectangle(width, height, Color.rgb(255, 255, 0, 0.35)) : new Rectangle(0, 0, Color.TRANSPARENT))
                 .with(quiltComponent)
                 .with(new InteractableComponent(
-                        () -> "按 F 摺好被子",
+                        () -> "按 F 摺被子",
                         quiltComponent::fold,
                         interactRange,
                         promptOnEntity,
@@ -297,7 +295,7 @@ public class HouseFactory implements EntityFactory {
         return entityBuilder(data)
                 .type(EntityTypes.PROP)
                 .view("Scene1/props/Bed.png")
-                .zIndex(-2)
+                .zIndex(-3)
                 .build();
     }
 
@@ -409,6 +407,59 @@ public class HouseFactory implements EntityFactory {
                 .type(EntityTypes.PROP)
                 .view("/Scene1/props/Cabinet.png")
                 .zIndex(-1)
+                .build();
+    }
+
+    @Spawns("water")
+    public Entity newWater(SpawnData data) {
+        String texture = "Scene1/props/Water.png";
+
+        return entityBuilder(data)
+                .type(EntityTypes.INTERACTABLE)
+                .view(texture)
+                .zIndex(-2)
+                .build();
+    }
+
+    @Spawns("water_trigger")
+    public Entity newWaterTrigger(SpawnData data) {
+        Entity visual = data.get("visual");
+
+        Entity player = data.get("player");
+
+        DeathSystem deathSystem = data.get("deathSystem");
+
+        AudioSystem audioSystem = data.hasKey("audioSystem")
+                ? data.get("audioSystem")
+                : null;
+
+        double width = data.get("width");
+        double height = data.get("height");
+
+        double interactRange = data.get("interactRange");
+        boolean promptOnEntity = data.get("promptOnEntity");
+        double promptOffsetY = data.get("promptOffsetY");
+
+        WaterComponent waterComponent = new WaterComponent(
+                visual,
+                player,
+                deathSystem,
+                audioSystem
+        );
+
+        return entityBuilder(data)
+                .type(EntityTypes.INTERACTABLE)
+                .bbox(new HitBox(BoundingShape.box(width, height)))
+                .view(Main.devMode ? new Rectangle(width, height, Color.rgb(255, 255, 0, 0.35)) : new Rectangle(0, 0, Color.TRANSPARENT))
+                .with(waterComponent)
+                .with(new InteractableComponent(
+                        () -> "按 F 喝水",
+                        waterComponent::drink,
+                        interactRange,
+                        promptOnEntity,
+                        promptOffsetY
+                ))
+                .zIndex(30)
                 .build();
     }
 }

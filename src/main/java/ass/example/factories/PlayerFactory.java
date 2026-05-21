@@ -48,6 +48,10 @@ public class PlayerFactory implements EntityFactory {
         Image walkl0 = image("characters/player/walkl1.png");
         Image walkl1 = image("characters/player/walkl2.png");
         Image walkl2 = image("characters/player/walkl3.png");
+        Image dashr0 = image("characters/player/dashr1.png");
+        Image dashr1 = image("characters/player/dashr2.png");
+        Image dashl0 = image("characters/player/dashl1.png");
+        Image dashl1 = image("characters/player/dashl2.png");
         Image dead = image("characters/player/dead.png");
 
         ImageView playerView = new ImageView(stand);
@@ -75,6 +79,8 @@ public class PlayerFactory implements EntityFactory {
                         stand,
                         new Image[]{walkr0, walkr1, walkr2},
                         new Image[]{walkl0, walkl1, walkl2},
+                        new Image[]{dashr0, dashr1},
+                        new Image[]{dashl0, dashl1},
                         dead
                 ))
                 .zIndex(0)

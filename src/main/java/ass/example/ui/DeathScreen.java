@@ -26,13 +26,13 @@ public class DeathScreen extends StackPane {
 
     private final Rectangle background = new Rectangle(SCREEN_WIDTH, SCREEN_HEIGHT);
 
-    private final Text deathTitle = new Text("wasted");
+    private final Text deathTitle = new Text("YOU FAILED");
     private final Text titleText = new Text();
     private final Text subtitleText = new Text();
 
     private final StackPane respawnButton;
 
-    private final VBox centerTextBox = new VBox(18);
+    private final VBox detailTextBox = new VBox(12);
 
     public DeathScreen(Runnable onRespawn, Runnable onMainMenu) {
         setPrefSize(SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -54,54 +54,56 @@ public class DeathScreen extends StackPane {
 
         getChildren().addAll(
                 background,
-                centerTextBox,
+                deathTitle,
+                detailTextBox,
                 respawnButton
         );
     }
 
     private void loadFonts() {
         try {
-            Font.loadFont(
-                    getClass().getResourceAsStream("/assets/fonts/Pricedown Bl.otf"),
-                    16
-            );
+            Font font = Font.loadFont(getClass().getResourceAsStream("/assets/fonts/OptimusPrinceps.ttf"), 16);
+            System.out.println(font.getFamily());
         } catch (Exception e) {
-            System.out.println("Load failed.");
+            System.out.println("Load font failed.");
         }
     }
 
     private void setupTexts() {
         deathTitle.setStyle("""
-                -fx-font-size: 128px;
-                -fx-fill: rgb(255, 0, 0, 0.65);
-                -fx-font-family: "Pricedown Black";
-                -fx-font-weight: bold;
-                """);
+            -fx-font-size: 128px;
+            -fx-fill: rgb(255, 0, 0, 0.65);
+            -fx-font-family: "OptimusPrinceps";
+            -fx-font-weight: bold;
+            """);
 
         titleText.setStyle("""
-                -fx-font-size: 32px;
-                -fx-fill: white;
-                -fx-font-weight: bold;
-                """);
+            -fx-font-size: 32px;
+            -fx-fill: white;
+            -fx-font-weight: bold;
+            """);
 
         subtitleText.setStyle("""
-                -fx-font-size: 24px;
-                -fx-fill: white;
-                """);
+            -fx-font-size: 24px;
+            -fx-fill: white;
+            """);
 
-        centerTextBox.setAlignment(Pos.CENTER);
-        centerTextBox.getChildren().addAll(
-                deathTitle,
+        detailTextBox.setAlignment(Pos.CENTER);
+        detailTextBox.getChildren().addAll(
                 titleText,
                 subtitleText
         );
     }
 
     private void setupLayout() {
-        StackPane.setAlignment(centerTextBox, Pos.CENTER);
+        StackPane.setAlignment(deathTitle, Pos.CENTER);
+
+        StackPane.setAlignment(detailTextBox, Pos.CENTER);
+        detailTextBox.setTranslateY(95);
 
         StackPane.setAlignment(respawnButton, Pos.BOTTOM_RIGHT);
         StackPane.setMargin(respawnButton, new Insets(0, 48, 42, 0));
+        respawnButton.setTranslateY(50);
     }
 
     /**
@@ -205,17 +207,29 @@ public class DeathScreen extends StackPane {
     private void resetAnimationState() {
         background.setOpacity(1.0);
 
+        /*
+         * DeathTitle
+         */
         deathTitle.setOpacity(0);
-        deathTitle.setScaleX(2.3);
-        deathTitle.setScaleY(2.3);
+        deathTitle.setScaleX(0.72);
+        deathTitle.setScaleY(0.72);
         deathTitle.setTranslateY(0);
 
-        titleText.setOpacity(0);
-        titleText.setTranslateY(45);
+        /*
+         * Title / Subtitle
+         */
+        detailTextBox.setOpacity(0);
+        detailTextBox.setTranslateY(140);
 
-        subtitleText.setOpacity(0);
-        subtitleText.setTranslateY(45);
+        titleText.setOpacity(1);
+        titleText.setTranslateY(0);
 
+        subtitleText.setOpacity(1);
+        subtitleText.setTranslateY(0);
+
+        /*
+         * respawnButton
+         */
         respawnButton.setOpacity(0);
         respawnButton.setTranslateX(-220);
         respawnButton.setTranslateY(0);
@@ -225,54 +239,49 @@ public class DeathScreen extends StackPane {
 
     private void playShowAnimation() {
         /*
-         * 標題
+         * 1. DeathTitle
          */
-        FadeTransition deathFadeIn = new FadeTransition(Duration.seconds(0.08), deathTitle);
+        FadeTransition deathFadeIn = new FadeTransition(Duration.seconds(1), deathTitle);
         deathFadeIn.setFromValue(0);
         deathFadeIn.setToValue(1);
 
-        ScaleTransition deathScale = new ScaleTransition(Duration.seconds(0.26), deathTitle);
-        deathScale.setFromX(2.3);
-        deathScale.setFromY(2.3);
-        deathScale.setToX(1.0);
-        deathScale.setToY(1.0);
-        deathScale.setInterpolator(Interpolator.EASE_OUT);
+        ScaleTransition deathScaleUp = new ScaleTransition(Duration.seconds(0.55), deathTitle);
+        deathScaleUp.setFromX(0.72);
+        deathScaleUp.setFromY(0.72);
+        deathScaleUp.setToX(1.0);
+        deathScaleUp.setToY(1.0);
+        deathScaleUp.setInterpolator(Interpolator.EASE_OUT);
 
-        ParallelTransition deathTitleAnim = new ParallelTransition(
+        ParallelTransition deathTitleAppear = new ParallelTransition(
                 deathFadeIn,
-                deathScale
+                deathScaleUp
         );
 
         /*
-         * 死亡原因、小字
+         * 2. Title / Subtitle
          */
-        FadeTransition titleFade = new FadeTransition(Duration.seconds(0.35), titleText);
-        titleFade.setFromValue(0);
-        titleFade.setToValue(1);
+        TranslateTransition deathTitlePushUp = new TranslateTransition(Duration.seconds(0.45), deathTitle);
+        deathTitlePushUp.setFromY(0);
+        deathTitlePushUp.setToY(-95);
+        deathTitlePushUp.setInterpolator(Interpolator.EASE_OUT);
 
-        TranslateTransition titleMove = new TranslateTransition(Duration.seconds(0.35), titleText);
-        titleMove.setFromY(45);
-        titleMove.setToY(0);
-        titleMove.setInterpolator(Interpolator.EASE_OUT);
+        FadeTransition detailFadeIn = new FadeTransition(Duration.seconds(0.45), detailTextBox);
+        detailFadeIn.setFromValue(0);
+        detailFadeIn.setToValue(1);
 
-        FadeTransition subtitleFade = new FadeTransition(Duration.seconds(0.35), subtitleText);
-        subtitleFade.setFromValue(0);
-        subtitleFade.setToValue(1);
+        TranslateTransition detailMoveUp = new TranslateTransition(Duration.seconds(0.45), detailTextBox);
+        detailMoveUp.setFromY(140);
+        detailMoveUp.setToY(95);
+        detailMoveUp.setInterpolator(Interpolator.EASE_OUT);
 
-        TranslateTransition subtitleMove = new TranslateTransition(Duration.seconds(0.35), subtitleText);
-        subtitleMove.setFromY(45);
-        subtitleMove.setToY(0);
-        subtitleMove.setInterpolator(Interpolator.EASE_OUT);
-
-        ParallelTransition textAnim = new ParallelTransition(
-                titleFade,
-                titleMove,
-                subtitleFade,
-                subtitleMove
+        ParallelTransition detailAnim = new ParallelTransition(
+                deathTitlePushUp,
+                detailFadeIn,
+                detailMoveUp
         );
 
         /*
-         * 重生按鈕
+         * 3. respawnButton
          */
         FadeTransition respawnFade = new FadeTransition(Duration.seconds(0.36), respawnButton);
         respawnFade.setFromValue(0);
@@ -283,17 +292,17 @@ public class DeathScreen extends StackPane {
         respawnSlide.setToX(0);
         respawnSlide.setInterpolator(Interpolator.EASE_OUT);
 
-        ParallelTransition buttonsAnim = new ParallelTransition(
+        ParallelTransition respawnAnim = new ParallelTransition(
                 respawnFade,
                 respawnSlide
         );
 
         SequentialTransition sequence = new SequentialTransition(
-                deathTitleAnim,
-                new PauseTransition(Duration.seconds(0.08)),
-                textAnim,
-                new PauseTransition(Duration.seconds(0.12)),
-                buttonsAnim
+                deathTitleAppear,
+                new PauseTransition(Duration.seconds(0.18)),
+                detailAnim,
+                new PauseTransition(Duration.seconds(0.18)),
+                respawnAnim
         );
 
         sequence.play();

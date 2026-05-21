@@ -32,7 +32,14 @@ public enum DeathReasons {
     JUMPING_ON_BED(
             "JUMPING_ON_BED",
             "在床上跳被媽媽制裁了",
-            "WHY ARE YOU BREAKING BED?"
+            "超大雙人床!"
+            // WHY ARE YOU BREAKING BED?
+    ),
+
+    DRINK_WATER(
+            "DRINK_WATER",
+            "喝下過夜水",
+            "眾所周知，水放一整天可以喝，水放過夜不能喝。"
     );
 
     private final String id;
