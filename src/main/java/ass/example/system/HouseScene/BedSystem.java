@@ -16,11 +16,15 @@ import static com.almasb.fxgl.dsl.FXGL.*;
 /**
  * 專門處理「床」的平台邏輯。
  *
- * 床分成兩種 Entity：
+ * 床分成三種 Entity：
  * 1. BED_ONE_WAY_PLATFORM
  *    - 玩家從這個區域上方落下時，會觸發上床
  *    - 可以在這個區域上方按Shift下落
- * 2. BED_ONE_WAY_PLATFORM_COLLIDER
+ * 2. BED_ONE_WAY_PLATFORM_COLLIDER1
+ *    - 觸發上床才生成的實體床面
+ *    - 支撐玩家站在床上
+ *    - 觸發死亡邏輯
+ * 3. BED_ONE_WAY_PLATFORM_COLLIDER2
  *    - 觸發上床才生成的實體床面
  *    - 支撐玩家站在床上
  *
@@ -45,7 +49,7 @@ public class BedSystem {
     private Entity currentBedPlatform;
     /**
      * 玩家跳上床後動態生成的實體床面。
-     * 玩家只要還在任一 collider 上方，就視為仍在床上。
+     * 玩家只要還在第一個 collider 上方，就視為仍在床上。
      */
     private final List<Entity> currentBedColliders = new ArrayList<>();
 
@@ -62,10 +66,9 @@ public class BedSystem {
     private final double dropDuration = 0.28;
 
     /**
-     * 落到床上的容許誤差。
-     * 玩家底部接近床面頂部多少像素內，算是落到床上。
+     * 落到床上的誤差。
      */
-    private final double landingTolerance = 0;
+    private final double landingTolerance = 2;
     /**
      * 水平判定內縮值。
      * 避免玩家只是碰到平台邊緣，就被判定落到床上。
@@ -173,6 +176,7 @@ public class BedSystem {
         player.setZIndex(bed.getNormalPlayerZIndex());
 
         currentBedPlatform = null;
+        jumpedFromBed = false;
 
         set("playerOnBedCollider", false);
 
@@ -354,6 +358,8 @@ public class BedSystem {
         set("playerOnBedCollider", true);
         player.setZIndex(bed.getPlayerZIndexOnBed());
 
+        hasJustLandedOnCurrentBedCollider();
+
         if (jumpedFromBed && hasJustLandedOnCurrentBedCollider()) {
             deathSystem.die(bed.getDeathReasonOnSecondLanding());
         }
@@ -367,6 +373,7 @@ public class BedSystem {
         player.setZIndex(bed.getNormalPlayerZIndex());
 
         currentBedPlatform = null;
+        hasLandedOnBed = false;
 
         set("playerOnBedCollider", false);
     }
@@ -436,12 +443,13 @@ public class BedSystem {
 
         double playerBottom = getPlayerBottom();
 
-        return currentBedColliders.stream().anyMatch(collider -> {
-            double colliderTop = collider.getY();
+        Entity firstCollider = currentBedColliders.get(0);
+        double colliderTop = firstCollider.getY();
 
-            return previousPlayerBottom <= colliderTop + landingTolerance &&
-                    playerBottom >= colliderTop - landingTolerance;
-        });
+        boolean result = previousPlayerBottom <= colliderTop + landingTolerance &&
+                playerBottom >= colliderTop - landingTolerance;
+
+        return result;
     }
 
     /**

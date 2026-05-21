@@ -28,7 +28,7 @@ public class Main extends GameApplication {
 
     private int jumpKeyHoldCount = 0;
 
-    public static boolean devMode = false;
+    public static boolean devMode = true;
 
     @Override
     protected void initSettings(GameSettings settings) {
@@ -266,6 +266,18 @@ public class Main extends GameApplication {
                 releaseJumpKey();
             }
         }, KeyCode.UP);
+
+        getInput().addAction(new UserAction("Drop S") {
+            @Override
+            protected void onActionBegin() {
+                sceneManager.dropThroughOneWayPlatform();
+            }
+
+            @Override
+            protected void onActionEnd() {
+                releaseJumpKey();
+            }
+        }, KeyCode.S);
 
         getPrimaryStage().getScene().addEventFilter(
                 KeyEvent.KEY_PRESSED,

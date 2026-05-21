@@ -156,6 +156,16 @@ public class HouseScene {
                 .put("height", 225.0)
                 .put("deathReason", DeathReasons.HIT_CEILING));
 
+        // door frames
+        spawn("death_wall", new SpawnData(2769, 311)
+                .put("width", 38.0)
+                .put("height", 23.0)
+                .put("deathReason", DeathReasons.HIT_DOORFRAME));
+        spawn("death_wall", new SpawnData(2073, 311)
+                .put("width", 38.0)
+                .put("height", 23.0)
+                .put("deathReason", DeathReasons.HIT_DOORFRAME));
+
         // props
         spawn("death_wall", new SpawnData(3037, 246)
                 .put("width", 14.0)
@@ -228,9 +238,9 @@ public class HouseScene {
 
                 // 第二組 bed collider
                 .put("collider2OffsetX", 316.0)
-                .put("collider2OffsetY", -61.0)
+                .put("collider2OffsetY", -244.0)
                 .put("collider2Width", 6.0)
-                .put("collider2Height", 71.0)
+                .put("collider2Height", 254.0)
 
                 .put("playerZIndexOnBed", -2)
                 .put("normalPlayerZIndex", 0)

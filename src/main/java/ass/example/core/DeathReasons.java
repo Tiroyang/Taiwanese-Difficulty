@@ -23,6 +23,12 @@ public enum DeathReasons {
             "小心碰頭。"
     ),
 
+    HIT_DOORFRAME(
+            "HIT_DOORFRAME",
+            "撞到門框",
+            "小心碰頭。"
+    ),
+
     JUMPING_ON_BED(
             "JUMPING_ON_BED",
             "在床上跳被媽媽制裁了",
