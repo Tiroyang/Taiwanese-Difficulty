@@ -17,7 +17,6 @@ import com.almasb.fxgl.physics.CollisionHandler;
 import javafx.scene.input.KeyCode;
 import ass.example.components.PlayerComponent;
 import javafx.scene.input.KeyEvent;
-
 import java.util.Map;
 
 public class Main extends GameApplication {
