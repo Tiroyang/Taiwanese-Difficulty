@@ -1,5 +1,7 @@
 package ass.example.core;
 
+import ass.example.system.LanguageSystem;
+
 /**
  * 死亡原因列表
  */
@@ -7,56 +9,61 @@ public enum DeathReason {
 
     LEFT_BEDROOM_WITHOUT_FOLDING_QUILT(
             "LEFT_BEDROOM_WITHOUT_FOLDING_QUILT",
-            "沒折被子",
-            "人家是西點軍校你是西點蛋糕啊。",
+            "death.LEFT_BEDROOM_WITHOUT_FOLDING_QUILT.title",
+            "death.LEFT_BEDROOM_WITHOUT_FOLDING_QUILT.subtitle",
             null
     ),
 
     HIT_CEILING(
             "HIT_CEILING",
-            "撞到天花板",
-            "小心碰頭。",
+            "death.HIT_CEILING.title",
+            "death.HIT_CEILING.subtitle",
             null
     ),
 
     HIT_SHOWER_CURTAIN_ROD(
             "HIT_SHOWER_CURTAIN_ROD",
-            "撞到浴簾桿",
-            "小心碰頭。",
+            "death.HIT_SHOWER_CURTAIN_ROD.title",
+            "death.HIT_SHOWER_CURTAIN_ROD.subtitle",
             null
     ),
 
     HIT_DOORFRAME(
             "HIT_DOORFRAME",
-            "撞到門框",
-            "小心碰頭。",
+            "death.HIT_DOORFRAME.title",
+            "death.HIT_DOORFRAME.subtitle",
             null
     ),
 
     JUMPING_ON_BED(
             "JUMPING_ON_BED",
-            "在床上跳被媽媽制裁了",
-            "超大雙人床！",
+            "death.JUMPING_ON_BED.title",
+            "death.JUMPING_ON_BED.subtitle",
             null
             // WHY ARE YOU BREAKING BED?
     ),
 
     DRINK_WATER(
             "DRINK_WATER",
-            "喝下過夜水",
-            "眾所周知，水放一整天可以喝，水放過夜不能喝。",
+            "death.DRINK_WATER.title",
+            "death.DRINK_WATER.subtitle",
             null
     );
 
     private final String id;
-    private final String title;
-    private final String subtitle;
+    private final String titleKey;
+    private final String subtitleKey;
     private final String iconPath;
 
-    DeathReason(String id, String title, String subtitle, String iconPath) {
+    DeathReason (
+            String id,
+            String titleKey,
+            String subtitleKey,
+            String iconPath
+    ) {
         this.id = id;
-        this.title = title;
-        this.subtitle = subtitle;
+        this.titleKey = titleKey;
+        this.subtitleKey = subtitleKey;
         this.iconPath = iconPath;
     }
 
@@ -64,11 +71,23 @@ public enum DeathReason {
         return id;
     }
 
-    public String getTitle() {
-        return title;
+    public String getTitleKey() {
+        return titleKey;
     }
 
-    public String getSubtitle() { return subtitle; }
+    public String getSubtitleKey() {
+        return subtitleKey;
+    }
 
-    public String getIconPath() { return iconPath; }
+    public String getTitle() {
+        return LanguageSystem.getInstance().text(titleKey);
+    }
+
+    public String getSubtitle() {
+        return LanguageSystem.getInstance().text(subtitleKey);
+    }
+
+    public String getIconPath() {
+        return iconPath;
+    }
 }

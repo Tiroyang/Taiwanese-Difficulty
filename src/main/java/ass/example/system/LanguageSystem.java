@@ -65,9 +65,9 @@ public class LanguageSystem {
 
         enUs.put("menu.storyMode.description", "Select an existing save, or start a new adventure.");
 
-        enUs.put("menu.storyMode.back", "New Game");
-        enUs.put("menu.storyMode.apply", "Load Saves");
-        enUs.put("menu.storyMode.on", "Edit Saves");
+        enUs.put("menu.storyMode.newGame", "New Game");
+        enUs.put("menu.storyMode.loadSaves", "Load Saves");
+        enUs.put("menu.storyMode.editSave", "Edit Saves");
 
         // Endless Mode Page
         zhTw.put("menu.endlessMode.description", "選擇一個關卡。");
@@ -93,6 +93,8 @@ public class LanguageSystem {
 
         // Settings Page
         zhTw.put("menu.settings.description", "選擇選項來調整遊戲設定");
+
+        enUs.put("menu.settings.description", "Select to adjust game settings.");
 
         zhTw.put("menu.settings.KeyConfig", "操作配置");
         zhTw.put("menu.settings.keyConfig.left", "：向左移動");
@@ -121,6 +123,7 @@ public class LanguageSystem {
         enUs.put("menu.settings.volume", "Volume");
         enUs.put("menu.settings.volume.global", "Global");
         enUs.put("menu.settings.volume.music", "Music");
+        enUs.put("menu.settings.volume.sound", "Sound");
         enUs.put("menu.settings.volume.button_sound", "Sound");
 
         zhTw.put("menu.settings.window", "視窗大小");
@@ -172,7 +175,7 @@ public class LanguageSystem {
         zhTw.put("menu.settings.dev_mode.deactivated", "開發者模式已關閉。");
 
         enUs.put("menu.settings.dev_mode", "Developer Mode");
-        enUs.put("menu.settings.dev_mode.toggleOff", "Switch to Developer Mode");
+        enUs.put("menu.settings.dev_mode.toggleOff", "Switch to Dev Mode");
         enUs.put("menu.settings.dev_mode.toggleOn", "Switch to Norm mode");
         enUs.put("menu.settings.dev_mode.activated", "Developer Mode activated.");
         enUs.put("menu.settings.dev_mode.deactivated", "Developer Mode deactivated.");
@@ -232,6 +235,11 @@ public class LanguageSystem {
         zhTw.put("menu.rebirth", "重生");
         enUs.put("story.house.rebirth", "Regenerate");
 
+        // Achievement Toast
+        zhTw.put("achievement.unlocked", "已解鎖");
+
+        enUs.put("achievement.unlocked", "Unlocked");
+
         // Story Mode
         zhTw.put("story.house.foldQuilt", "折被子");
         enUs.put("story.house.foldQuilt", "Fold Quilt");
@@ -243,6 +251,43 @@ public class LanguageSystem {
         zhTw.put("story.house.closeDoor", "關門");
         enUs.put("story.house.openDoor", "Open Door");
         enUs.put("story.house.closeDoor", "Close Door");
+
+        // deaths
+        zhTw.put("death.LEFT_BEDROOM_WITHOUT_FOLDING_QUILT.title", "沒折被子");
+        zhTw.put("death.LEFT_BEDROOM_WITHOUT_FOLDING_QUILT.subtitle", "人家是西點軍校，你們是西點麵包啊。");
+
+        enUs.put("death.LEFT_BEDROOM_WITHOUT_FOLDING_QUILT.title", "FORGET TO FOLD THE QUILT");
+        enUs.put("death.LEFT_BEDROOM_WITHOUT_FOLDING_QUILT.subtitle", "Seems like someone is folded.");
+
+        zhTw.put("death.HIT_CEILING.title", "撞到天花板");
+        zhTw.put("death.HIT_CEILING.subtitle", "It's-a-me Mario.");
+
+        enUs.put("death.HIT_CEILING.title", "HIT THE CEILING");
+        enUs.put("death.HIT_CEILING.subtitle", "It's-a-me Mario.");
+
+        zhTw.put("death.HIT_SHOWER_CURTAIN_ROD.title", "撞到浴簾桿");
+        zhTw.put("death.HIT_SHOWER_CURTAIN_ROD.subtitle", "鋼管掉落.mp3");
+
+        enUs.put("death.HIT_SHOWER_CURTAIN_ROD.title", "HIT SHOWER CURTAIN ROD");
+        enUs.put("death.HIT_SHOWER_CURTAIN_ROD.subtitle", "Metal Pipe Falling.mp3");
+
+        zhTw.put("death.HIT_DOORFRAME.title", "撞到門框");
+        zhTw.put("death.HIT_DOORFRAME.subtitle", "Watch your head -> 看你個頭。");
+
+        enUs.put("death.HIT_DOORFRAME.title", "HIT DOORFRAME");
+        enUs.put("death.HIT_DOORFRAME.subtitle", "The door framed you.");
+
+        zhTw.put("death.JUMPING_ON_BED.title", "在床上跳被媽媽制裁了");
+        zhTw.put("death.JUMPING_ON_BED.subtitle", "超大雙人床ㄟ。");
+
+        enUs.put("death.JUMPING_ON_BED.title", "JUMPING ON BED");
+        enUs.put("death.JUMPING_ON_BED.subtitle", "You know, breaking bed is illegal.");
+
+        zhTw.put("death.DRINK_WATER.title", "喝下過夜水");
+        zhTw.put("death.DRINK_WATER.subtitle", "眾所周知，水放過夜不能喝，但水放一整天可以喝。");
+
+        enUs.put("death.DRINK_WATER.title", "DRINK THE OVERNIGHT WATER");
+        enUs.put("death.DRINK_WATER.subtitle", "Water lasted all day long: totally fine; Water left overnight: poisoned.");
 
     }
 

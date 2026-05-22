@@ -208,7 +208,7 @@ public class HouseFactory implements EntityFactory {
                 .bbox(new HitBox(BoundingShape.box(100, 180)))
                 .with(doorComponent)
                 .with(new InteractableComponent(
-                        () -> doorComponent.isOpened() ? "按 F 關門" : "按 F 開門",
+                        () -> doorComponent.isOpened() ? "story.house.openDoor" : "story.house.closeDoor",
                         doorComponent::toggle,
                         interactRange,
                         promptOnEntity,
@@ -280,7 +280,7 @@ public class HouseFactory implements EntityFactory {
                 .view(Main.devMode ? new Rectangle(width, height, Color.rgb(255, 255, 0, 0.35)) : new Rectangle(0, 0, Color.TRANSPARENT))
                 .with(quiltComponent)
                 .with(new InteractableComponent(
-                        () -> "按 F 摺被子",
+                        () -> "story.house.foldQuilt",
                         quiltComponent::fold,
                         interactRange,
                         promptOnEntity,
@@ -453,7 +453,7 @@ public class HouseFactory implements EntityFactory {
                 .view(Main.devMode ? new Rectangle(width, height, Color.rgb(255, 255, 0, 0.35)) : new Rectangle(0, 0, Color.TRANSPARENT))
                 .with(waterComponent)
                 .with(new InteractableComponent(
-                        () -> "按 F 喝水",
+                        () -> "story.house.drinkWater",
                         waterComponent::drink,
                         interactRange,
                         promptOnEntity,

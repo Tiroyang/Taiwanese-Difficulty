@@ -422,14 +422,14 @@ public class MainMenu extends FXGLMenu {
                     stopBGM();
                     fireNewGame();
                 }),
-                createSubButton(text("menu.common.back"), () -> showRightContent(page, createInfoPanel(text("menu.endlessMode.comingSoon"), text("menu.endlessMode.comingSoon.description")))),
-                createSubButton(text("menu.common.back"), () -> showRightContent(page, createInfoPanel(text("menu.endlessMode.comingSoon"), text("menu.endlessMode.comingSoon.description")))),
-                createSubButton(text("menu.common.back"), () -> showRightContent(page, createInfoPanel(text("menu.endlessMode.comingSoon"), text("menu.endlessMode.comingSoon.description")))),
-                createSubButton(text("menu.common.back"), this::closePage)
+                createSubButton(text("menu.endlessMode.comingSoon"), () -> showRightContent(page, createInfoPanel(text("menu.endlessMode.comingSoon"), text("menu.endlessMode.comingSoon.description")))),
+                createSubButton(text("menu.endlessMode.comingSoon"), () -> showRightContent(page, createInfoPanel(text("menu.endlessMode.comingSoon"), text("menu.endlessMode.comingSoon.description")))),
+                createSubButton(text("menu.endlessMode.comingSoon"), () -> showRightContent(page, createInfoPanel(text("menu.endlessMode.comingSoon"), text("menu.endlessMode.comingSoon.description")))),
+                createSubButton(text("menu.endlessMode.comingSoon"), this::closePage)
         );
 
         page.setLeft(leftMenu);
-        page.setCenter(createInfoPanel(text("menu.endlessMode"), text("menu.endlessMode.description")
+        page.setCenter(createInfoPanel(text("menu.endless"), text("menu.endlessMode.description")
         ));
 
         showPage(page);

@@ -1,6 +1,7 @@
 package ass.example.ui;
 
 import ass.example.core.DeathReason;
+import ass.example.system.LanguageSystem;
 import javafx.animation.*;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -25,7 +26,7 @@ public class AchievementToast extends StackPane {
 
     private final ImageView iconView = new ImageView();
 
-    private final Text title = new Text("已解鎖");
+    private final Text title = new Text();
     private final Text subtitle = new Text();
 
     private SequentialTransition currentAnimation;
@@ -93,6 +94,7 @@ public class AchievementToast extends StackPane {
 
     public void showUnlock(DeathReason reason) {
         setIcon(reason);
+        title.setText(LanguageSystem.getInstance().text("achievement.unlocked"));
         subtitle.setText(reason.getTitle());
 
         if (currentAnimation != null) {
