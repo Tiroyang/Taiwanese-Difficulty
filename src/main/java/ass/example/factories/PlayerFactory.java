@@ -2,7 +2,7 @@ package ass.example.factories;
 
 import ass.example.Main;
 import ass.example.components.PlayerComponent;
-import ass.example.core.EntityTypes;
+import ass.example.core.EntityType;
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.EntityFactory;
 import com.almasb.fxgl.entity.SpawnData;
@@ -65,7 +65,7 @@ public class PlayerFactory implements EntityFactory {
         double bodyHeight = 242;
 
         return entityBuilder(data)
-                .type(EntityTypes.PLAYER)
+                .type(EntityType.PLAYER)
                 .view(playerView)
                 .bbox(new HitBox(
                         "PLAYER_BODY",
@@ -94,7 +94,7 @@ public class PlayerFactory implements EntityFactory {
         double height = data.get("height");
 
         return entityBuilder(data)
-                .type(EntityTypes.PLAYER_GROUND_SENSOR)
+                .type(EntityType.PLAYER_GROUND_SENSOR)
                 .bbox(new HitBox(BoundingShape.box(width, height)))
                 .view(Main.devMode
                         ? new Rectangle(width, height, Color.rgb(37, 255, 0, 0.5))

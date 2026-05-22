@@ -3,7 +3,7 @@ package ass.example.core;
 /**
  * Entity類型列表
  */
-public enum EntityTypes {
+public enum EntityType {
     PLAYER,
     PLAYER_GROUND_SENSOR,
 

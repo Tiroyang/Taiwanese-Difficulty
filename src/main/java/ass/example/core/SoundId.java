@@ -5,12 +5,15 @@ package ass.example.core;
  */
 public enum SoundId {
 
+    BUTTON_HOVER("useraction/button_hover.wav", 1),
+    BUTTON_PRESSED("useraction/button_pressed.wav", 0.4),
+
     DEATH("characters/player/death.wav", 1),
 
     DOOR_OPEN("props/scene1/door_open.wav", 1),
     DOOR_CLOSE("props/scene1/door_close.wav", 1),
 
-    EATING("props/scene1/eating.wav", 0.8);
+    EATING("props/scene1/eating.wav", 0.6);
 
     private final String fileName;
     private final double builtInVolume;

@@ -288,19 +288,7 @@ public class PlayerComponent extends Component {
     }
 
     public void dashPressed() {
-        if (!controlEnabled) {
-            return;
-        }
-
-        if (dashing) {
-            return;
-        }
-
-        if (dashCooldownTimer > 0) {
-            return;
-        }
-
-        if (currentDirection != Direction.RIGHT && currentDirection != Direction.LEFT) {
+        if (!controlEnabled || dashing || dashCooldownTimer > 0) {
             return;
         }
 

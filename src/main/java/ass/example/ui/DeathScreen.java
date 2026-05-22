@@ -1,11 +1,10 @@
 package ass.example.ui;
 
-import ass.example.core.DeathReasons;
+import ass.example.core.DeathReason;
 import javafx.animation.*;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.Button;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -34,6 +33,8 @@ public class DeathScreen extends StackPane {
 
     private final VBox detailTextBox = new VBox(12);
 
+    private final AchievementToast achievementToast = new AchievementToast();
+
     public DeathScreen(Runnable onRespawn, Runnable onMainMenu) {
         setPrefSize(SCREEN_WIDTH, SCREEN_HEIGHT);
         setVisible(false);
@@ -56,7 +57,8 @@ public class DeathScreen extends StackPane {
                 background,
                 deathTitle,
                 detailTextBox,
-                respawnButton
+                respawnButton,
+                achievementToast
         );
     }
 
@@ -104,6 +106,9 @@ public class DeathScreen extends StackPane {
         StackPane.setAlignment(respawnButton, Pos.BOTTOM_RIGHT);
         StackPane.setMargin(respawnButton, new Insets(0, 48, 42, 0));
         respawnButton.setTranslateY(50);
+
+        StackPane.setAlignment(achievementToast, Pos.BOTTOM_CENTER);
+        StackPane.setMargin(achievementToast, new Insets(0, 0, -2, 0));
     }
 
     /**
@@ -188,7 +193,7 @@ public class DeathScreen extends StackPane {
         return fallback;
     }
 
-    public void show(DeathReasons reason, int deathCount) {
+    public void show(DeathReason reason, int deathCount) {
         titleText.setText(reason.getTitle());
         subtitleText.setText(reason.getSubtitle());
 
@@ -306,5 +311,9 @@ public class DeathScreen extends StackPane {
         );
 
         sequence.play();
+    }
+
+    public void showAchievementUnlock(DeathReason reason) {
+        achievementToast.showUnlock(reason);
     }
 }

@@ -2,7 +2,7 @@ package ass.example.system;
 
 import ass.example.components.OneWayPlatformComponent;
 import ass.example.components.PlayerComponent;
-import ass.example.core.EntityTypes;
+import ass.example.core.EntityType;
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.SpawnData;
 import com.almasb.fxgl.physics.PhysicsComponent;
@@ -83,7 +83,7 @@ public class OneWayPlatformSystem {
         }
 
         return getGameWorld()
-                .getEntitiesByType(EntityTypes.ONE_WAY_PLATFORM)
+                .getEntitiesByType(EntityType.ONE_WAY_PLATFORM)
                 .stream()
                 .filter(this::canLandOn)
                 .min(Comparator.comparingDouble(Entity::getY));
@@ -230,7 +230,7 @@ public class OneWayPlatformSystem {
         removeCurrentSolid();
 
         getGameWorld()
-                .getEntitiesByType(EntityTypes.ONE_WAY_PLATFORM_COLLIDER)
+                .getEntitiesByType(EntityType.ONE_WAY_PLATFORM_COLLIDER)
                 .forEach(Entity::removeFromWorld);
 
         currentPlatform = null;

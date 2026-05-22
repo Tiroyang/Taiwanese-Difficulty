@@ -1,6 +1,6 @@
 package ass.example.components.HouseScene;
 
-import ass.example.core.DeathReasons;
+import ass.example.core.DeathReason;
 import com.almasb.fxgl.entity.component.Component;
 
 public class BedComponent extends Component {
@@ -29,7 +29,7 @@ public class BedComponent extends Component {
     private final int playerZIndexOnBed;
     private final int normalPlayerZIndex;
 
-    private final DeathReasons deathReasonOnSecondLanding;
+    private final DeathReason deathReasonOnSecondLanding;
 
     public BedComponent(
             Role role,
@@ -49,7 +49,7 @@ public class BedComponent extends Component {
 
             int playerZIndexOnBed,
             int normalPlayerZIndex,
-            DeathReasons deathReasonOnSecondLanding
+            DeathReason deathReasonOnSecondLanding
     ) {
         this.role = role;
         this.bedId = bedId;
@@ -139,7 +139,7 @@ public class BedComponent extends Component {
         return normalPlayerZIndex;
     }
 
-    public DeathReasons getDeathReasonOnSecondLanding() {
+    public DeathReason getDeathReasonOnSecondLanding() {
         return deathReasonOnSecondLanding;
     }
 }

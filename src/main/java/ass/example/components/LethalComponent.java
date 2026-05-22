@@ -1,17 +1,17 @@
 package ass.example.components;
 
-import ass.example.core.DeathReasons;
+import ass.example.core.DeathReason;
 import com.almasb.fxgl.entity.component.Component;
 
 public class LethalComponent extends Component {
 
-    private final DeathReasons deathReason;
+    private final DeathReason deathReason;
 
-    public LethalComponent(DeathReasons deathReason) {
+    public LethalComponent(DeathReason deathReason) {
         this.deathReason = deathReason;
     }
 
-    public DeathReasons getDeathReason() {
+    public DeathReason getDeathReason() {
         return deathReason;
     }
 

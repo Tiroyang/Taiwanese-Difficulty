@@ -4,6 +4,7 @@ import ass.example.components.PlayerComponent;
 import ass.example.core.SceneType;
 import ass.example.system.AudioSystem;
 import ass.example.system.DeathSystem;
+import ass.example.system.SaveSystem;
 import com.almasb.fxgl.entity.Entity;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,6 +32,7 @@ public class SceneManager {
 
     private DeathSystem deathSystem;
     private AudioSystem audioSystem;
+    private SaveSystem saveSystem;
 
     /**
      * 每個場景對應一組SceneConfig。
@@ -64,12 +66,19 @@ public class SceneManager {
         ;
     }
 
-    public void setDeathSystem(DeathSystem deathSystem) {
-        this.deathSystem = deathSystem;
-    }
+    public void setDeathSystem(DeathSystem deathSystem) { this.deathSystem = deathSystem; }
+    public void setAudioSystem(AudioSystem audioSystem) { this.audioSystem = audioSystem; }
+    public void setSaveSystem(SaveSystem saveSystem) { this.saveSystem = saveSystem; }
 
-    public void setAudioSystem(AudioSystem audioSystem) {
-        this.audioSystem = audioSystem;
+    public void loadSceneByType(SceneType sceneType) {
+        switch (sceneType) {
+            case HOUSE -> loadHouseScene();
+
+            // case STREET -> loadStreetScene();
+            // case ENDLESS -> loadEndlessScene();
+
+            default -> loadHouseScene();
+        }
     }
 
     /**
@@ -80,11 +89,16 @@ public class SceneManager {
     public void loadHouseScene() {
         currentSceneType = SceneType.HOUSE;
 
-        clearCurrentWorld();
+        if (houseScene != null) {
+            houseScene.cleanup();
+            houseScene = null;
+        }
 
-        SceneConfig houseConfig = getCurrentSceneConfig();
+        getGameWorld().getEntitiesCopy().forEach(Entity::removeFromWorld);
 
-        houseScene = new HouseScene(houseConfig, deathSystem, audioSystem);
+        SceneConfig homeConfig = getCurrentSceneConfig();
+
+        houseScene = new HouseScene(homeConfig, deathSystem, audioSystem);
         player = houseScene.load();
     }
 
@@ -92,6 +106,12 @@ public class SceneManager {
         getGameWorld()
                 .getEntitiesCopy()
                 .forEach(Entity::removeFromWorld);
+    }
+
+    public void applySavedState() {
+        if (currentSceneType == SceneType.HOUSE && houseScene != null) {
+            houseScene.applySavedState();
+        }
     }
 
     /**

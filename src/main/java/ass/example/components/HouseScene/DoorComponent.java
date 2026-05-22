@@ -1,5 +1,6 @@
 package ass.example.components.HouseScene;
 
+import ass.example.components.LoadSaveComponent;
 import ass.example.core.SoundId;
 import com.almasb.fxgl.dsl.FXGL;
 import com.almasb.fxgl.entity.Entity;
@@ -8,7 +9,7 @@ import com.almasb.fxgl.entity.component.Component;
 import ass.example.system.AudioSystem;
 import static com.almasb.fxgl.dsl.FXGL.*;
 
-public class DoorComponent extends Component {
+public class DoorComponent extends Component implements LoadSaveComponent {
 
     private final String id;
 
@@ -53,6 +54,38 @@ public class DoorComponent extends Component {
         createCollider();
     }
 
+    @Override
+    public void applySavedState() {
+        boolean shouldOpen = getb("door_" + id + "_opened");
+
+        if (shouldOpen) {
+            restoreOpenedState();
+        } else {
+            restoreClosedState();
+        }
+    }
+
+    public void restoreOpenedState() {
+        opened = true;
+
+        setTexture(openTexture);
+
+        if (collider != null) {
+            collider.removeFromWorld();
+            collider = null;
+        }
+    }
+
+    public void restoreClosedState() {
+        opened = false;
+
+        setTexture(closedTexture);
+
+        if (collider == null) {
+            createCollider();
+        }
+    }
+
     public void toggle() {
         if (opened) {
             close();
@@ -71,6 +104,7 @@ public class DoorComponent extends Component {
         }
 
         opened = true;
+        set("door_" + id + "_opened", true);
 
         setTexture(openTexture);
         audioSystem.playSFX(SoundId.DOOR_OPEN);
@@ -89,6 +123,7 @@ public class DoorComponent extends Component {
         }
 
         opened = false;
+        set("door_" + id + "_opened", false);
 
         setTexture(closedTexture);
         createCollider();

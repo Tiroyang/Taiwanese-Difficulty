@@ -1,11 +1,10 @@
 package ass.example.system;
 
 import ass.example.components.PlayerComponent;
-import ass.example.core.DeathReasons;
+import ass.example.core.DeathReason;
 import ass.example.core.SoundId;
 import ass.example.scenes.SceneManager;
 import ass.example.ui.DeathScreen;
-import com.almasb.fxgl.dsl.FXGL;
 import com.almasb.fxgl.entity.Entity;
 import static com.almasb.fxgl.dsl.FXGL.*;
 
@@ -18,14 +17,19 @@ public class DeathSystem {
     private final DeathScreen deathScreen;
 
     private boolean dead = false;
-    private DeathReasons currentReason;
+    private DeathReason currentReason;
 
     private final AudioSystem audioSystem;
+    private final AchievementSystem achievementSystem;
 
-    public DeathSystem(SceneManager sceneManager) {
+    public DeathSystem(
+            SceneManager sceneManager,
+            AudioSystem audioSystem,
+            AchievementSystem achievementSystem
+    ) {
         this.sceneManager = sceneManager;
-
-        this.audioSystem = new AudioSystem();
+        this.audioSystem = audioSystem;
+        this.achievementSystem = achievementSystem;
 
         deathScreen = new DeathScreen(
                 this::respawn,
@@ -35,33 +39,41 @@ public class DeathSystem {
         addUINode(deathScreen, 0, 0);
     }
 
-    public void die(DeathReasons reason) {
+    public void die(DeathReason reason) {
         if (dead) {
             return;
         }
 
-        audioSystem.playSFX(SoundId.DEATH);
-
         dead = true;
-        currentReason = reason;
 
         set("playerDead", true);
-        inc("deathCount", +1);
-        set("death_" + reason.name(), true);
+        set("playerOnBedCollider", false);
+
+        boolean newlyUnlocked = false;
+
+        if (achievementSystem != null) {
+            newlyUnlocked = achievementSystem.unlockDeathReason(reason);
+        }
+
+        if (audioSystem != null) {
+            audioSystem.playSFX(SoundId.DEATH);
+        }
 
         sceneManager.onPlayerDied();
 
         Entity player = sceneManager.getPlayer();
         if (player != null) {
-            PlayerComponent playerComponent =
-                    player.getComponent(PlayerComponent.class);
-
-            playerComponent.stopAllMovement();
-            playerComponent.setControlEnabled(false);
-            playerComponent.playerDead();
+            PlayerComponent pc = player.getComponent(PlayerComponent.class);
+            pc.stopAllMovement();
+            pc.setControlEnabled(false);
+            pc.playerDead();
         }
 
-        deathScreen.show(reason, geti("deathCount"));
+        deathScreen.show(reason, 0);
+
+        if (newlyUnlocked) {
+            deathScreen.showAchievementUnlock(reason);
+        }
     }
 
     public void respawn() {
@@ -91,7 +103,7 @@ public class DeathSystem {
         return dead;
     }
 
-    public DeathReasons getCurrentReason() {
+    public DeathReason getCurrentReason() {
         return currentReason;
     }
 }

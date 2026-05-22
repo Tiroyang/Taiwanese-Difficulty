@@ -1,12 +1,11 @@
 package ass.example.system.HouseScene;
 
-import ass.example.core.DeathReasons;
+import ass.example.core.DeathReason;
 import ass.example.core.HouseScene.RoomType;
 import ass.example.system.DeathSystem;
 import com.almasb.fxgl.entity.Entity;
 import javafx.animation.FadeTransition;
 import javafx.scene.Group;
-import javafx.scene.effect.GaussianBlur;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
@@ -91,7 +90,7 @@ public class RoomSystem {
     }
 
     private void triggerDeathBecauseQuiltNotFolded() {
-        deathSystem.die(DeathReasons.LEFT_BEDROOM_WITHOUT_FOLDING_QUILT);
+        deathSystem.die(DeathReason.LEFT_BEDROOM_WITHOUT_FOLDING_QUILT);
     }
 
     public RoomType getCurrentRoom() {
@@ -170,6 +169,8 @@ public class RoomSystem {
     }
 
     public void revealRoom(RoomType roomType) {
+        set("room_" + roomType.name() + "_revealed", true);
+
         Entity cover = roomCovers.get(roomType);
         Group coverView = roomCoverViews.get(roomType);
 
@@ -178,6 +179,16 @@ public class RoomSystem {
         fade.setToValue(0.0);
         fade.setOnFinished(e -> cover.removeFromWorld());
         fade.play();
+    }
+
+    public void revealRoomNoAnimation(RoomType roomType) {
+        Entity cover = roomCovers.get(roomType);
+
+        if (cover != null) {
+            cover.removeFromWorld();
+            roomCovers.remove(roomType);
+            roomCoverViews.remove(roomType);
+        }
     }
 
     public boolean isRoomRevealed(RoomType roomType) {

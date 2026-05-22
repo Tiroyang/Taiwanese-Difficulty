@@ -1,7 +1,10 @@
 package ass.example.scenes;
 
 import ass.example.components.HouseScene.DoorComponent;
-import ass.example.core.DeathReasons;
+import ass.example.components.HouseScene.QuiltComponent;
+import ass.example.components.HouseScene.WaterComponent;
+import ass.example.components.LoadSaveComponent;
+import ass.example.core.DeathReason;
 import ass.example.core.HouseScene.RoomType;
 import ass.example.system.AudioSystem;
 import ass.example.system.DeathSystem;
@@ -11,6 +14,7 @@ import ass.example.system.HouseScene.RoomSystem;
 import ass.example.system.InteractionSystem;
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.SpawnData;
+import com.almasb.fxgl.entity.component.Component;
 import static com.almasb.fxgl.dsl.FXGL.*;
 import static java.lang.Math.clamp;
 
@@ -53,6 +57,13 @@ public class HouseScene {
         this.config = config;
         this.deathSystem = deathSystem;
         this.audioSystem = audioSystem;
+    }
+
+    public void cleanup() {
+        if (interactionSystem != null) {
+            interactionSystem.dispose();
+            interactionSystem = null;
+        }
     }
 
     /**
@@ -154,23 +165,23 @@ public class HouseScene {
         spawn("death_wall", new SpawnData(0, 0)
                 .put("width", 3200.0)
                 .put("height", 225.0)
-                .put("deathReason", DeathReasons.HIT_CEILING));
+                .put("deathReason", DeathReason.HIT_CEILING));
 
         // door frames
         spawn("death_wall", new SpawnData(2769, 311)
                 .put("width", 38.0)
                 .put("height", 23.0)
-                .put("deathReason", DeathReasons.HIT_DOORFRAME));
+                .put("deathReason", DeathReason.HIT_DOORFRAME));
         spawn("death_wall", new SpawnData(2073, 311)
                 .put("width", 38.0)
                 .put("height", 23.0)
-                .put("deathReason", DeathReasons.HIT_DOORFRAME));
+                .put("deathReason", DeathReason.HIT_DOORFRAME));
 
         // props
         spawn("death_wall", new SpawnData(3037, 246)
                 .put("width", 14.0)
                 .put("height", 14.0)
-                .put("deathReason", DeathReasons.HIT_SHOWER_CURTAIN_ROD));
+                .put("deathReason", DeathReason.HIT_SHOWER_CURTAIN_ROD));
     }
 
     /**
@@ -245,7 +256,7 @@ public class HouseScene {
 
                 .put("playerZIndexOnBed", -3)
                 .put("normalPlayerZIndex", 0)
-                .put("deathReason", DeathReasons.JUMPING_ON_BED));
+                .put("deathReason", DeathReason.JUMPING_ON_BED));
 
         // water
         Entity waterVisual = spawn("water", new SpawnData(0, 0));
@@ -297,6 +308,39 @@ public class HouseScene {
      */
     private void spawnAnimatedProps() {
         // 循環動畫物件
+    }
+
+    public void applySavedState() {
+        applyRoomCoverState();
+        applyPropsState();
+    }
+
+    private void applyRoomCoverState() {
+        if (getb("room_LIVING_ROOM_revealed")) {
+            roomSystem.revealRoomNoAnimation(RoomType.LIVING_ROOM);
+        }
+
+        if (getb("room_TOILET_revealed")) {
+            roomSystem.revealRoomNoAnimation(RoomType.TOILET);
+        }
+    }
+
+    private <T extends Component & LoadSaveComponent> void applyStateToComponents(Class<T> componentClass) {
+        getGameWorld()
+                .getEntitiesByComponent(componentClass)
+                .forEach(entity -> {
+                    entity.getComponent(componentClass).applySavedState();
+                });
+    }
+
+    private void applyPropsState() {
+        applyStateToComponents(DoorComponent.class);
+        applyStateToComponents(QuiltComponent.class);
+        applyStateToComponents(WaterComponent.class);
+
+        if (bedSystem != null) {
+            bedSystem.applySavedState();
+        }
     }
 
     /**

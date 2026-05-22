@@ -5,8 +5,8 @@ import ass.example.components.HouseScene.*;
 import ass.example.components.InteractableComponent;
 import ass.example.components.LethalComponent;
 import ass.example.components.OneWayPlatformComponent;
-import ass.example.core.DeathReasons;
-import ass.example.core.EntityTypes;
+import ass.example.core.DeathReason;
+import ass.example.core.EntityType;
 import ass.example.system.AudioSystem;
 import ass.example.system.DeathSystem;
 import com.almasb.fxgl.entity.Entity;
@@ -30,7 +30,7 @@ public class HouseFactory implements EntityFactory {
     @Spawns("house_background")
     public Entity newHouseBackground(SpawnData data) {
         return entityBuilder(data)
-                .type(EntityTypes.MAP_BACKGROUND)
+                .type(EntityType.MAP_BACKGROUND)
                 .view("/Scene1/map/Background.png")
                 .zIndex(-200)
                 .build();
@@ -39,7 +39,7 @@ public class HouseFactory implements EntityFactory {
     @Spawns("house_floor")
     public Entity newHouseFloor(SpawnData data) {
         return entityBuilder(data)
-                .type(EntityTypes.MAP_BACKGROUND)
+                .type(EntityType.MAP_BACKGROUND)
                 .view("/Scene1/map/Floor.png")
                 .zIndex(1)
                 .build();
@@ -48,7 +48,7 @@ public class HouseFactory implements EntityFactory {
     @Spawns("house_ceiling")
     public Entity newHouseCeiling(SpawnData data) {
         return entityBuilder(data)
-                .type(EntityTypes.MAP_BACKGROUND)
+                .type(EntityType.MAP_BACKGROUND)
                 .view("/Scene1/map/Ceiling.png")
                 .zIndex(-2)
                 .build();
@@ -72,7 +72,7 @@ public class HouseFactory implements EntityFactory {
     @Spawns("house_foreground")
     public Entity newHouseForeground(SpawnData data) {
         return entityBuilder(data)
-                .type(EntityTypes.MAP_BACKGROUND)
+                .type(EntityType.MAP_BACKGROUND)
                 .view("/Scene1/map/Foreground.png")
                 .zIndex(200)
                 .build();
@@ -87,7 +87,7 @@ public class HouseFactory implements EntityFactory {
         physics.setBodyType(BodyType.STATIC);
 
         return entityBuilder(data)
-                .type(EntityTypes.WALL)
+                .type(EntityType.WALL)
                 .bbox(new HitBox(BoundingShape.box(width, height)))
                 .view(Main.devMode ? new Rectangle(width, height, javafx.scene.paint.Color.rgb(255, 0, 0, 0.5)) : new Rectangle(0, 0, Color.TRANSPARENT))
                 .zIndex(1000)
@@ -101,7 +101,7 @@ public class HouseFactory implements EntityFactory {
         double width = data.get("width");
         double height = data.get("height");
 
-        DeathReasons deathReason = data.get("deathReason");
+        DeathReason deathReason = data.get("deathReason");
 
         PhysicsComponent physics = new PhysicsComponent();
         physics.setBodyType(BodyType.STATIC);
@@ -113,7 +113,7 @@ public class HouseFactory implements EntityFactory {
         );
 
         return entityBuilder(data)
-                .type(EntityTypes.DEATH_WALL)
+                .type(EntityType.DEATH_WALL)
                 .bbox(new HitBox(BoundingShape.box(width, height)))
                 .view(Main.devMode ? new Rectangle(width, height, javafx.scene.paint.Color.rgb(115, 0, 255, 0.5)) : new Rectangle(0, 0, Color.TRANSPARENT))
                 .with(physics)
@@ -135,7 +135,7 @@ public class HouseFactory implements EntityFactory {
                 : 10;
 
         return entityBuilder(data)
-                .type(EntityTypes.ONE_WAY_PLATFORM)
+                .type(EntityType.ONE_WAY_PLATFORM)
                 .bbox(new HitBox(BoundingShape.box(width, height)))
                 .view(Main.devMode ? new Rectangle(width, height, javafx.scene.paint.Color.rgb(0, 180, 255, 0.35)) : new Rectangle(0, 0, Color.TRANSPARENT))
                 .with(new CollidableComponent(true))
@@ -164,7 +164,7 @@ public class HouseFactory implements EntityFactory {
         );
 
         return entityBuilder(data)
-                .type(EntityTypes.ONE_WAY_PLATFORM_COLLIDER)
+                .type(EntityType.ONE_WAY_PLATFORM_COLLIDER)
                 .bbox(new HitBox(BoundingShape.box(width, height)))
                 .view(Main.devMode ? new Rectangle(width, height, javafx.scene.paint.Color.rgb(0, 255, 196, 0.35)) : new Rectangle(0, 0, Color.TRANSPARENT))
                 .with(physics)
@@ -203,7 +203,7 @@ public class HouseFactory implements EntityFactory {
         );
 
         return entityBuilder(data)
-                .type(EntityTypes.DOOR)
+                .type(EntityType.DOOR)
                 .view(closedTexture)
                 .bbox(new HitBox(BoundingShape.box(100, 180)))
                 .with(doorComponent)
@@ -233,7 +233,7 @@ public class HouseFactory implements EntityFactory {
         );
 
         return entityBuilder(data)
-                .type(EntityTypes.DOOR_COLLIDER)
+                .type(EntityType.DOOR_COLLIDER)
                 .bbox(new HitBox(BoundingShape.box(width, height)))
                 .view(Main.devMode ? new Rectangle(width, height, javafx.scene.paint.Color.rgb(37, 255, 0, 0.5)) : new Rectangle(0, 0, Color.TRANSPARENT))
                 .with(physics)
@@ -248,7 +248,7 @@ public class HouseFactory implements EntityFactory {
         String foldedTexture = "Scene1/props/Quilt_folded.png";
 
         return entityBuilder(data)
-                .type(EntityTypes.INTERACTABLE)
+                .type(EntityType.INTERACTABLE)
                 .view(messyTexture)
                 .zIndex(-3)
                 .build();
@@ -275,7 +275,7 @@ public class HouseFactory implements EntityFactory {
         );
 
         return entityBuilder(data)
-                .type(EntityTypes.TRIGGER)
+                .type(EntityType.TRIGGER)
                 .bbox(new HitBox(BoundingShape.box(width, height)))
                 .view(Main.devMode ? new Rectangle(width, height, Color.rgb(255, 255, 0, 0.35)) : new Rectangle(0, 0, Color.TRANSPARENT))
                 .with(quiltComponent)
@@ -293,7 +293,7 @@ public class HouseFactory implements EntityFactory {
     @Spawns("bed")
     public Entity newBed(SpawnData data) {
         return entityBuilder(data)
-                .type(EntityTypes.PROP)
+                .type(EntityType.PROP)
                 .view("Scene1/props/Bed.png")
                 .zIndex(-3)
                 .build();
@@ -319,10 +319,10 @@ public class HouseFactory implements EntityFactory {
         int playerZIndexOnBed = ((Number) data.get("playerZIndexOnBed")).intValue();
         int normalPlayerZIndex = ((Number) data.get("normalPlayerZIndex")).intValue();
 
-        DeathReasons deathReason = data.get("deathReason");
+        DeathReason deathReason = data.get("deathReason");
 
         return entityBuilder(data)
-                .type(EntityTypes.BED_ONE_WAY_PLATFORM)
+                .type(EntityType.BED_ONE_WAY_PLATFORM)
                 .bbox(new HitBox(BoundingShape.box(width, height)))
                 .view(Main.devMode ? new Rectangle(width, height, javafx.scene.paint.Color.rgb(0, 180, 255, 0.35)) : new Rectangle(0, 0, Color.TRANSPARENT))
                 .with(new CollidableComponent(true))
@@ -360,7 +360,7 @@ public class HouseFactory implements EntityFactory {
         int playerZIndexOnBed = ((Number) data.get("playerZIndexOnBed")).intValue();
         int normalPlayerZIndex = ((Number) data.get("normalPlayerZIndex")).intValue();
 
-        DeathReasons deathReason = data.get("deathReason");
+        DeathReason deathReason = data.get("deathReason");
 
         PhysicsComponent physics = new PhysicsComponent();
         physics.setBodyType(BodyType.STATIC);
@@ -372,7 +372,7 @@ public class HouseFactory implements EntityFactory {
         );
 
         return entityBuilder(data)
-                .type(EntityTypes.BED_ONE_WAY_PLATFORM_COLLIDER)
+                .type(EntityType.BED_ONE_WAY_PLATFORM_COLLIDER)
                 .bbox(new HitBox(BoundingShape.box(width, height)))
                 .view(Main.devMode ? new Rectangle(width, height, javafx.scene.paint.Color.rgb(0, 255, 196, 0.35)) : new Rectangle(0, 0, Color.TRANSPARENT))
                 .with(physics)
@@ -404,7 +404,7 @@ public class HouseFactory implements EntityFactory {
     @Spawns("cabinet")
     public Entity newCabinet(SpawnData data) {
         return entityBuilder(data)
-                .type(EntityTypes.PROP)
+                .type(EntityType.PROP)
                 .view("/Scene1/props/Cabinet.png")
                 .zIndex(-1)
                 .build();
@@ -415,7 +415,7 @@ public class HouseFactory implements EntityFactory {
         String texture = "Scene1/props/Water.png";
 
         return entityBuilder(data)
-                .type(EntityTypes.INTERACTABLE)
+                .type(EntityType.INTERACTABLE)
                 .view(texture)
                 .zIndex(-2)
                 .build();
@@ -448,7 +448,7 @@ public class HouseFactory implements EntityFactory {
         );
 
         return entityBuilder(data)
-                .type(EntityTypes.INTERACTABLE)
+                .type(EntityType.INTERACTABLE)
                 .bbox(new HitBox(BoundingShape.box(width, height)))
                 .view(Main.devMode ? new Rectangle(width, height, Color.rgb(255, 255, 0, 0.35)) : new Rectangle(0, 0, Color.TRANSPARENT))
                 .with(waterComponent)

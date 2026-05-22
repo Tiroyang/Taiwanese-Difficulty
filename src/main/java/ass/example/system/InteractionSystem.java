@@ -1,7 +1,7 @@
 package ass.example.system;
 
 import ass.example.components.InteractableComponent;
-import ass.example.core.EntityTypes;
+import ass.example.core.EntityType;
 import com.almasb.fxgl.entity.Entity;
 import javafx.scene.text.Text;
 
@@ -18,7 +18,7 @@ public class InteractionSystem {
     private final Entity player;
     private final Text promptText;
 
-    private final double defaultPromptX = 500;
+    private final double defaultPromptX = 640;
     private final double defaultPromptY = 620;
 
     // 防連按
@@ -82,7 +82,7 @@ public class InteractionSystem {
                 .stream()
                 .filter(e -> {
                     if (getb("playerOnBedCollider") &&
-                            e.getType() == EntityTypes.DOOR) {
+                            e.getType() == EntityType.DOOR) {
                         return false;
                     }
 
@@ -119,5 +119,12 @@ public class InteractionSystem {
 
         promptText.setTranslateX(screenX - promptText.getLayoutBounds().getWidth() / 2);
         promptText.setTranslateY(screenY);
+    }
+
+    public void dispose() {
+        promptText.setVisible(false);
+        promptText.setText("");
+
+        removeUINode(promptText);
     }
 }

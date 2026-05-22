@@ -1,19 +1,28 @@
 package ass.example;
 
 import ass.example.components.LethalComponent;
-import ass.example.core.DeathReasons;
-import ass.example.core.EntityTypes;
+import ass.example.core.DeathReason;
+import ass.example.core.EntityType;
+import ass.example.core.SaveKey;
 import ass.example.factories.HouseFactory;
 import ass.example.factories.PlayerFactory;
+import ass.example.system.AchievementSystem;
 import ass.example.system.AudioSystem;
 import ass.example.system.DeathSystem;
+import ass.example.system.SaveSystem;
+import ass.example.ui.MainMenu;
 import com.almasb.fxgl.app.GameApplication;
 import com.almasb.fxgl.app.GameSettings;
 import ass.example.scenes.SceneManager;
 import static com.almasb.fxgl.dsl.FXGL.*;
+import com.almasb.fxgl.app.scene.FXGLMenu;
+import com.almasb.fxgl.app.scene.SceneFactory;
+import com.almasb.fxgl.core.serialization.Bundle;
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.input.UserAction;
 import com.almasb.fxgl.physics.CollisionHandler;
+import com.almasb.fxgl.profile.DataFile;
+import com.almasb.fxgl.profile.SaveLoadHandler;
 import javafx.scene.input.KeyCode;
 import ass.example.components.PlayerComponent;
 import javafx.scene.input.KeyEvent;
@@ -24,6 +33,8 @@ public class Main extends GameApplication {
     private SceneManager sceneManager;
     private DeathSystem deathSystem;
     private AudioSystem audioSystem;
+    private SaveSystem saveSystem;
+    private AchievementSystem achievementSystem;
 
     private int jumpKeyHoldCount = 0;
 
@@ -34,10 +45,20 @@ public class Main extends GameApplication {
         settings.setWidth(1280);
         settings.setHeight(720);
         settings.setTitle("Taiwanese Difficulty");
-        settings.setVersion("0.1");
+        settings.setVersion("0.3");
 
         settings.setMainMenuEnabled(true);
         settings.setGameMenuEnabled(true);
+
+        settings.setManualResizeEnabled(true);
+        settings.setPreserveResizeRatio(false);
+
+        settings.setSceneFactory(new SceneFactory() {
+            @Override
+            public FXGLMenu newMainMenu() {
+                return new MainMenu();
+            }
+        });
     }
 
     @Override
@@ -45,11 +66,16 @@ public class Main extends GameApplication {
         getGameWorld().addEntityFactory(new PlayerFactory());
         getGameWorld().addEntityFactory(new HouseFactory());
 
-        audioSystem = new AudioSystem();
+        audioSystem = AudioSystem.getInstance();
+        achievementSystem = new AchievementSystem();
 
         sceneManager = new SceneManager();
 
-        deathSystem = new DeathSystem(sceneManager);
+        deathSystem = new DeathSystem(
+                sceneManager,
+                audioSystem,
+                achievementSystem
+        );
 
         sceneManager.setDeathSystem(deathSystem);
         sceneManager.setAudioSystem(audioSystem);
@@ -58,13 +84,30 @@ public class Main extends GameApplication {
     }
 
     @Override
+    protected void onPreInit() {
+        getSaveLoadService().addHandler(new SaveLoadHandler() {
+            @Override
+            public void onSave(DataFile dataFile) {
+                Bundle bundle = saveSystem.createSaveBundle();
+                dataFile.putBundle(bundle);
+            }
+
+            @Override
+            public void onLoad(DataFile dataFile) {
+                Bundle bundle = dataFile.getBundle(SaveKey.BUNDLE_NAME);
+                saveSystem.loadFromBundle(bundle);
+            }
+        });
+    }
+
+    @Override
     protected void initPhysics() {
 
         getPhysicsWorld().setGravity(0, 1600);
 
         getPhysicsWorld().addCollisionHandler(new CollisionHandler(
-                EntityTypes.PLAYER_GROUND_SENSOR,
-                EntityTypes.WALL
+                EntityType.PLAYER_GROUND_SENSOR,
+                EntityType.WALL
         ) {
             @Override
             protected void onCollisionBegin(Entity sensor, Entity wall) {
@@ -90,8 +133,8 @@ public class Main extends GameApplication {
         });
 
         getPhysicsWorld().addCollisionHandler(new CollisionHandler(
-                EntityTypes.PLAYER,
-                EntityTypes.DEATH_WALL
+                EntityType.PLAYER,
+                EntityType.DEATH_WALL
         ) {
             @Override
             protected void onCollisionBegin(Entity player, Entity deathSolid) {
@@ -107,8 +150,8 @@ public class Main extends GameApplication {
         });
 
         getPhysicsWorld().addCollisionHandler(new CollisionHandler(
-                EntityTypes.PLAYER_GROUND_SENSOR,
-                EntityTypes.BED_ONE_WAY_PLATFORM_COLLIDER
+                EntityType.PLAYER_GROUND_SENSOR,
+                EntityType.BED_ONE_WAY_PLATFORM_COLLIDER
         ) {
             @Override
             protected void onCollisionBegin(Entity sensor, Entity bedCollider) {
@@ -138,13 +181,21 @@ public class Main extends GameApplication {
     protected void initGameVars(Map<String, Object> vars) {
         vars.put("playerDead", false);
         vars.put("deathCount", 0);
-        for (DeathReasons reason : DeathReasons.values()) {
+
+        for (DeathReason reason : DeathReason.values()) {
             vars.put("death_" + reason.name(), false);
         }
 
-        // House
+        // HouseScene
         vars.put("quiltFolded", false);
+        vars.put("waterDrunk", false);
         vars.put("playerOnBedCollider", false);
+
+        vars.put("room_LIVING_ROOM_revealed", false);
+        vars.put("room_TOILET_revealed", false);
+
+        vars.put("door_Door1_opened", false);
+        vars.put("door_Door2_opened", false);
     }
 
     public DeathSystem getDeathSystem() {
@@ -278,6 +329,18 @@ public class Main extends GameApplication {
             }
         }, KeyCode.S);
 
+        getInput().addAction(new UserAction("Drop Down") {
+            @Override
+            protected void onActionBegin() {
+                sceneManager.dropThroughOneWayPlatform();
+            }
+
+            @Override
+            protected void onActionEnd() {
+                releaseJumpKey();
+            }
+        }, KeyCode.DOWN);
+
         getPrimaryStage().getScene().addEventFilter(
                 KeyEvent.KEY_PRESSED,
                 e -> {
@@ -296,6 +359,22 @@ public class Main extends GameApplication {
                 sceneManager.tryInteract();
             }
         }, KeyCode.F);
+
+        getInput().addAction(new UserAction("Save Game Test") {
+            @Override
+            protected void onActionBegin() {
+                getSaveLoadService().saveAndWriteTask("slot1.sav").run();
+                System.out.println("Saved slot1");
+            }
+        }, KeyCode.F5);
+
+        getInput().addAction(new UserAction("Load Game Test") {
+            @Override
+            protected void onActionBegin() {
+                getSaveLoadService().readAndLoadTask("slot1.sav").run();
+                System.out.println("Loaded slot1");
+            }
+        }, KeyCode.F9);
     }
 
     @Override

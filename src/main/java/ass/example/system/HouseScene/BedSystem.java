@@ -2,7 +2,7 @@ package ass.example.system.HouseScene;
 
 import ass.example.components.HouseScene.BedComponent;
 import ass.example.components.PlayerComponent;
-import ass.example.core.EntityTypes;
+import ass.example.core.EntityType;
 import ass.example.system.DeathSystem;
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.SpawnData;
@@ -151,6 +151,100 @@ public class BedSystem {
         previousPlayerBottom = getPlayerBottom();
     }
 
+    public void applySavedState() {
+        if (!getb("playerOnBedCollider")) {
+            return;
+        }
+
+        Optional<Entity> bedPlatform = findNearestBedPlatformForSavedPlayer();
+
+        if (bedPlatform.isEmpty()) {
+            set("playerOnBedCollider", false);
+            getPlayerComponent().setOnOneWayPlatform(false);
+            player.setZIndex(normalPlayerZIndex);
+            return;
+        }
+
+        restorePlayerOnBed(bedPlatform.get());
+    }
+
+    private Optional<Entity> findNearestBedPlatformForSavedPlayer() {
+        return getGameWorld()
+                .getEntitiesByType(EntityType.BED_ONE_WAY_PLATFORM)
+                .stream()
+                .filter(this::isPlayerNearBedPlatformForRestore)
+                .min(Comparator.comparingDouble(e -> e.distance(player)));
+    }
+
+    private boolean isPlayerNearBedPlatformForRestore(Entity bedPlatform) {
+        BedComponent bed = bedPlatform.getComponent(BedComponent.class);
+
+        double platformLeft = bedPlatform.getX();
+        double platformRight = bedPlatform.getX() + bed.getPlatformWidth();
+
+        double collider1Left = bedPlatform.getX() + bed.getCollider1OffsetX();
+        double collider1Right = collider1Left + bed.getCollider1Width();
+
+        double collider2Left = bedPlatform.getX() + bed.getCollider2OffsetX();
+        double collider2Right = collider2Left + bed.getCollider2Width();
+
+        double playerLeft = player.getBoundingBoxComponent().getMinXWorld();
+        double playerRight = player.getBoundingBoxComponent().getMaxXWorld();
+
+        boolean abovePlatform =
+                playerRight > platformLeft + sidePadding &&
+                        playerLeft < platformRight - sidePadding;
+
+        boolean aboveCollider1 =
+                playerRight > collider1Left + sidePadding &&
+                        playerLeft < collider1Right - sidePadding;
+
+        boolean aboveCollider2 =
+                bed.hasSecondCollider() &&
+                        playerRight > collider2Left + sidePadding &&
+                        playerLeft < collider2Right - sidePadding;
+
+        return abovePlatform || aboveCollider1 || aboveCollider2;
+    }
+
+    private void restorePlayerOnBed(Entity bedPlatform) {
+        BedComponent bed = bedPlatform.getComponent(BedComponent.class);
+
+        removeBedCollider();
+
+        currentBedPlatform = bedPlatform;
+
+        createBedCollider(bedPlatform, bed);
+
+        getPlayerComponent().setOnOneWayPlatform(true);
+
+        set("playerOnBedCollider", true);
+
+        player.setZIndex(bed.getPlayerZIndexOnBed());
+
+        hasLandedOnBed = true;
+
+        jumpedFromBed = false;
+
+        previousPlayerBottom = getPlayerBottom();
+    }
+
+    /**
+     * 玩家按下跳躍鍵時呼叫。
+     *
+     * 如果玩家是在床上按跳，代表他從床上跳起。
+     * 之後再次落回床上就會死亡。
+     */
+    public void onPlayerJumpPressed() {
+        if (currentBedPlatform == null || currentBedColliders.isEmpty()) {
+            return;
+        }
+
+        if (hasLandedOnBed) {
+            jumpedFromBed = true;
+        }
+    }
+
     /**
      * Shift 下落。
      * 只有玩家還在BED_ONE_WAY_PLATFORM上方時，才允許下落。
@@ -186,22 +280,6 @@ public class BedSystem {
     }
 
     /**
-     * 玩家按下跳躍鍵時呼叫。
-     *
-     * 如果玩家是在床上按跳，代表他從床上跳起。
-     * 之後再次落回床上就會死亡。
-     */
-    public void onPlayerJumpPressed() {
-        if (currentBedPlatform == null || currentBedColliders.isEmpty()) {
-            return;
-        }
-
-        if (hasLandedOnBed) {
-            jumpedFromBed = true;
-        }
-    }
-
-    /**
      * 尋找符合玩家可落到的BED_ONE_WAY_PLATFORM。
      *
      * 條件：
@@ -217,7 +295,7 @@ public class BedSystem {
         }
 
         return getGameWorld()
-                .getEntitiesByType(EntityTypes.BED_ONE_WAY_PLATFORM)
+                .getEntitiesByType(EntityType.BED_ONE_WAY_PLATFORM)
                 .stream()
                 .filter(this::canLandOnBedPlatform)
                 .min(Comparator.comparingDouble(Entity::getY));
@@ -475,7 +553,7 @@ public class BedSystem {
         removeBedCollider();
 
         getGameWorld()
-                .getEntitiesByType(EntityTypes.BED_ONE_WAY_PLATFORM_COLLIDER)
+                .getEntitiesByType(EntityType.BED_ONE_WAY_PLATFORM_COLLIDER)
                 .forEach(Entity::removeFromWorld);
 
         currentBedPlatform = null;

@@ -1,0 +1,141 @@
+/* Main Menu */
+
+/* Achievement Page*/
+.settings-scroll {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-padding: 0;
+}
+
+.settings-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
+.settings-scroll .scroll-bar:vertical {
+    -fx-background-color: transparent;
+    -fx-pref-width: 10px;
+}
+
+.settings-scroll .scroll-bar:horizontal {
+    -fx-background-color: transparent;
+    -fx-pref-height: 10px;
+}
+
+.settings-scroll .scroll-bar .track {
+    -fx-background-color: rgba(255,255,255,0.18);
+    -fx-background-radius: 5px;
+}
+
+.settings-scroll .scroll-bar .thumb {
+    -fx-background-color: rgba(255,255,255,0.55);
+    -fx-background-radius: 5px;
+}
+
+.settings-scroll .scroll-bar .thumb:hover {
+    -fx-background-color: rgba(255,255,255,0.85);
+}
+
+.settings-scroll .scroll-bar .increment-button,
+.settings-scroll .scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 2px;
+}
+
+.settings-scroll .scroll-bar .increment-arrow,
+.settings-scroll .scroll-bar .decrement-arrow {
+    -fx-background-color: rgba(255, 255, 255, 0.6);
+    -fx-padding: 2px 3px;
+}
+
+.settings-scroll .scroll-bar .increment-button:hover .increment-arrow,
+.settings-scroll .scroll-bar .decrement-button:hover .decrement-arrow {
+    -fx-background-color: rgba(255, 255, 255, 1);
+}
+
+/* Window Mode Page*/
+.settings-combo-box {
+    -fx-background-color: rgba(15, 15, 18, 0.88);
+    -fx-border-color: rgba(255, 255, 255, 0.28);
+    -fx-border-width: 1.5px;
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+
+    -fx-font-size: 18px;
+    -fx-font-family: "Microsoft JhengHei", "Segoe UI", sans-serif;
+    -fx-cursor: hand;
+
+    -fx-padding: 2px 4px 2px 8px;
+}
+
+/* Hover */
+.settings-combo-box:hover {
+    -fx-border-color: rgba(213, 105, 16, 0.95);
+    -fx-effect: dropshadow(three-pass-box, rgba(213, 105, 16, 0.35), 10, 0, 0, 0);
+}
+
+/* Focused / Open */
+.settings-combo-box:focused {
+    -fx-border-color: rgba(255, 165, 70, 1.0);
+    -fx-effect: dropshadow(three-pass-box, rgba(255, 165, 70, 0.45), 14, 0, 0, 0);
+}
+
+/* 目前顯示的選中項目 */
+.settings-combo-box > .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: white;
+    -fx-padding: 7px 12px 7px 12px;
+}
+
+/* 右側箭頭按鈕區 */
+.settings-combo-box .arrow-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0 12px 0 8px;
+}
+
+/* 箭頭 */
+.settings-combo-box .arrow {
+    -fx-background-color: white;
+}
+
+/* =========================================================
+   Popup List
+   ========================================================= */
+
+.settings-combo-box .combo-box-popup .list-view {
+    -fx-background-color: rgba(18, 18, 22, 0.98);
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+
+    -fx-border-color: rgba(255, 255, 255, 0.22);
+    -fx-border-width: 1px;
+
+    -fx-padding: 4px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.7), 16, 0, 0, 8);
+}
+
+/* 下拉選單每一列 */
+.settings-combo-box .combo-box-popup .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: rgba(255, 255, 255, 0.78);
+    -fx-font-size: 16px;
+    -fx-padding: 4px 14px 4px 14px;
+}
+
+/* Hover 選項 */
+.settings-combo-box .combo-box-popup .list-cell:filled:hover {
+    -fx-background-color: rgba(213, 105, 16, 0.35);
+    -fx-text-fill: white;
+}
+
+/* 選中項目 */
+.settings-combo-box .combo-box-popup .list-cell:filled:selected {
+    -fx-background-color: rgba(213, 105, 16, 0.82);
+    -fx-text-fill: white;
+}
+
+/* 選中且 hover */
+.settings-combo-box .combo-box-popup .list-cell:filled:selected:hover {
+    -fx-background-color: rgba(240, 130, 35, 0.95);
+    -fx-text-fill: white;
+}
