@@ -6,11 +6,10 @@ import ass.example.core.EntityType;
 import ass.example.core.SaveKey;
 import ass.example.factories.HouseFactory;
 import ass.example.factories.PlayerFactory;
-import ass.example.system.AchievementSystem;
-import ass.example.system.AudioSystem;
-import ass.example.system.DeathSystem;
-import ass.example.system.SaveSystem;
+import ass.example.system.*;
+import ass.example.system.save.SaveSlotManager;
 import ass.example.ui.MainMenu;
+import ass.example.ui.PauseMenu;
 import com.almasb.fxgl.app.GameApplication;
 import com.almasb.fxgl.app.GameSettings;
 import ass.example.scenes.SceneManager;
@@ -38,14 +37,14 @@ public class Main extends GameApplication {
 
     private int jumpKeyHoldCount = 0;
 
-    public static boolean devMode = true;
+    public static boolean devMode = false;
 
     @Override
     protected void initSettings(GameSettings settings) {
         settings.setWidth(1280);
         settings.setHeight(720);
         settings.setTitle("Taiwanese Difficulty");
-        settings.setVersion("0.3");
+        settings.setVersion("0.5");
 
         settings.setMainMenuEnabled(true);
         settings.setGameMenuEnabled(true);
@@ -57,6 +56,11 @@ public class Main extends GameApplication {
             @Override
             public FXGLMenu newMainMenu() {
                 return new MainMenu();
+            }
+
+            @Override
+            public FXGLMenu newGameMenu() {
+                return new PauseMenu();
             }
         });
     }
@@ -80,7 +84,15 @@ public class Main extends GameApplication {
         sceneManager.setDeathSystem(deathSystem);
         sceneManager.setAudioSystem(audioSystem);
 
-        sceneManager.loadHouseScene();
+        saveSystem = new SaveSystem(sceneManager);
+
+        if (SaveRequestSystem.hasPendingLoadSlot()) {
+            int slotIndex = SaveRequestSystem.consumePendingLoadSlot();
+
+            SaveSlotManager.getInstance().loadSlot(slotIndex, saveSystem);
+        } else {
+            sceneManager.loadHouseScene();
+        }
     }
 
     @Override
@@ -181,6 +193,7 @@ public class Main extends GameApplication {
     protected void initGameVars(Map<String, Object> vars) {
         vars.put("playerDead", false);
         vars.put("deathCount", 0);
+        vars.put("lastDeathReason", "");
 
         for (DeathReason reason : DeathReason.values()) {
             vars.put("death_" + reason.name(), false);
@@ -359,22 +372,6 @@ public class Main extends GameApplication {
                 sceneManager.tryInteract();
             }
         }, KeyCode.F);
-
-        getInput().addAction(new UserAction("Save Game Test") {
-            @Override
-            protected void onActionBegin() {
-                getSaveLoadService().saveAndWriteTask("slot1.sav").run();
-                System.out.println("Saved slot1");
-            }
-        }, KeyCode.F5);
-
-        getInput().addAction(new UserAction("Load Game Test") {
-            @Override
-            protected void onActionBegin() {
-                getSaveLoadService().readAndLoadTask("slot1.sav").run();
-                System.out.println("Loaded slot1");
-            }
-        }, KeyCode.F9);
     }
 
     @Override

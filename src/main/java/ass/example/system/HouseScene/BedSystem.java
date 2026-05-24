@@ -452,6 +452,7 @@ public class BedSystem {
 
         currentBedPlatform = null;
         hasLandedOnBed = false;
+        jumpedFromBed = false;
 
         set("playerOnBedCollider", false);
     }

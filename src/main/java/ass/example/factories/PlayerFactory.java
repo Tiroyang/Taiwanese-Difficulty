@@ -100,7 +100,7 @@ public class PlayerFactory implements EntityFactory {
                         ? new Rectangle(width, height, Color.rgb(37, 255, 0, 0.5))
                         : new Rectangle(0, 0, Color.TRANSPARENT))
                 .with(new CollidableComponent(true))
-                .zIndex(0)
+                .zIndex(4000)
                 .build();
     }
 }

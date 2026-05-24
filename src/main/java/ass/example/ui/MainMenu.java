@@ -9,6 +9,8 @@ import ass.example.system.AchievementSystem;
 import ass.example.system.AudioSystem;
 import ass.example.system.LanguageSystem;
 import ass.example.system.WindowSystem;
+import ass.example.ui.save.SaveMenuMode;
+import ass.example.ui.save.SaveSlotPanel;
 import com.almasb.fxgl.dsl.FXGL;
 import javafx.animation.*;
 import javafx.geometry.Insets;
@@ -35,6 +37,8 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
+
+import static com.almasb.fxgl.dsl.FXGLForKtKt.getGameController;
 
 public class MainMenu extends FXGLMenu {
 
@@ -144,8 +148,8 @@ public class MainMenu extends FXGLMenu {
     private void createLogo() {
         logoView = loadImageView(
                 "/assets/textures/ui/mainmenu/titlescreen_logo.png",
-                552,
-                169
+                612,
+                195
         );
 
         logoView.setOpacity(0);
@@ -174,10 +178,10 @@ public class MainMenu extends FXGLMenu {
 
         mainButtonBox.getChildren().addAll(
                 createMenuButton(text("menu.story"), this::showStoryModePage),
-                createMenuButton(text("menu.endless"), this::showEndlessModePage),
+                createMenuButton(text("menu.miniGame"), this::showMiniGameModePage),
                 createMenuButton(text("menu.achievement"), this::showAchievementPage),
                 createMenuButton(text("menu.settings"), this::showSettingsPage),
-                createMenuButton(text("menu.exit"), this::fireExit)
+                createMenuButton(text("menu.exit"), this::requestExitGame , exitButtonStyle())
         );
 
         StackPane.setAlignment(mainButtonBox, Pos.TOP_CENTER);
@@ -209,9 +213,21 @@ public class MainMenu extends FXGLMenu {
     // =========================
 
     private void playIntroAnimation() {
-        FadeTransition bgFade = new FadeTransition(Duration.seconds(0.8), backgroundView);
+        FadeTransition bgFade = new FadeTransition(Duration.seconds(0.85), backgroundView);
         bgFade.setFromValue(0);
         bgFade.setToValue(1);
+
+        ScaleTransition bgScale = new ScaleTransition(Duration.seconds(0.65), backgroundView);
+        bgScale.setFromX(1.08);
+        bgScale.setFromY(1.08);
+        bgScale.setToX(1.0);
+        bgScale.setToY(1.0);
+        bgScale.setInterpolator(Interpolator.EASE_OUT);
+
+        ParallelTransition bgIntro = new ParallelTransition(
+                bgFade,
+                bgScale
+        );
 
         FadeTransition logoFade = new FadeTransition(Duration.seconds(0.35), logoView);
         logoFade.setFromValue(0);
@@ -238,8 +254,8 @@ public class MainMenu extends FXGLMenu {
         ParallelTransition buttonAnim = new ParallelTransition(buttonFade, buttonMove);
 
         SequentialTransition seq = new SequentialTransition(
-                bgFade,
-                new PauseTransition(Duration.seconds(1.3)),
+                bgIntro,
+                new PauseTransition(Duration.seconds(1.5)),
                 logoPop,
                 new PauseTransition(Duration.seconds(0.13)),
                 buttonAnim
@@ -382,8 +398,32 @@ public class MainMenu extends FXGLMenu {
                     stopBGM();
                     fireNewGame();
                 }),
-                createSubButton(text("menu.storyMode.loadSaves"), () -> showRightContent(page, createSaveList("讀取存檔"))),
-                createSubButton(text("menu.storyMode.editSave"), () -> showRightContent(page, createSaveList("編輯存檔"))),
+                createSubButton(text("menu.storyMode.loadSaves"), () -> {
+                    showRightContent(
+                            page,
+                            new SaveSlotPanel(
+                                    SaveMenuMode.LOAD,
+                                    null,
+                                    slotIndex -> {
+                                        stopBGM();
+                                        fireNewGame();
+                                    },
+                                    null
+                            )
+                    );
+                }),
+
+                createSubButton(text("menu.storyMode.editSave"), () -> {
+                    showRightContent(
+                            page,
+                            new SaveSlotPanel(
+                                    SaveMenuMode.EDIT,
+                                    null,
+                                    null,
+                                    null
+                            )
+                    );
+                }),
                 createSubButton(text("menu.common.back"), this::closePage)
         );
 
@@ -414,22 +454,22 @@ public class MainMenu extends FXGLMenu {
     // 無盡模式
     // =========================
 
-    private void showEndlessModePage() {
+    private void showMiniGameModePage() {
         BorderPane page = createSubPageBase();
 
         VBox leftMenu = createLeftMenu(
-                createSubButton(text("menu.endlessMode.theStreet"), () -> {
+                createSubButton(text("menu.miniGameMode.StreetEndless"), () -> {
                     stopBGM();
                     fireNewGame();
                 }),
-                createSubButton(text("menu.endlessMode.comingSoon"), () -> showRightContent(page, createInfoPanel(text("menu.endlessMode.comingSoon"), text("menu.endlessMode.comingSoon.description")))),
-                createSubButton(text("menu.endlessMode.comingSoon"), () -> showRightContent(page, createInfoPanel(text("menu.endlessMode.comingSoon"), text("menu.endlessMode.comingSoon.description")))),
-                createSubButton(text("menu.endlessMode.comingSoon"), () -> showRightContent(page, createInfoPanel(text("menu.endlessMode.comingSoon"), text("menu.endlessMode.comingSoon.description")))),
-                createSubButton(text("menu.endlessMode.comingSoon"), this::closePage)
+                createSubButton(text("menu.miniGameMode.comingSoon"), () -> showRightContent(page, createInfoPanel(text("menu.miniGameMode.comingSoon"), text("menu.miniGameMode.comingSoon.description")))),
+                createSubButton(text("menu.miniGameMode.comingSoon"), () -> showRightContent(page, createInfoPanel(text("menu.miniGameMode.comingSoon"), text("menu.miniGameMode.comingSoon.description")))),
+                createSubButton(text("menu.miniGameMode.comingSoon"), () -> showRightContent(page, createInfoPanel(text("menu.miniGameMode.comingSoon"), text("menu.miniGameMode.comingSoon.description")))),
+                createSubButton(text("menu.common.back"), this::closePage)
         );
 
         page.setLeft(leftMenu);
-        page.setCenter(createInfoPanel(text("menu.endless"), text("menu.endlessMode.description")
+        page.setCenter(createInfoPanel(text("menu.miniGame"), text("menu.miniGameMode.description")
         ));
 
         showPage(page);
@@ -1094,9 +1134,36 @@ public class MainMenu extends FXGLMenu {
         return Math.round(value * 100) + "%";
     }
 
+    private void updateSliderProgressStyle(Slider slider) {
+        double min = slider.getMin();
+        double max = slider.getMax();
+        double value = slider.getValue();
+
+        double percent = (value - min) / (max - min) * 100.0;
+
+        slider.lookup(".track").setStyle(String.format("""
+            -fx-background-color:
+                linear-gradient(to right,
+                    rgba(213, 105, 16, 0.95) 0%%,
+                    rgba(213, 105, 16, 0.95) %.1f%%,
+                    rgba(0, 0, 0, 0.55) %.1f%%,
+                    rgba(0, 0, 0, 0.55) 100%%);
+            -fx-border-color: rgba(255, 255, 255, 0.28);
+            -fx-border-width: 1px;
+            -fx-pref-height: 8px;
+            """, percent, percent));
+    }
+
     @FunctionalInterface
     private interface ToggleAction {
         void onToggle(boolean enabled);
+    }
+
+    private record ToggleSwitchState(
+            Rectangle track,
+            Rectangle knob,
+            boolean enabled
+    ) {
     }
 
     private StackPane createToggleSwitch(boolean enabled, ToggleAction action) {
@@ -1124,15 +1191,20 @@ public class MainMenu extends FXGLMenu {
 
         toggle.setUserData(new ToggleSwitchState(track, knob, enabled));
 
-        updateToggleSwitch(toggle, enabled);
+        /*
+         * 第一次建立：直接放到正確位置，不播放動畫。
+         */
+        updateToggleSwitch(toggle, enabled, false);
 
         toggle.setOnMouseClicked(e -> {
             ToggleSwitchState state = (ToggleSwitchState) toggle.getUserData();
 
             boolean newValue = !state.enabled();
-            toggle.setUserData(new ToggleSwitchState(state.track(), state.knob(), newValue));
 
-            updateToggleSwitch(toggle, newValue);
+            /*
+             * 點擊切換：播放動畫。
+             */
+            updateToggleSwitch(toggle, newValue, true);
 
             if (action != null) {
                 action.onToggle(newValue);
@@ -1181,7 +1253,7 @@ public class MainMenu extends FXGLMenu {
         return row;
     }
 
-    private void updateToggleSwitch(StackPane toggle, boolean enabled) {
+    private void updateToggleSwitch(StackPane toggle, boolean enabled, boolean animate) {
         Object data = toggle.getUserData();
 
         if (!(data instanceof ToggleSwitchState state)) {
@@ -1204,15 +1276,19 @@ public class MainMenu extends FXGLMenu {
                 ? Color.rgb(213, 105, 16)
                 : Color.rgb(180, 180, 180));
 
-        TranslateTransition move = new TranslateTransition(Duration.seconds(0.14), knob);
-        move.setToX(targetX);
-        move.setInterpolator(Interpolator.EASE_OUT);
-        move.play();
+        if (animate) {
+            TranslateTransition move = new TranslateTransition(Duration.seconds(0.14), knob);
+            move.setToX(targetX);
+            move.setInterpolator(Interpolator.EASE_OUT);
+            move.play();
+        } else {
+            /*
+             * 初始化時直接瞬移，不播放動畫。
+             */
+            knob.setTranslateX(targetX);
+        }
 
         toggle.setUserData(new ToggleSwitchState(track, knob, enabled));
-    }
-
-    private record ToggleSwitchState(Rectangle track, Rectangle knob, boolean enabled) {
     }
 
     private HBox createVolumeRow(
@@ -1252,6 +1328,21 @@ public class MainMenu extends FXGLMenu {
         Slider slider = new Slider(0, 1, displayVolume);
         slider.setMaxWidth(Double.MAX_VALUE);
         slider.setPrefWidth(360);
+        slider.getStyleClass().add("settings-slider");
+        slider.getStylesheets().add(
+                getClass().getResource("/style.css").toExternalForm()
+        );
+
+        slider.valueProperty().addListener((obs, oldValue, newValue) -> {
+            updateSliderProgressStyle(slider);
+        });
+
+        slider.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene != null) {
+                slider.applyCss();
+                updateSliderProgressStyle(slider);
+            }
+        });
 
         Label percentLabel = new Label(toPercentText(displayVolume));
         percentLabel.setMinWidth(52);
@@ -1451,10 +1542,10 @@ public class MainMenu extends FXGLMenu {
 
         mainButtonBox.getChildren().addAll(
                 createMenuButton(text("menu.story"), this::showStoryModePage),
-                createMenuButton(text("menu.endless"), this::showEndlessModePage),
+                createMenuButton(text("menu.miniGame"), this::showMiniGameModePage),
                 createMenuButton(text("menu.achievement"), this::showAchievementPage),
                 createMenuButton(text("menu.settings"), this::showSettingsPage),
-                createMenuButton(text("menu.exit"), this::fireExit)
+                createMenuButton(text("menu.exit"), this::requestExitGame, exitButtonStyle())
         );
 
         cutscene = false;
@@ -1474,6 +1565,11 @@ public class MainMenu extends FXGLMenu {
         languageBox.getStylesheets().add(
                 getClass().getResource("/style.css").toExternalForm()
         );
+
+        languageBox.setPrefWidth(260);
+        languageBox.setStyle("""
+            -fx-font-size: 18px;
+            """);
 
         StackPane applyButton = createSubButton(text("menu.common.apply"), () -> {
             languageSystem.setLanguage(languageBox.getValue());
@@ -1569,7 +1665,11 @@ public class MainMenu extends FXGLMenu {
     }
 
     private StackPane createPopupButton(String text, Runnable action) {
-        StackPane button = createButtonBase(text, 120, 42);
+        return createPopupButton(text, action, defaultButtonStyle());
+    }
+
+    private StackPane createPopupButton(String text, Runnable action, ButtonStyle style) {
+        StackPane button = createButtonBase(text, 120, 42, style);
 
         button.setOnMouseClicked(e -> {
             if (!cutscene) {
@@ -1609,7 +1709,7 @@ public class MainMenu extends FXGLMenu {
             if (onConfirm != null) {
                 onConfirm.run();
             }
-        });
+        }, exitButtonStyle());
 
         StackPane cancel = createPopupButton(text("menu.common.cancel"), () -> {
             pageLayer.getChildren().remove(box.getParent());
@@ -1649,7 +1749,7 @@ public class MainMenu extends FXGLMenu {
                                 text("menu.settings.reset.deleteLocalData.notification");
                             }
                     );
-                })
+                }, exitButtonStyle())
         );
 
         return box;
@@ -2043,7 +2143,7 @@ public class MainMenu extends FXGLMenu {
 
     private void createDarkOverlay() {
         darkOverlay = new Rectangle(SCREEN_WIDTH, SCREEN_HEIGHT);
-        darkOverlay.setFill(Color.rgb(0, 0, 0, 0.38));
+        darkOverlay.setFill(Color.rgb(0, 0, 0, 0.5));
         darkOverlay.setOpacity(0);
         darkOverlay.setMouseTransparent(true);
 
@@ -2151,46 +2251,70 @@ public class MainMenu extends FXGLMenu {
     }
 
     private StackPane createMenuButton(String text, Runnable action) {
-        StackPane button = createButtonBase(text, 280, 58);
+        return createMenuButton(text, action, defaultButtonStyle());
+    }
+
+    private StackPane createMenuButton(String text, Runnable action, ButtonStyle style) {
+        StackPane button = createButtonBase(text, 280, 58, style);
+
         button.setOnMouseClicked(e -> {
             if (!cutscene) {
                 audioSystem.playButtonSFX(SoundId.BUTTON_PRESSED);
-                action.run();
+
+                if (action != null) {
+                    action.run();
+                }
             }
         });
+
         return button;
     }
 
     private StackPane createSubButton(String text, Runnable action) {
-        StackPane button = createButtonBase(text, 240, 46);
+        return createSubButton(text, action, defaultButtonStyle());
+    }
+
+    private StackPane createSubButton(String text, Runnable action, ButtonStyle style) {
+        StackPane button = createButtonBase(text, 240, 46, style);
+
         button.setOnMouseClicked(e -> {
             if (!cutscene) {
                 audioSystem.playButtonSFX(SoundId.BUTTON_PRESSED);
-                action.run();
+
+                if (action != null) {
+                    action.run();
+                }
             }
         });
+
         return button;
     }
 
-    private StackPane createButtonBase(String text, double width, double height) {
+    private StackPane createButtonBase(
+            String text,
+            double width,
+            double height,
+            ButtonStyle style
+    ) {
         StackPane button = new StackPane();
         button.setPrefSize(width, height);
+        button.setMinSize(width, height);
         button.setMaxSize(width, height);
         button.setPickOnBounds(true);
 
         Rectangle bg = new Rectangle(width, height);
-        bg.setArcWidth(10);
-        bg.setArcHeight(10);
-        bg.setFill(Color.rgb(0, 0, 0, 0.58));
-        bg.setStroke(Color.rgb(255, 255, 255, 0.72));
-        bg.setStrokeWidth(1.4);
+        bg.setArcWidth(style.arc());
+        bg.setArcHeight(style.arc());
+        bg.setFill(style.normalFill());
+        bg.setStroke(style.normalStroke());
+        bg.setStrokeWidth(style.strokeWidth());
 
         Text label = new Text(text);
         label.setStyle("""
-                -fx-font-size: 22px;
-                -fx-fill: white;
-                -fx-font-weight: bold;
-                """);
+            -fx-font-size: 22px;
+            -fx-font-weight: bold;
+            """);
+        label.setFill(style.normalText());
 
         button.getChildren().addAll(bg, label);
 
@@ -2198,32 +2322,106 @@ public class MainMenu extends FXGLMenu {
             if (!cutscene) {
                 audioSystem.playButtonSFX(SoundId.BUTTON_HOVER);
             }
-            bg.setFill(Color.rgb(255, 255, 255, 0.18));
-            label.setStyle("""
-                -fx-font-size: 22px;
-                -fx-fill: black;
-                -fx-font-weight: bold;
-                """);
+
+            bg.setFill(style.hoverFill());
+            bg.setStroke(style.hoverStroke());
+            label.setFill(style.hoverText());
+
             ScaleTransition st = new ScaleTransition(Duration.seconds(0.08), button);
-            st.setToX(1.04);
-            st.setToY(1.04);
+            st.setToX(style.hoverScale());
+            st.setToY(style.hoverScale());
             st.play();
         });
 
         button.setOnMouseExited(e -> {
-            bg.setFill(Color.rgb(0, 0, 0, 0.58));
-            label.setStyle("""
-                -fx-font-size: 22px;
-                -fx-fill: white;
-                -fx-font-weight: bold;
-                """);
+            bg.setFill(style.normalFill());
+            bg.setStroke(style.normalStroke());
+            label.setFill(style.normalText());
+
             ScaleTransition st = new ScaleTransition(Duration.seconds(0.08), button);
             st.setToX(1.0);
             st.setToY(1.0);
             st.play();
         });
 
+        button.setOnMousePressed(e -> {
+            bg.setFill(style.pressedFill());
+            bg.setStroke(style.pressedStroke());
+            label.setFill(style.pressedText());
+
+            button.setScaleX(0.97);
+            button.setScaleY(0.97);
+        });
+
+        button.setOnMouseReleased(e -> {
+            bg.setFill(style.hoverFill());
+            bg.setStroke(style.hoverStroke());
+            label.setFill(style.hoverText());
+
+            button.setScaleX(style.hoverScale());
+            button.setScaleY(style.hoverScale());
+        });
+
         return button;
+    }
+
+    private record ButtonStyle(
+            Color normalFill,
+            Color normalStroke,
+            Color normalText,
+
+            Color hoverFill,
+            Color hoverStroke,
+            Color hoverText,
+
+            Color pressedFill,
+            Color pressedStroke,
+            Color pressedText,
+
+            double strokeWidth,
+            double arc,
+            double hoverScale
+    ) {
+    }
+
+    private ButtonStyle defaultButtonStyle() {
+        return new ButtonStyle(
+                Color.rgb(0, 0, 0, 0.58),
+                Color.rgb(255, 255, 255, 0.72),
+                Color.WHITE,
+
+                Color.rgb(255, 255, 255, 0.58),
+                Color.WHITE,
+                Color.BLACK,
+
+                Color.rgb(213, 105, 16, 0.92),
+                Color.WHITE,
+                Color.WHITE,
+
+                1.4,
+                10,
+                1.04
+        );
+    }
+
+    private ButtonStyle exitButtonStyle() {
+        return new ButtonStyle(
+                Color.rgb(0, 0, 0, 0.58),
+                Color.rgb(255, 255, 255, 0.72),
+                Color.WHITE,
+
+                Color.rgb(168, 27, 27, 0.9),
+                Color.rgb(255, 255, 255, 0.4),
+                Color.BLACK,
+
+                Color.rgb(80, 0, 0, 0.95),
+                Color.rgb(255, 150, 150, 1.0),
+                Color.WHITE,
+
+                1.6,
+                10,
+                1.05
+        );
     }
 
     private ImageView loadImageView(String path, double width, double height) {
@@ -2308,5 +2506,71 @@ public class MainMenu extends FXGLMenu {
         if (devModeLabel != null) {
             devModeLabel.setVisible(Main.devMode);
         }
+    }
+
+    private void showConfirmNoticeOnMainMenu(String message, Runnable onConfirm) {
+        pageLayer.getChildren().clear();
+        pageLayer.setVisible(true);
+        pageLayer.setOpacity(1);
+        pageLayer.setPickOnBounds(true);
+        pageLayer.toFront();
+
+        VBox box = new VBox(18);
+        box.setAlignment(Pos.CENTER);
+        box.setPadding(new Insets(24));
+        box.setMaxSize(460, 180);
+
+        Rectangle bg = new Rectangle(460, 180);
+        bg.setArcWidth(18);
+        bg.setArcHeight(18);
+        bg.setFill(Color.rgb(0, 0, 0, 0.88));
+        bg.setStroke(Color.WHITE);
+
+        Text textNode = createTextBlock(message);
+        textNode.setWrappingWidth(380);
+        textNode.setTextAlignment(TextAlignment.CENTER);
+
+        HBox buttons = new HBox(16);
+        buttons.setAlignment(Pos.CENTER);
+
+        StackPane popup = new StackPane(bg, box);
+        popup.setAlignment(Pos.CENTER);
+
+        StackPane confirm = createPopupButton(
+                text("menu.common.confirm"),
+                () -> {
+                    pageLayer.getChildren().remove(popup);
+
+                    if (onConfirm != null) {
+                        onConfirm.run();
+                    }
+                },
+                exitButtonStyle()
+        );
+
+        StackPane cancel = createPopupButton(
+                text("menu.common.cancel"),
+                () -> {
+                    pageLayer.getChildren().remove(popup);
+                    pageLayer.setVisible(false);
+                    pageLayer.setOpacity(0);
+                    pageLayer.setPickOnBounds(false);
+                }
+        );
+
+        buttons.getChildren().addAll(confirm, cancel);
+        box.getChildren().addAll(textNode, buttons);
+
+        pageLayer.getChildren().add(popup);
+    }
+
+    private void requestExitGame() {
+        showConfirmNoticeOnMainMenu(
+                text("menu.exit.confirm"),
+                () -> {
+                    stopBGM();
+                    getGameController().exit();
+                }
+        );
     }
 }

@@ -1,6 +1,7 @@
 package ass.example.scenes;
 
 import ass.example.components.PlayerComponent;
+import ass.example.core.DeathReason;
 import ass.example.core.SceneType;
 import ass.example.system.AudioSystem;
 import ass.example.system.DeathSystem;
@@ -58,7 +59,7 @@ public class SceneManager {
                         3200,
                         720,
                         2500,
-                        402
+                        422.0
                 )
         )
 
@@ -75,7 +76,7 @@ public class SceneManager {
             case HOUSE -> loadHouseScene();
 
             // case STREET -> loadStreetScene();
-            // case ENDLESS -> loadEndlessScene();
+            // case miniGame -> loadminiGameScene();
 
             default -> loadHouseScene();
         }
@@ -181,12 +182,27 @@ public class SceneManager {
         pc.setControlEnabled(true);
     }
 
+    public void clearDeathStateForLoad() {
+        set("playerDead", false);
+        set("lastDeathReason", "");
+
+        if (deathSystem != null) {
+            deathSystem.clearDeathScreenForLoad();
+        }
+    }
+
     /**
      * 重設目前場景的暫時狀態。
      */
-    private void resetCurrentSceneRuntimeSystems() {
+    public void resetCurrentSceneRuntimeSystems() {
         if (currentSceneType == SceneType.HOUSE && houseScene != null) {
             houseScene.resetRuntimeSystems();
+        }
+    }
+
+    public void restoreDeathFromSave(DeathReason reason) {
+        if (deathSystem != null) {
+            deathSystem.restoreDeathFromSave(reason);
         }
     }
 

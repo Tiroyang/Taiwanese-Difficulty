@@ -169,15 +169,44 @@ public class RoomSystem {
     }
 
     public void revealRoom(RoomType roomType) {
-        set("room_" + roomType.name() + "_revealed", true);
+        if (roomType == null || roomType == RoomType.NONE) {
+            return;
+        }
+
+        String key = "room_" + roomType.name() + "_revealed";
+
+        if (getb(key)) {
+            return;
+        }
+
+        set(key, true);
 
         Entity cover = roomCovers.get(roomType);
         Group coverView = roomCoverViews.get(roomType);
 
+        if (cover == null || coverView == null) {
+            roomCovers.remove(roomType);
+            roomCoverViews.remove(roomType);
+            return;
+        }
+
+        /*
+         * 先移除紀錄，避免淡出動畫還沒結束時，
+         * 玩家再次開門或讀檔 applySavedState 又呼叫 revealRoom。
+         */
+        roomCovers.remove(roomType);
+        roomCoverViews.remove(roomType);
+
         FadeTransition fade = new FadeTransition(Duration.seconds(0.4), coverView);
-        fade.setFromValue(1.0);
+        fade.setFromValue(coverView.getOpacity());
         fade.setToValue(0.0);
-        fade.setOnFinished(e -> cover.removeFromWorld());
+
+        fade.setOnFinished(e -> {
+            if (cover.isActive()) {
+                cover.removeFromWorld();
+            }
+        });
+
         fade.play();
     }
 

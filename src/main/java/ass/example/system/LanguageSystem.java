@@ -30,13 +30,13 @@ public class LanguageSystem {
     private void initTexts() {
         // Main Menu
         zhTw.put("menu.story", "故事模式");
-        zhTw.put("menu.endless", "無盡模式");
+        zhTw.put("menu.miniGame", "迷你模式");
         zhTw.put("menu.achievement", "成就");
         zhTw.put("menu.settings", "設定");
         zhTw.put("menu.exit", "退出");
 
         enUs.put("menu.story", "Story Mode");
-        enUs.put("menu.endless", "Endless Mode");
+        enUs.put("menu.miniGame", "Minigame Mode");
         enUs.put("menu.achievement", "Achievements");
         enUs.put("menu.settings", "Settings");
         enUs.put("menu.exit", "Exit");
@@ -69,20 +69,20 @@ public class LanguageSystem {
         enUs.put("menu.storyMode.loadSaves", "Load Saves");
         enUs.put("menu.storyMode.editSave", "Edit Saves");
 
-        // Endless Mode Page
-        zhTw.put("menu.endlessMode.description", "選擇一個關卡。");
+        // miniGame Mode Page
+        zhTw.put("menu.miniGameMode.description", "選擇一個關卡。");
 
-        zhTw.put("menu.endlessMode.theStreet", "街頭");
-        zhTw.put("menu.endlessMode.comingSoon", "敬請期待");
+        zhTw.put("menu.miniGameMode.StreetEndless", "街頭跑酷");
+        zhTw.put("menu.miniGameMode.comingSoon", "敬請期待");
 
-        zhTw.put("menu.endlessMode.comingSoon.description", "此關卡尚未開放。");
+        zhTw.put("menu.miniGameMode.comingSoon.description", "此關卡尚未開放。");
 
-        enUs.put("menu.endlessMode.description", "Choose a level.");
+        enUs.put("menu.miniGameMode.description", "Choose a level.");
 
-        enUs.put("menu.endlessMode.theStreet", "The Street");
-        enUs.put("menu.endlessMode.comingSoon", "Coming Soon");
+        enUs.put("menu.miniGameMode.StreetEndless", "The Street Parkord");
+        enUs.put("menu.miniGameMode.comingSoon", "Coming Soon");
 
-        enUs.put("menu.endlessMode.comingSoon.description", "This level has yet to be finished.");
+        enUs.put("menu.miniGameMode.comingSoon.description", "This level has yet to be finished.");
 
         //Achievement Page
         zhTw.put("menu.achievement.locked", "尚未解鎖");
@@ -124,7 +124,7 @@ public class LanguageSystem {
         enUs.put("menu.settings.volume.global", "Global");
         enUs.put("menu.settings.volume.music", "Music");
         enUs.put("menu.settings.volume.sound", "Sound");
-        enUs.put("menu.settings.volume.button_sound", "Sound");
+        enUs.put("menu.settings.volume.button_sound", "Button Sfx");
 
         zhTw.put("menu.settings.window", "視窗大小");
         zhTw.put("menu.settings.window.current", "目前視窗：");
@@ -231,6 +231,30 @@ public class LanguageSystem {
         enUs.put("menu.settings.about.credits.online_assets", "Online Assets");
         enUs.put("menu.settings.about.credits.tiro_online_assets", "Tiro, Online Assets");
 
+        // Exit
+        zhTw.put("menu.exit.confirm", "確定要退出遊戲嗎？");
+
+        enUs.put("menu.exit.confirm", "Are you sure you want to quit the game?");
+
+        // Pause Menu
+        zhTw.put("pause.resume", "繼續遊戲");
+        zhTw.put("pause.save", "存檔");
+        zhTw.put("pause.settings", "設定");
+        zhTw.put("pause.exitToMain", "退出到主畫面");
+        zhTw.put("pause.save.placeholder", "存檔功能尚未完成。");
+
+        enUs.put("pause.resume", "Resume");
+        enUs.put("pause.save", "Save");
+        enUs.put("pause.settings", "Settings");
+        enUs.put("pause.exitToMain", "Exit to Main Menu");
+        enUs.put("pause.save.placeholder", "Save system is not implemented yet.");
+
+        zhTw.put("menu.settings.language.changed", "語言設定已更新。");
+        enUs.put("menu.settings.language.changed", "Language setting updated.");
+
+        zhTw.put("pause.exitToMain.confirm", "確定要回到主畫面嗎？未儲存的進度可能會遺失。");
+        enUs.put("pause.exitToMain.confirm", "Return to the main menu? Unsaved progress may be lost.");
+
         // Dead Menu
         zhTw.put("menu.rebirth", "重生");
         enUs.put("story.house.rebirth", "Regenerate");
@@ -239,6 +263,70 @@ public class LanguageSystem {
         zhTw.put("achievement.unlocked", "已解鎖");
 
         enUs.put("achievement.unlocked", "Unlocked");
+
+        // Save System
+        zhTw.put("save.load", "讀取存檔");
+        zhTw.put("save.edit", "編輯存檔");
+        zhTw.put("save.saveTo", "存檔至");
+        zhTw.put("save.quickSave", "快速存檔");
+        zhTw.put("save.quickSave.done", "已快速存檔。");
+        zhTw.put("save.saved", "存檔完成。");
+        zhTw.put("save.loaded", "讀取完成。");
+        zhTw.put("save.description", "管理目前遊戲的存檔資料。");
+
+        zhTw.put("save.emptySlot", "空存檔槽");
+        zhTw.put("save.empty", "EMPTY");
+        zhTw.put("save.noData", "尚無資料");
+        zhTw.put("save.scene", "場景：");
+        zhTw.put("save.name", "名稱：");
+        zhTw.put("save.createdAt", "建立日期：");
+        zhTw.put("save.savedAt", "存檔日期：");
+        zhTw.put("save.lastOpenedAt", "上次開啟：");
+
+        zhTw.put("save.rename", "重新命名");
+        zhTw.put("save.rename.header", "修改存檔名稱");
+        zhTw.put("save.rename.content", "請輸入新的存檔名稱：");
+
+        zhTw.put("save.delete", "刪除存檔");
+        zhTw.put("save.delete.confirm", "確定要刪除此存檔嗎？");
+
+        zhTw.put("save.confirm", "確認");
+        zhTw.put("save.warning.unsaved", "目前遊戲內容可能尚未存檔，讀取後會遺失變更。是否繼續？");
+        zhTw.put("save.overwrite.confirm", "此存檔槽已有資料，是否覆蓋？");
+        zhTw.put("save.inputName.header", "輸入存檔名稱");
+        zhTw.put("save.inputName.content", "存檔名稱：");
+
+
+        enUs.put("save.load", "Load Save");
+        enUs.put("save.edit", "Edit Saves");
+        enUs.put("save.saveTo", "Save To");
+        enUs.put("save.quickSave", "Quick Save");
+        enUs.put("save.quickSave.done", "Quick save completed.");
+        enUs.put("save.saved", "Game saved.");
+        enUs.put("save.loaded", "Save loaded.");
+        enUs.put("save.description", "Manage the current game save data.");
+
+        enUs.put("save.emptySlot", "Empty Slot");
+        enUs.put("save.empty", "EMPTY");
+        enUs.put("save.noData", "No Data");
+        enUs.put("save.scene", "Scene: ");
+        enUs.put("save.name", "Name: ");
+        enUs.put("save.createdAt", "Created: ");
+        enUs.put("save.savedAt", "Saved: ");
+        enUs.put("save.lastOpenedAt", "Last Opened: ");
+
+        enUs.put("save.rename", "Rename");
+        enUs.put("save.rename.header", "Rename Save");
+        enUs.put("save.rename.content", "Enter a new save name:");
+
+        enUs.put("save.delete", "Delete Save");
+        enUs.put("save.delete.confirm", "Are you sure you want to delete this save?");
+
+        enUs.put("save.confirm", "Confirm");
+        enUs.put("save.warning.unsaved", "Your current progress may not be saved. Loading another save may discard unsaved changes. Continue?");
+        enUs.put("save.overwrite.confirm", "This slot already contains a save. Overwrite it?");
+        enUs.put("save.inputName.header", "Enter Save Name");
+        enUs.put("save.inputName.content", "Save name:");
 
         // Story Mode
         zhTw.put("story.house.foldQuilt", "折被子");
@@ -272,7 +360,7 @@ public class LanguageSystem {
         enUs.put("death.HIT_SHOWER_CURTAIN_ROD.subtitle", "Metal Pipe Falling.mp3");
 
         zhTw.put("death.HIT_DOORFRAME.title", "撞到門框");
-        zhTw.put("death.HIT_DOORFRAME.subtitle", "Watch your head -> 看你個頭。");
+        zhTw.put("death.HIT_DOORFRAME.subtitle", "相信我，\"Watch your head\"的中文是「看你個頭」。");
 
         enUs.put("death.HIT_DOORFRAME.title", "HIT DOORFRAME");
         enUs.put("death.HIT_DOORFRAME.subtitle", "The door framed you.");

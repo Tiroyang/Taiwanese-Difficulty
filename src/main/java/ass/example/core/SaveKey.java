@@ -18,6 +18,8 @@ public final class SaveKey {
 
     //GAMEVARS
     public static final String DEATH_COUNT = "deathCount";
+    public static final String PLAYER_DEAD = "playerDead";
+    public static final String LAST_DEATH_REASON = "lastDeathReason";
 
     // HouseScene
     public static final String QUILT_FOLDED = "quiltFolded";

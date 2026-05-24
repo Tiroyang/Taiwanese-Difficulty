@@ -8,9 +8,11 @@ import ass.example.scenes.SceneManager;
 import com.almasb.fxgl.core.serialization.Bundle;
 import com.almasb.fxgl.entity.Entity;
 import javafx.embed.swing.SwingFXUtils;
+import javafx.scene.Node;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
+import javafx.scene.paint.Color;
 import javax.imageio.ImageIO;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
@@ -25,14 +27,22 @@ public class SaveSystem {
 
     private final SceneManager sceneManager;
 
-    public SaveSystem(SceneManager sceneManager) {
-        this.sceneManager = sceneManager;
+    private static SaveSystem instance;
+
+    public static SaveSystem getInstance() {
+        return instance;
     }
 
-    /**
-     * 寫入目前遊戲資料到 Bundle。
-     */
+    public SaveSystem(SceneManager sceneManager) {
+        this.sceneManager = sceneManager;
+        instance = this;
+    }
+
     public Bundle createSaveBundle() {
+        return createSaveBundle(null);
+    }
+
+    public Bundle createSaveBundle(Node nodeToHideBeforeScreenshot) {
         Bundle bundle = new Bundle(SaveKey.BUNDLE_NAME);
 
         Entity player = sceneManager.getPlayer();
@@ -51,10 +61,64 @@ public class SaveSystem {
         saveGameVars(bundle);
         saveDeathAchievements(bundle);
 
-        String thumbnailBase64 = captureThumbnailAsBase64(320, 180);
-        bundle.put(SaveKey.THUMBNAIL_BASE64, thumbnailBase64);
+        putBoolIfExists(bundle, SaveKey.PLAYER_DEAD);
+        putStringIfExists(bundle, SaveKey.LAST_DEATH_REASON);
+
+        bundle.put(
+                SaveKey.THUMBNAIL_BASE64,
+                captureThumbnail(nodeToHideBeforeScreenshot)
+        );
 
         return bundle;
+    }
+
+    private void restoreDeathStateIfNeeded(Bundle bundle) {
+        boolean savedPlayerDead = getBoolFromBundle(bundle, SaveKey.PLAYER_DEAD, false);
+        String reasonName = getStringFromBundle(bundle, SaveKey.LAST_DEATH_REASON, "");
+
+        /*
+         * 重點：
+         * 只有存檔本身就是死亡狀態，才恢復死亡畫面。
+         * 否則一律清掉死亡畫面與死亡狀態。
+         */
+        if (!savedPlayerDead) {
+            set(SaveKey.PLAYER_DEAD, false);
+            set(SaveKey.LAST_DEATH_REASON, "");
+
+            sceneManager.clearDeathStateForLoad();
+            return;
+        }
+
+        if (reasonName == null || reasonName.isBlank()) {
+            sceneManager.clearDeathStateForLoad();
+            return;
+        }
+
+        try {
+            DeathReason reason = DeathReason.valueOf(reasonName);
+            sceneManager.restoreDeathFromSave(reason);
+
+        } catch (Exception e) {
+            System.out.println("Invalid saved death reason: " + reasonName);
+            sceneManager.clearDeathStateForLoad();
+        }
+    }
+
+    private boolean getBoolFromBundle(Bundle bundle, String key, boolean defaultValue) {
+        try {
+            return bundle.get(key);
+        } catch (Exception e) {
+            return defaultValue;
+        }
+    }
+
+    private String getStringFromBundle(Bundle bundle, String key, String defaultValue) {
+        try {
+            String value = bundle.get(key);
+            return value == null ? defaultValue : value;
+        } catch (Exception e) {
+            return defaultValue;
+        }
     }
 
     /**
@@ -65,10 +129,18 @@ public class SaveSystem {
             return;
         }
 
+        /*
+         * 先清掉目前可能殘留的死亡畫面。
+         * 尤其是從死亡畫面讀檔時。
+         */
+        sceneManager.clearDeathStateForLoad();
+
         String sceneTypeName = bundle.get(SaveKey.SCENE_TYPE);
         SceneType sceneType = SceneType.valueOf(sceneTypeName);
 
         sceneManager.loadSceneByType(sceneType);
+
+        sceneManager.resetCurrentSceneRuntimeSystems();
 
         loadGameVars(bundle);
         loadDeathAchievements(bundle);
@@ -79,15 +151,21 @@ public class SaveSystem {
         Entity player = sceneManager.getPlayer();
 
         if (player != null) {
-            player.getComponent(PlayerComponent.class)
-                    .respawnAt(playerX, playerY);
+            PlayerComponent pc = player.getComponent(PlayerComponent.class);
+            pc.respawnAt(playerX, playerY);
         }
 
         sceneManager.applySavedState();
+
+        /*
+         * 最後根據存檔內容決定是否恢復死亡畫面。
+         * 如果存檔不是死亡狀態，這裡會再次確保 DeathScreen 被關掉。
+         */
+        restoreDeathStateIfNeeded(bundle);
     }
 
     private void saveGameVars(Bundle bundle) {
-        putBoolIfExists(bundle, SaveKey.DEATH_COUNT);
+        putIntIfExists(bundle, SaveKey.DEATH_COUNT);
 
         putBoolIfExists(bundle, SaveKey.QUILT_FOLDED);
         putBoolIfExists(bundle, SaveKey.WATER_DRUNK);
@@ -101,7 +179,7 @@ public class SaveSystem {
     }
 
     private void loadGameVars(Bundle bundle) {
-        setBoolIfExists(bundle, SaveKey.DEATH_COUNT);
+        setIntIfExists(bundle, SaveKey.DEATH_COUNT);
 
         setBoolIfExists(bundle, SaveKey.QUILT_FOLDED);
         setBoolIfExists(bundle, SaveKey.WATER_DRUNK);
@@ -112,6 +190,9 @@ public class SaveSystem {
 
         setBoolIfExists(bundle, SaveKey.DOOR_1_OPENED);
         setBoolIfExists(bundle, SaveKey.DOOR_2_OPENED);
+
+        setBoolIfExists(bundle, SaveKey.PLAYER_DEAD);
+        setStringIfExists(bundle, SaveKey.LAST_DEATH_REASON);
     }
 
     private void saveDeathAchievements(Bundle bundle) {
@@ -143,34 +224,97 @@ public class SaveSystem {
         }
     }
 
+    private void putIntIfExists(Bundle bundle, String key) {
+        try {
+            bundle.put(key, geti(key));
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void setIntIfExists(Bundle bundle, String key) {
+        try {
+            int value = bundle.get(key);
+            set(key, value);
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void putStringIfExists(Bundle bundle, String key) {
+        try {
+            bundle.put(key, gets(key));
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void setStringIfExists(Bundle bundle, String key) {
+        try {
+            String value = bundle.get(key);
+            set(key, value);
+        } catch (Exception ignored) {
+        }
+    }
+
     /**
      * 擷取遊戲畫面並轉為 Base64。
      */
-    private String captureThumbnailAsBase64(int targetWidth, int targetHeight) {
+    private String captureThumbnail(Node nodeToHide) {
+        boolean oldVisible = false;
+
         try {
-            WritableImage snapshot = getGameScene()
-                    .getRoot()
-                    .snapshot(new SnapshotParameters(), null);
+            if (nodeToHide != null) {
+                oldVisible = nodeToHide.isVisible();
+                nodeToHide.setVisible(false);
+            }
 
-            BufferedImage original = SwingFXUtils.fromFXImage(snapshot, null);
+            int width = 1280;
+            int height = 720;
 
-            BufferedImage resized = new BufferedImage(
-                    targetWidth,
-                    targetHeight,
-                    BufferedImage.TYPE_INT_ARGB
-            );
+            javafx.scene.Node gameRoot = getGameScene().getRoot();
 
-            Graphics2D g = resized.createGraphics();
-            g.drawImage(original, 0, 0, targetWidth, targetHeight, null);
-            g.dispose();
+            gameRoot.applyCss();
 
+            WritableImage image = new WritableImage(width, height);
+
+            SnapshotParameters params = new SnapshotParameters();
+            params.setFill(Color.TRANSPARENT);
+            params.setViewport(new javafx.geometry.Rectangle2D(
+                    0,
+                    0,
+                    width,
+                    height
+            ));
+
+            gameRoot.snapshot(params, image);
+
+            return imageToBase64(image);
+
+        } catch (Exception e) {
+            System.out.println("Capture thumbnail failed.");
+            e.printStackTrace();
+            return "";
+
+        } finally {
+            if (nodeToHide != null) {
+                nodeToHide.setVisible(oldVisible);
+            }
+        }
+    }
+
+    private String imageToBase64(WritableImage image) {
+        try {
             ByteArrayOutputStream output = new ByteArrayOutputStream();
-            ImageIO.write(resized, "png", output);
+
+            ImageIO.write(
+                    SwingFXUtils.fromFXImage(image, null),
+                    "png",
+                    output
+            );
 
             return Base64.getEncoder().encodeToString(output.toByteArray());
 
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to capture thumbnail", e);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "";
         }
     }
 

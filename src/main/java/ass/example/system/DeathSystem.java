@@ -48,6 +48,8 @@ public class DeathSystem {
 
         set("playerDead", true);
         set("playerOnBedCollider", false);
+        set("lastDeathReason", reason.name());
+        inc("deathCount", +1);
 
         boolean newlyUnlocked = false;
 
@@ -76,6 +78,36 @@ public class DeathSystem {
         }
     }
 
+    public void restoreDeathFromSave(DeathReason reason) {
+        if (reason == null) {
+            return;
+        }
+
+        set("playerDead", true);
+        set("pauseDisabled", true);
+        set("lastDeathReason", reason.name());
+
+        Entity player = sceneManager.getPlayer();
+
+        if (player != null) {
+            PlayerComponent pc = player.getComponent(PlayerComponent.class);
+
+            pc.stopAllMovement();
+            pc.setControlEnabled(false);
+
+            /*
+             * 如果你已經有死亡圖片方法，請用你的方法名稱。
+             * 例如 showDeadImage() / showDead() / setDeadImage()
+             */
+            pc.playerDead();
+
+            dead = true;
+            currentReason = reason;
+        }
+
+        deathScreen.show(reason, geti("deathCount"));
+    }
+
     public void respawn() {
         if (!dead) {
             return;
@@ -88,6 +120,15 @@ public class DeathSystem {
         deathScreen.hide();
 
         sceneManager.respawnPlayer();
+    }
+
+    public void clearDeathScreenForLoad() {
+        set("playerDead", false);
+        set("lastDeathReason", "");
+
+        if (deathScreen != null) {
+            deathScreen.hide();
+        }
     }
 
     private void goToMainMenu() {

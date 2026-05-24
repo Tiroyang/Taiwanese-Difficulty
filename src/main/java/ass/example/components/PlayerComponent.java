@@ -1,5 +1,6 @@
 package ass.example.components;
 
+import ass.example.core.DeathReason;
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.SpawnData;
 import com.almasb.fxgl.entity.component.Component;
@@ -445,11 +446,6 @@ public class PlayerComponent extends Component {
         }
     }
 
-    /**
-     * 是否在地上
-     * groundContacts > 0：腳底 sensor 碰到普通地板 / 牆 / 平台
-     * onOneWayPlatform：OneWayPlatformSystem 或 BedSystem 判定玩家站在特殊平台上
-     */
     public boolean isOnGround() {
         return groundContacts > 0 || onOneWayPlatform;
     }
@@ -467,6 +463,54 @@ public class PlayerComponent extends Component {
         if (groundContacts < 0) {
             groundContacts = 0;
         }
+    }
+
+    private void refreshGroundContacts() {
+        if (groundSensor == null) {
+            groundContacts = 0;
+            return;
+        }
+
+        updateGroundSensorPosition();
+
+        groundContacts = 0;
+
+        getGameWorld()
+                .getEntitiesCopy()
+                .stream()
+                .filter(this::isGroundEntity)
+                .filter(this::isSensorTouchingEntity)
+                .forEach(e -> groundContacts++);
+    }
+
+    private boolean isGroundEntity(Entity entity) {
+        Object type = entity.getType();
+
+        return type == ass.example.core.EntityType.WALL ||
+                type == ass.example.core.EntityType.ONE_WAY_PLATFORM_COLLIDER ||
+                type == ass.example.core.EntityType.BED_ONE_WAY_PLATFORM_COLLIDER;
+    }
+
+    private boolean isSensorTouchingEntity(Entity ground) {
+        double sensorLeft = groundSensor.getBoundingBoxComponent().getMinXWorld();
+        double sensorRight = groundSensor.getBoundingBoxComponent().getMaxXWorld();
+        double sensorTop = groundSensor.getBoundingBoxComponent().getMinYWorld();
+        double sensorBottom = groundSensor.getBoundingBoxComponent().getMaxYWorld();
+
+        double groundLeft = ground.getBoundingBoxComponent().getMinXWorld();
+        double groundRight = ground.getBoundingBoxComponent().getMaxXWorld();
+        double groundTop = ground.getBoundingBoxComponent().getMinYWorld();
+        double groundBottom = ground.getBoundingBoxComponent().getMaxYWorld();
+
+        boolean xOverlap =
+                sensorRight > groundLeft &&
+                        sensorLeft < groundRight;
+
+        boolean yOverlap =
+                sensorBottom >= groundTop &&
+                        sensorTop <= groundBottom;
+
+        return xOverlap && yOverlap;
     }
 
     /**
@@ -608,6 +652,8 @@ public class PlayerComponent extends Component {
 
         visualState = PlayerVisualState.STAND;
         setPlayerImage(standImage);
+
+        refreshGroundContacts();
 
         controlEnabled = true;
     }
