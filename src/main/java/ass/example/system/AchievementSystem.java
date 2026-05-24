@@ -8,6 +8,8 @@ import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
 
+import static com.almasb.fxgl.dsl.FXGLForKtKt.getb;
+
 public class AchievementSystem {
 
     private static final String SAVE_FOLDER_NAME = ".taiwanese_difficulty";
@@ -28,10 +30,6 @@ public class AchievementSystem {
 
     public boolean isUnlocked(DeathReason reason) {
         return unlockedDeathIds.contains(reason.getId());
-    }
-
-    public boolean isUnlocked(String deathId) {
-        return unlockedDeathIds.contains(deathId);
     }
 
     /**

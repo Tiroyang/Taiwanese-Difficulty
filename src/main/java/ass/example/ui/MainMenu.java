@@ -1,14 +1,9 @@
 package ass.example.ui;
 
 import ass.example.Main;
-import ass.example.core.DeathReason;
-import ass.example.core.Language;
-import ass.example.core.SoundId;
-import ass.example.core.WindowMode;
-import ass.example.system.AchievementSystem;
-import ass.example.system.AudioSystem;
-import ass.example.system.LanguageSystem;
-import ass.example.system.WindowSystem;
+import ass.example.core.*;
+import ass.example.scenes.SceneManager;
+import ass.example.system.*;
 import ass.example.ui.save.SaveMenuMode;
 import ass.example.ui.save.SaveSlotPanel;
 import com.almasb.fxgl.dsl.FXGL;
@@ -71,7 +66,7 @@ public class MainMenu extends FXGLMenu {
     private final LanguageSystem languageSystem = LanguageSystem.getInstance();
 
     // Sound
-    private MediaPlayer bgmPlayer;
+    private final MusicSystem musicSystem = MusicSystem.getInstance();
     private final AudioSystem audioSystem = AudioSystem.getInstance();
 
     @Override
@@ -79,23 +74,31 @@ public class MainMenu extends FXGLMenu {
         windowSystem.installResizeListener();
         windowSystem.applySavedSettings();
 
-        stopBGM();
+        musicSystem.stopBGM();
 
         if (firstCreate) {
             firstCreate = false;
 
             resetToMainMenuFirst();
             playIntroAnimation();
-            playBGMFrom(16.5);
+            musicSystem.playBGMFrom(
+                    "/assets/music/mainmenu/Tom Petty - Love Is A Long Road.mp3",
+                    16.5,
+                    true
+            );
         } else {
             resetToMainMenuSecondary();
-            playBGMFrom(0.0);
+            musicSystem.playBGMFrom(
+                    "/assets/music/mainmenu/Tom Petty - Love Is A Long Road.mp3",
+                    0.0,
+                    true
+            );
         }
     }
 
     @Override
     public void onDestroy() {
-        stopBGM();
+        musicSystem.stopBGM();
     }
 
     public MainMenu() {
@@ -268,47 +271,6 @@ public class MainMenu extends FXGLMenu {
         seq.play();
     }
 
-    private void applyBGMVolume() {
-        if (bgmPlayer != null) {
-            bgmPlayer.setVolume(audioSystem.getEffectiveMusicVolume());
-            bgmPlayer.setMute(false);
-        }
-    }
-
-    private void playBGMFrom(double startSeconds) {
-        try {
-            URL url = getClass().getResource("/assets/music/mainmenu/Tom Petty - Love Is A Long Road.mp3");
-
-            if (url == null) {
-                System.out.println("Main menu BGM not found.");
-                return;
-            }
-
-            Media media = new Media(url.toExternalForm());
-            bgmPlayer = new MediaPlayer(media);
-
-            bgmPlayer.setCycleCount(MediaPlayer.INDEFINITE);
-
-            bgmPlayer.setOnReady(() -> {
-                bgmPlayer.seek(Duration.seconds(startSeconds));
-                bgmPlayer.setVolume(audioSystem.getEffectiveMusicVolume());
-                bgmPlayer.play();
-            });
-
-        } catch (Exception e) {
-            System.out.println("Main menu BGM failed.");
-            e.printStackTrace();
-        }
-    }
-
-    private void stopBGM() {
-        if (bgmPlayer != null) {
-            bgmPlayer.stop();
-            bgmPlayer.dispose();
-            bgmPlayer = null;
-        }
-    }
-
     // =========================
     // Page 切換
     // =========================
@@ -395,7 +357,6 @@ public class MainMenu extends FXGLMenu {
 
         VBox leftMenu = createLeftMenu(
                 createSubButton(text("menu.storyMode.newGame"), () -> {
-                    stopBGM();
                     fireNewGame();
                 }),
                 createSubButton(text("menu.storyMode.loadSaves"), () -> {
@@ -405,7 +366,6 @@ public class MainMenu extends FXGLMenu {
                                     SaveMenuMode.LOAD,
                                     null,
                                     slotIndex -> {
-                                        stopBGM();
                                         fireNewGame();
                                     },
                                     null
@@ -459,7 +419,8 @@ public class MainMenu extends FXGLMenu {
 
         VBox leftMenu = createLeftMenu(
                 createSubButton(text("menu.miniGameMode.StreetEndless"), () -> {
-                    stopBGM();
+                    musicSystem.stopBGM();
+                    SceneManager.requestStartScene(SceneType.STREET_ENDLESS);
                     fireNewGame();
                 }),
                 createSubButton(text("menu.miniGameMode.comingSoon"), () -> showRightContent(page, createInfoPanel(text("menu.miniGameMode.comingSoon"), text("menu.miniGameMode.comingSoon.description")))),
@@ -1447,7 +1408,7 @@ public class MainMenu extends FXGLMenu {
                         audioSystem.isMasterMuted(),
                         audioSystem::setMasterVolume,
                         audioSystem::setMasterMuted,
-                        this::applyBGMVolume
+                        musicSystem::applyVolume
                 ),
 
                 createVolumeRow(
@@ -1456,7 +1417,7 @@ public class MainMenu extends FXGLMenu {
                         audioSystem.isMusicMuted(),
                         audioSystem::setMusicVolume,
                         audioSystem::setMusicMuted,
-                        this::applyBGMVolume
+                        musicSystem::applyVolume
                 ),
 
                 createVolumeRow(
@@ -1593,7 +1554,7 @@ public class MainMenu extends FXGLMenu {
     private void resetSettingsToDefault() {
         // 音量設定
         audioSystem.resetSettings();
-        applyBGMVolume();
+        musicSystem.applyVolume();
 
         // 視窗設定，如果你有 WindowSystem
         if (windowSystem != null) {
@@ -1650,13 +1611,15 @@ public class MainMenu extends FXGLMenu {
 
         achievementSystem.resetAll();
 
+        StreetEndlessRecordSystem.getInstance().reset();
+
         deleteLocalSaveFolder();
 
         if (devModeLabel != null) {
             devModeLabel.setVisible(false);
         }
 
-        applyBGMVolume();
+        musicSystem.applyVolume();
 
         if (windowSystem != null) {
             windowSystem.applySavedSettings();
@@ -2568,7 +2531,7 @@ public class MainMenu extends FXGLMenu {
         showConfirmNoticeOnMainMenu(
                 text("menu.exit.confirm"),
                 () -> {
-                    stopBGM();
+                    musicSystem.stopBGM();
                     getGameController().exit();
                 }
         );

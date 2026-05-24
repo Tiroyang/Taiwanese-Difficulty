@@ -5,5 +5,7 @@ package ass.example.core;
  */
 public enum SceneType {
     HOUSE,
-    STREET
+    STREET,
+
+    STREET_ENDLESS
 }

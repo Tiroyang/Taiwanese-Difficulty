@@ -48,6 +48,34 @@ public enum DeathReason {
             "death.DRINK_WATER.title",
             "death.DRINK_WATER.subtitle",
             null
+    ),
+
+    TRIPPED_BY_SIDEWALK_TILE(
+            "TRIPPED_BY_SIDEWALK_TILE",
+            "death.TRIPPED_BY_SIDEWALK_TILE.title",
+            "death.TRIPPED_BY_SIDEWALK_TILE.subtitle",
+            null
+    ),
+
+    HIT_BY_SCOOTER(
+            "HIT_BY_SCOOTER",
+            "death.HIT_BY_SCOOTER.title",
+            "death.HIT_BY_SCOOTER.subtitle",
+            null
+    ),
+
+    FALLING_FRIDGE(
+            "FALLING_FRIDGE",
+            "death.FALLING_FRIDGE.title",
+            "death.FALLING_FRIDGE.subtitle",
+            null
+    ),
+
+    FALLING_HELI(
+            "FALLING_HELI",
+            "death.FALLING_HELI.title",
+            "death.FALLING_HELI.subtitle",
+            null
     );
 
     private final String id;

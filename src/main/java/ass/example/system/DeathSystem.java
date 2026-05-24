@@ -45,17 +45,32 @@ public class DeathSystem {
         }
 
         dead = true;
+        currentReason = reason;
 
         set("playerDead", true);
         set("playerOnBedCollider", false);
         set("lastDeathReason", reason.name());
-        inc("deathCount", +1);
 
-        boolean newlyUnlocked = false;
+        boolean streetMode = false;
 
-        if (achievementSystem != null) {
-            newlyUnlocked = achievementSystem.unlockDeathReason(reason);
+        try {
+            streetMode = getb("streetEndlessMode");
+        } catch (Exception ignored) {
         }
+
+        /*
+         * 故事模式才累加死亡次數。
+         * Street Endless 不需要把死亡次數混進去。
+         */
+        if (!streetMode) {
+            inc("deathCount", +1);
+        }
+
+        /*
+         * 重點：
+         * Street Endless 的最高分一定要在 deathScreen.show() 前更新。
+         */
+        handleStreetEndlessRecordIfNeeded();
 
         if (audioSystem != null) {
             audioSystem.playSFX(SoundId.DEATH);
@@ -71,10 +86,30 @@ public class DeathSystem {
             pc.playerDead();
         }
 
-        deathScreen.show(reason, 0);
+        /*
+         * 不要傳 0。
+         * 故事模式會顯示死亡次數。
+         * Street Endless 則會在 DeathScreen 裡讀 streetRunDistance / streetBestDistance。
+         */
+        deathScreen.show(reason, geti("deathCount"));
 
-        if (newlyUnlocked) {
-            deathScreen.showAchievementUnlock(reason);
+        boolean achievementDisabled = false;
+
+        try {
+            achievementDisabled = getb("achievementDisabled");
+        } catch (Exception ignored) {
+        }
+
+        /*
+         * Street Endless 已經設 achievementDisabled = true，
+         * 所以不會解鎖成就。
+         */
+        if (!achievementDisabled && achievementSystem != null) {
+            boolean newlyUnlocked = achievementSystem.unlockDeathReason(reason);
+
+            if (newlyUnlocked) {
+                deathScreen.showAchievementUnlock(reason);
+            }
         }
     }
 
@@ -106,6 +141,39 @@ public class DeathSystem {
         }
 
         deathScreen.show(reason, geti("deathCount"));
+    }
+
+    private void handleStreetEndlessRecordIfNeeded() {
+        boolean streetMode = false;
+
+        try {
+            streetMode = getb("streetEndlessMode");
+        } catch (Exception ignored) {
+        }
+
+        if (!streetMode) {
+            return;
+        }
+
+        double currentDistance = 0;
+
+        try {
+            currentDistance = getd("streetRunDistance");
+        } catch (Exception ignored) {
+        }
+
+        double oldBest = StreetEndlessRecordSystem.getInstance().getBestDistance();
+
+        set("streetBestDistanceBeforeRun", oldBest);
+
+        boolean newRecord = StreetEndlessRecordSystem
+                .getInstance()
+                .tryUpdateBestDistance(currentDistance);
+
+        double newBest = StreetEndlessRecordSystem.getInstance().getBestDistance();
+
+        set("streetBestDistance", newBest);
+        set("streetNewRecord", newRecord);
     }
 
     public void respawn() {

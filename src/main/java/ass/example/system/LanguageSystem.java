@@ -99,7 +99,7 @@ public class LanguageSystem {
         zhTw.put("menu.settings.KeyConfig", "操作配置");
         zhTw.put("menu.settings.keyConfig.left", "：向左移動");
         zhTw.put("menu.settings.keyConfig.right", "：向右移動");
-        zhTw.put("menu.settings.keyConfig.jump", "：跳躍");
+        zhTw.put("menu.settings.keyConfig.jump", "：跳躍（長按大跳）");
         zhTw.put("menu.settings.keyConfig.drop", "從單向平台上降落");
         zhTw.put("menu.settings.keyConfig.interact", "：互動");
         zhTw.put("menu.settings.keyConfig.dash", "：短暫衝刺");
@@ -257,7 +257,16 @@ public class LanguageSystem {
 
         // Dead Menu
         zhTw.put("menu.rebirth", "重生");
-        enUs.put("story.house.rebirth", "Regenerate");
+        zhTw.put("menu.deathCount", "死亡次數：");
+        zhTw.put("menu.score", "分數：");
+        zhTw.put("menu.highestScore", "最高分數：");
+        zhTw.put("menu.newRecord", "新紀錄！");
+
+        enUs.put("menu.rebirth", "Regenerate");
+        enUs.put("menu.deathCount", "Death Count: ");
+        enUs.put("menu.score", "Score: ");
+        enUs.put("menu.highestScore", "Highest Score: ");
+        zhTw.put("menu.newRecord", "New Record!");
 
         // Achievement Toast
         zhTw.put("achievement.unlocked", "已解鎖");
@@ -295,7 +304,6 @@ public class LanguageSystem {
         zhTw.put("save.overwrite.confirm", "此存檔槽已有資料，是否覆蓋？");
         zhTw.put("save.inputName.header", "輸入存檔名稱");
         zhTw.put("save.inputName.content", "存檔名稱：");
-
 
         enUs.put("save.load", "Load Save");
         enUs.put("save.edit", "Edit Saves");
@@ -340,6 +348,10 @@ public class LanguageSystem {
         enUs.put("story.house.openDoor", "Open Door");
         enUs.put("story.house.closeDoor", "Close Door");
 
+        // Mini Game
+        zhTw.put("pause.save.disabled", "此模式無法使用存檔功能。");
+        enUs.put("pause.save.disabled", "Saving is not available in this mode.");
+
         // deaths
         zhTw.put("death.LEFT_BEDROOM_WITHOUT_FOLDING_QUILT.title", "沒折被子");
         zhTw.put("death.LEFT_BEDROOM_WITHOUT_FOLDING_QUILT.subtitle", "人家是西點軍校，你們是西點麵包啊。");
@@ -360,7 +372,7 @@ public class LanguageSystem {
         enUs.put("death.HIT_SHOWER_CURTAIN_ROD.subtitle", "Metal Pipe Falling.mp3");
 
         zhTw.put("death.HIT_DOORFRAME.title", "撞到門框");
-        zhTw.put("death.HIT_DOORFRAME.subtitle", "相信我，\"Watch your head\"的中文是「看你個頭」。");
+        zhTw.put("death.HIT_DOORFRAME.subtitle", "\"Watch your head\"的中文直譯是「看你個頭」，相信我。");
 
         enUs.put("death.HIT_DOORFRAME.title", "HIT DOORFRAME");
         enUs.put("death.HIT_DOORFRAME.subtitle", "The door framed you.");
@@ -377,6 +389,29 @@ public class LanguageSystem {
         enUs.put("death.DRINK_WATER.title", "DRINK THE OVERNIGHT WATER");
         enUs.put("death.DRINK_WATER.subtitle", "Water lasted all day long: totally fine; Water left overnight: poisoned.");
 
+        zhTw.put("death.TRIPPED_BY_SIDEWALK_TILE.title", "被凸起磁磚絆倒");
+        zhTw.put("death.TRIPPED_BY_SIDEWALK_TILE.subtitle", "人生有起也有落落落落落。");
+
+        enUs.put("death.TRIPPED_BY_SIDEWALK_TILE.title", "TRIPPED BY PROTRUDING TILES");
+        enUs.put("death.TRIPPED_BY_SIDEWALK_TILE.subtitle", "DIVE HEAD-FIRST FOR THE BAG! And... Out!");
+
+        zhTw.put("death.HIT_BY_SCOOTER.title", "被摩托車創飛");
+        zhTw.put("death.HIT_BY_SCOOTER.subtitle", "麥可！Hee-hee!");
+
+        enUs.put("death.HIT_BY_SCOOTER.title", "SENT FLYING BY A SCOOTER");
+        enUs.put("death.HIT_BY_SCOOTER.subtitle", "Ah ha! Classic.");
+
+        zhTw.put("death.FALLING_FRIDGE.title", "被墜落的冰箱擊中");
+        zhTw.put("death.FALLING_FRIDGE.subtitle", "F＝ma-mma-mia");
+
+        enUs.put("death.FALLING_FRIDGE.title", "CRASHED BY A FALLEN FRIDGE");
+        enUs.put("death.FALLING_FRIDGE.subtitle", "F＝ma-mma-mia");
+
+        zhTw.put("death.FALLING_HELI.title", "被墜落的阿帕契擊中");
+        zhTw.put("death.FALLING_HELI.subtitle", "甚麼都掉，甚麼都不奇怪。");
+
+        enUs.put("death.FALLING_HELI.title", "CRASHED BY AN APACHE");
+        enUs.put("death.FALLING_HELI.subtitle", "Nothing weird these days.");
     }
 
     public String text(String key) {

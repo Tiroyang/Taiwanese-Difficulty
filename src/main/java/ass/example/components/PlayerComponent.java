@@ -68,7 +68,7 @@ public class PlayerComponent extends Component {
     private double jumpHoldTimer = 0;
 
     // 起跳瞬時速率
-    private final double jumpSpeed = 520;
+    private final double jumpSpeed = 560;
 
     // 長跳加成
     private final double jumpBoostPower = 800;
@@ -138,6 +138,11 @@ public class PlayerComponent extends Component {
         setPlayerImage(standImage);
     }
 
+    @Override
+    public void onRemoved() {
+        disposeRuntimeNodes();
+    }
+
     private void createDashChargeUI() {
         Rectangle background = new Rectangle(dashChargeWidth, dashChargeHeight);
         background.setArcWidth(6);
@@ -175,6 +180,29 @@ public class PlayerComponent extends Component {
     private void hideDashChargeUI() {
         if (dashChargeBox != null) {
             dashChargeBox.setVisible(false);
+        }
+    }
+
+    private void disposeRuntimeNodes() {
+        /*
+         * 移除 dash UI。
+         * 因為 dashChargeBox 是 addUINode 加到 UI layer，
+         * 不會跟著 player Entity 自動消失。
+         */
+        if (dashChargeBox != null) {
+            removeUINode(dashChargeBox);
+            dashChargeBox = null;
+            dashChargeFill = null;
+        }
+
+        /*
+         * 移除腳底感測器。
+         * groundSensor 是另外 spawn 出來的 Entity，
+         * 不會自動跟著 player 消失。
+         */
+        if (groundSensor != null) {
+            groundSensor.removeFromWorld();
+            groundSensor = null;
         }
     }
 
@@ -465,7 +493,7 @@ public class PlayerComponent extends Component {
         }
     }
 
-    private void refreshGroundContacts() {
+    public void refreshGroundContacts() {
         if (groundSensor == null) {
             groundContacts = 0;
             return;
@@ -594,8 +622,7 @@ public class PlayerComponent extends Component {
         isJumping = false;
         jumpHoldTimer = 0;
 
-        dashing = false;
-        dashTimer = 0;
+        resetDashState();
 
         isWalking = false;
         walkAnimTimer = 0;
@@ -605,6 +632,21 @@ public class PlayerComponent extends Component {
             physics.setVelocityX(0);
             physics.setVelocityY(0);
         }
+    }
+
+    public void resetDashState() {
+        dashing = false;
+        dashTimer = 0;
+        dashCooldownTimer = 0;
+
+        if (dashChargeFill != null) {
+            dashChargeFill.setWidth(dashChargeWidth);
+        }
+
+        hideDashChargeUI();
+
+        walkAnimTimer = 0;
+        walkFrameIndex = 0;
     }
 
     /**
@@ -620,9 +662,7 @@ public class PlayerComponent extends Component {
         movingRight = false;
         currentDirection = Direction.NONE;
 
-        dashing = false;
-        dashTimer = 0;
-        dashCooldownTimer = 0;
+        resetDashState();
 
         jumpHeld = false;
         isJumping = false;
@@ -662,11 +702,11 @@ public class PlayerComponent extends Component {
      * 完全刪除玩家Entity。
      * 一般死亡畫面請用playerDead()。
      */
-     public void kill() {
-        if (groundSensor != null) {
-            groundSensor.removeFromWorld();
-        }
+    public void kill() {
+        disposeRuntimeNodes();
 
-        entity.removeFromWorld();
+        if (entity != null) {
+            entity.removeFromWorld();
+        }
     }
 }

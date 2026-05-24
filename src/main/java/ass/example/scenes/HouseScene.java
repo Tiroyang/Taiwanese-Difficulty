@@ -6,12 +6,9 @@ import ass.example.components.HouseScene.WaterComponent;
 import ass.example.components.LoadSaveComponent;
 import ass.example.core.DeathReason;
 import ass.example.core.HouseScene.RoomType;
-import ass.example.system.AudioSystem;
-import ass.example.system.DeathSystem;
+import ass.example.system.*;
 import ass.example.system.HouseScene.BedSystem;
-import ass.example.system.OneWayPlatformSystem;
 import ass.example.system.HouseScene.RoomSystem;
-import ass.example.system.InteractionSystem;
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.SpawnData;
 import com.almasb.fxgl.entity.component.Component;
@@ -64,6 +61,9 @@ public class HouseScene {
             interactionSystem.dispose();
             interactionSystem = null;
         }
+
+        getGameScene().getViewport().unbind();
+        getGameScene().getViewport().setLazy(false);
     }
 
     /**
@@ -134,10 +134,10 @@ public class HouseScene {
     private void spawnCollisions() {
         // WALL
         // floor
-        spawn("wall", new SpawnData(476, 664)
+        spawn("floor", new SpawnData(476, 664)
                 .put("width", 2724.0)
                 .put("height", 70.0));
-        spawn("wall", new SpawnData(0, 694)
+        spawn("floor", new SpawnData(0, 694)
                 .put("width", 3200.0)
                 .put("height", 70.0));
 
@@ -160,7 +160,7 @@ public class HouseScene {
                 .put("width", 140.0)
                 .put("height", 111.0));
 
-        //DEATH_WALL(碰撞即死)
+        //DEATH_ZONE(碰撞即死)
         // ceiling
         spawn("death_wall", new SpawnData(0, 0)
                 .put("width", 3200.0)

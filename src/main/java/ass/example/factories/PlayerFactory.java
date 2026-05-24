@@ -2,7 +2,9 @@ package ass.example.factories;
 
 import ass.example.Main;
 import ass.example.components.PlayerComponent;
+import ass.example.core.CollisionCategory;
 import ass.example.core.EntityType;
+import ass.example.core.FixtureFilterUtil;
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.EntityFactory;
 import com.almasb.fxgl.entity.SpawnData;
@@ -34,12 +36,18 @@ public class PlayerFactory implements EntityFactory {
 
         physics.setBodyType(BodyType.DYNAMIC);
 
-        physics.setFixtureDef(
-                new FixtureDef()
+        FixtureDef fixtureDef = new FixtureDef()
                         .density(1.0f)
                         .friction(0.0f)
-                        .restitution(0.0f)
+                        .restitution(0.0f);
+
+        FixtureFilterUtil.applyFilter(
+                fixtureDef,
+                CollisionCategory.PLAYER,
+                (short) (CollisionCategory.FLOOR | CollisionCategory.WALL)
         );
+
+        physics.setFixtureDef(fixtureDef);
 
         Image stand = image("characters/player/stand.png");
         Image walkr0 = image("characters/player/walkr1.png");

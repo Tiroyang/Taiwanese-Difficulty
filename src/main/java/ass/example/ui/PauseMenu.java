@@ -4,10 +4,7 @@ import ass.example.Main;
 import ass.example.core.Language;
 import ass.example.core.SoundId;
 import ass.example.core.WindowMode;
-import ass.example.system.AudioSystem;
-import ass.example.system.LanguageSystem;
-import ass.example.system.SaveSystem;
-import ass.example.system.WindowSystem;
+import ass.example.system.*;
 import ass.example.system.save.SaveSlotManager;
 import ass.example.ui.save.SaveMenuMode;
 import ass.example.ui.save.SaveSlotPanel;
@@ -33,6 +30,7 @@ import javafx.util.StringConverter;
 import java.util.List;
 
 import static com.almasb.fxgl.dsl.FXGLForKtKt.getGameController;
+import static com.almasb.fxgl.dsl.FXGLForKtKt.getb;
 
 public class PauseMenu extends FXGLMenu {
 
@@ -51,6 +49,7 @@ public class PauseMenu extends FXGLMenu {
     private final VBox menuBox = new VBox(16);
     private final StackPane pageLayer = new StackPane();
 
+    private final MusicSystem  musicSystem = MusicSystem.getInstance();
     private final AudioSystem audioSystem = AudioSystem.getInstance();
     private final LanguageSystem languageSystem = LanguageSystem.getInstance();
     private final WindowSystem windowSystem = WindowSystem.getInstance();
@@ -363,6 +362,11 @@ public class PauseMenu extends FXGLMenu {
     }
 
     private void showSaveMenuPage() {
+        if (getb("saveDisabled")) {
+            showTextNotice(text("pause.save.disabled"));
+            return;
+        }
+
         selectedSubPageButton = null;
 
         BorderPane page = new BorderPane();
@@ -682,16 +686,25 @@ public class PauseMenu extends FXGLMenu {
 
         box.getChildren().addAll(
                 createPageTitle(text("menu.settings.volume")),
+
                 createVolumeRow(
                         text("menu.settings.volume.global"),
                         audioSystem.getMasterVolume(),
-                        audioSystem::setMasterVolume
+                        value -> {
+                            audioSystem.setMasterVolume(value);
+                            MusicSystem.getInstance().applyVolume();
+                        }
                 ),
+
                 createVolumeRow(
                         text("menu.settings.volume.music"),
                         audioSystem.getMusicVolume(),
-                        audioSystem::setMusicVolume
+                        value -> {
+                            audioSystem.setMusicVolume(value);
+                            MusicSystem.getInstance().applyVolume();
+                        }
                 ),
+
                 createVolumeRow(
                         text("menu.settings.volume.sound"),
                         audioSystem.getSfxVolume(),
@@ -996,6 +1009,8 @@ public class PauseMenu extends FXGLMenu {
                 () -> {
                     audioSystem.playButtonSFX(SoundId.BUTTON_PRESSED);
                     root.getChildren().remove(popupLayer);
+
+                    musicSystem.stopBGM();
 
                     /*
                      * 重點：

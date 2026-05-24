@@ -5,8 +5,10 @@ import ass.example.components.HouseScene.*;
 import ass.example.components.InteractableComponent;
 import ass.example.components.LethalComponent;
 import ass.example.components.OneWayPlatformComponent;
+import ass.example.core.CollisionCategory;
 import ass.example.core.DeathReason;
 import ass.example.core.EntityType;
+import ass.example.core.FixtureFilterUtil;
 import ass.example.system.AudioSystem;
 import ass.example.system.DeathSystem;
 import com.almasb.fxgl.entity.Entity;
@@ -78,101 +80,6 @@ public class HouseFactory implements EntityFactory {
                 .build();
     }
 
-    @Spawns("wall")
-    public Entity newWall(SpawnData data) {
-        double width = data.get("width");
-        double height = data.get("height");
-
-        PhysicsComponent physics = new PhysicsComponent();
-        physics.setBodyType(BodyType.STATIC);
-
-        return entityBuilder(data)
-                .type(EntityType.WALL)
-                .bbox(new HitBox(BoundingShape.box(width, height)))
-                .view(Main.devMode ? new Rectangle(width, height, javafx.scene.paint.Color.rgb(255, 0, 0, 0.5)) : new Rectangle(0, 0, Color.TRANSPARENT))
-                .zIndex(1000)
-                .with(physics)
-                .with(new CollidableComponent(true))
-                .build();
-    }
-
-    @Spawns("death_wall")
-    public Entity newDeathWall(SpawnData data) {
-        double width = data.get("width");
-        double height = data.get("height");
-
-        DeathReason deathReason = data.get("deathReason");
-
-        PhysicsComponent physics = new PhysicsComponent();
-        physics.setBodyType(BodyType.STATIC);
-
-        physics.setFixtureDef(
-                new FixtureDef()
-                        .friction(0.0f)
-                        .restitution(0.0f)
-        );
-
-        return entityBuilder(data)
-                .type(EntityType.DEATH_WALL)
-                .bbox(new HitBox(BoundingShape.box(width, height)))
-                .view(Main.devMode ? new Rectangle(width, height, javafx.scene.paint.Color.rgb(115, 0, 255, 0.5)) : new Rectangle(0, 0, Color.TRANSPARENT))
-                .with(physics)
-                .with(new CollidableComponent(true))
-                .with(new LethalComponent(deathReason))
-                .zIndex(1000)
-                .build();
-    }
-
-    @Spawns("one_way_platform")
-    public Entity newOneWayPlatform(SpawnData data) {
-        String id = data.get("id");
-
-        double width = data.get("width");
-        double height = data.get("height");
-
-        int playerZIndexOnTop = data.hasKey("playerZIndexOnTop")
-                ? ((Number) data.get("playerZIndexOnTop")).intValue()
-                : 10;
-
-        return entityBuilder(data)
-                .type(EntityType.ONE_WAY_PLATFORM)
-                .bbox(new HitBox(BoundingShape.box(width, height)))
-                .view(Main.devMode ? new Rectangle(width, height, javafx.scene.paint.Color.rgb(0, 180, 255, 0.35)) : new Rectangle(0, 0, Color.TRANSPARENT))
-                .with(new CollidableComponent(true))
-                .with(new OneWayPlatformComponent(
-                        id,
-                        width,
-                        height,
-                        playerZIndexOnTop
-                ))
-                .zIndex(1000)
-                .build();
-    }
-
-    @Spawns("one_way_platform_collider")
-    public Entity newOneWayPlatformCollider(SpawnData data) {
-        double width = data.get("width");
-        double height = data.get("height");
-
-        PhysicsComponent physics = new PhysicsComponent();
-        physics.setBodyType(BodyType.STATIC);
-
-        physics.setFixtureDef(
-                new FixtureDef()
-                        .friction(0.0f)
-                        .restitution(0.0f)
-        );
-
-        return entityBuilder(data)
-                .type(EntityType.ONE_WAY_PLATFORM_COLLIDER)
-                .bbox(new HitBox(BoundingShape.box(width, height)))
-                .view(Main.devMode ? new Rectangle(width, height, javafx.scene.paint.Color.rgb(0, 255, 196, 0.35)) : new Rectangle(0, 0, Color.TRANSPARENT))
-                .with(physics)
-                .with(new CollidableComponent(true))
-                .zIndex(1000)
-                .build();
-    }
-
     @Spawns("door")
     public Entity newDoor(SpawnData data) {
         String id = data.get("id");
@@ -226,11 +133,7 @@ public class HouseFactory implements EntityFactory {
         PhysicsComponent physics = new PhysicsComponent();
         physics.setBodyType(BodyType.STATIC);
 
-        physics.setFixtureDef(
-                new FixtureDef()
-                        .friction(0.0f)
-                        .restitution(0.0f)
-        );
+        physics.setFixtureDef(createWallFixtureDef());
 
         return entityBuilder(data)
                 .type(EntityType.DOOR_COLLIDER)
@@ -365,11 +268,7 @@ public class HouseFactory implements EntityFactory {
         PhysicsComponent physics = new PhysicsComponent();
         physics.setBodyType(BodyType.STATIC);
 
-        physics.setFixtureDef(
-                new FixtureDef()
-                        .friction(0.0f)
-                        .restitution(0.0f)
-        );
+        physics.setFixtureDef(createFloorFixtureDef());
 
         return entityBuilder(data)
                 .type(EntityType.BED_ONE_WAY_PLATFORM_COLLIDER)
@@ -461,5 +360,33 @@ public class HouseFactory implements EntityFactory {
                 ))
                 .zIndex(30)
                 .build();
+    }
+
+    private FixtureDef createWallFixtureDef() {
+        FixtureDef fixtureDef = new FixtureDef()
+                .friction(0.0f)
+                .restitution(0.0f);
+
+        FixtureFilterUtil.applyFilter(
+                fixtureDef,
+                CollisionCategory.WALL,
+                CollisionCategory.PLAYER
+        );
+
+        return fixtureDef;
+    }
+
+    private FixtureDef createFloorFixtureDef() {
+        FixtureDef fixtureDef = new FixtureDef()
+                .friction(0.8f)
+                .restitution(0.1f);
+
+        FixtureFilterUtil.applyFilter(
+                fixtureDef,
+                CollisionCategory.FLOOR,
+                (short) (CollisionCategory.PLAYER | CollisionCategory.FALLING_OBJECT)
+        );
+
+        return fixtureDef;
     }
 }

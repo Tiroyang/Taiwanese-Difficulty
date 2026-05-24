@@ -1,6 +1,7 @@
 package ass.example.ui;
 
 import ass.example.core.DeathReason;
+import ass.example.system.LanguageSystem;
 import javafx.animation.*;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -15,6 +16,9 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.util.Duration;
 
+import static com.almasb.fxgl.dsl.FXGLForKtKt.getb;
+import static com.almasb.fxgl.dsl.FXGLForKtKt.getd;
+
 /**
  * 死亡畫面。
  */
@@ -28,6 +32,9 @@ public class DeathScreen extends StackPane {
     private final Text deathTitle = new Text("YOU FAILED");
     private final Text titleText = new Text();
     private final Text subtitleText = new Text();
+
+    private final Text extraInfoText = new Text();
+    private final Text newRecordText = new Text();
 
     private final StackPane respawnButton;
 
@@ -47,7 +54,7 @@ public class DeathScreen extends StackPane {
 
         respawnButton = createImageTextButton(
                 "/assets/textures/ui/respawn_button.png",
-                "重生",
+                LanguageSystem.getInstance().text("menu.rebirth"),
                 onRespawn
         );
 
@@ -90,10 +97,24 @@ public class DeathScreen extends StackPane {
             -fx-fill: white;
             """);
 
+        extraInfoText.setStyle("""
+        -fx-font-size: 21px;
+        -fx-fill: rgba(255,255,255,0.82);
+        """);
+
+        newRecordText.setStyle("""
+        -fx-font-size: 26px;
+        -fx-fill: #ffd36a;
+        -fx-font-weight: bold;
+        """);
+        newRecordText.setEffect(new DropShadow(8, Color.BLACK));
+
         detailTextBox.setAlignment(Pos.CENTER);
         detailTextBox.getChildren().addAll(
                 titleText,
-                subtitleText
+                subtitleText,
+                extraInfoText,
+                newRecordText
         );
     }
 
@@ -109,6 +130,54 @@ public class DeathScreen extends StackPane {
 
         StackPane.setAlignment(achievementToast, Pos.BOTTOM_CENTER);
         StackPane.setMargin(achievementToast, new Insets(0, 0, -2, 0));
+    }
+
+    private void updateModeExtraInfo(int deathCount) {
+        boolean streetMode = false;
+
+        try {
+            streetMode = getb("streetEndlessMode");
+        } catch (Exception ignored) {
+        }
+
+        if (!streetMode) {
+            extraInfoText.setText(LanguageSystem.getInstance().text("menu.deathCount") + deathCount);
+            newRecordText.setText("");
+            return;
+        }
+
+        double currentDistance = 0;
+        double bestDistance = 0;
+        boolean newRecord = false;
+
+        try {
+            currentDistance = getd("streetRunDistance");
+        } catch (Exception ignored) {
+        }
+
+        try {
+            bestDistance = getd("streetBestDistance");
+        } catch (Exception ignored) {
+        }
+
+        try {
+            newRecord = getb("streetNewRecord");
+        } catch (Exception ignored) {
+        }
+
+        int current = (int) Math.floor(currentDistance);
+        int best = (int) Math.floor(bestDistance);
+
+        extraInfoText.setText(
+                LanguageSystem.getInstance().text("menu.score") + current + "\n" +
+                        LanguageSystem.getInstance().text("menu.highestScore") + best
+        );
+
+        if (newRecord) {
+            newRecordText.setText(LanguageSystem.getInstance().text("menu.newRecord"));
+        } else {
+            newRecordText.setText("");
+        }
     }
 
     /**
@@ -197,6 +266,8 @@ public class DeathScreen extends StackPane {
         titleText.setText(reason.getTitle());
         subtitleText.setText(reason.getSubtitle());
 
+        updateModeExtraInfo(deathCount);
+
         setVisible(true);
         toFront();
 
@@ -231,6 +302,12 @@ public class DeathScreen extends StackPane {
 
         subtitleText.setOpacity(1);
         subtitleText.setTranslateY(0);
+
+        extraInfoText.setOpacity(0);
+        extraInfoText.setTranslateY(45);
+
+        newRecordText.setOpacity(0);
+        newRecordText.setTranslateY(45);
 
         /*
          * respawnButton
@@ -279,10 +356,32 @@ public class DeathScreen extends StackPane {
         detailMoveUp.setToY(95);
         detailMoveUp.setInterpolator(Interpolator.EASE_OUT);
 
+        FadeTransition extraFade = new FadeTransition(Duration.seconds(0.35), extraInfoText);
+        extraFade.setFromValue(0);
+        extraFade.setToValue(1);
+
+        TranslateTransition extraMove = new TranslateTransition(Duration.seconds(0.35), extraInfoText);
+        extraMove.setFromY(45);
+        extraMove.setToY(0);
+        extraMove.setInterpolator(Interpolator.EASE_OUT);
+
+        FadeTransition recordFade = new FadeTransition(Duration.seconds(0.35), newRecordText);
+        recordFade.setFromValue(0);
+        recordFade.setToValue(1);
+
+        TranslateTransition recordMove = new TranslateTransition(Duration.seconds(0.35), newRecordText);
+        recordMove.setFromY(45);
+        recordMove.setToY(0);
+        recordMove.setInterpolator(Interpolator.EASE_OUT);
+
         ParallelTransition detailAnim = new ParallelTransition(
                 deathTitlePushUp,
                 detailFadeIn,
-                detailMoveUp
+                detailMoveUp,
+                extraFade,
+                extraMove,
+                recordFade,
+                recordMove
         );
 
         /*

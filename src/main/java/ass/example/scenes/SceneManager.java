@@ -3,9 +3,7 @@ package ass.example.scenes;
 import ass.example.components.PlayerComponent;
 import ass.example.core.DeathReason;
 import ass.example.core.SceneType;
-import ass.example.system.AudioSystem;
-import ass.example.system.DeathSystem;
-import ass.example.system.SaveSystem;
+import ass.example.system.*;
 import com.almasb.fxgl.entity.Entity;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,6 +22,7 @@ public class SceneManager {
      * 匯入場景。
      */
     private HouseScene houseScene;
+    private StreetEndlessScene streetEndlessScene;
     // 在此新增匯入場景
 
     /**
@@ -45,6 +44,8 @@ public class SceneManager {
      */
     private final Map<SceneType, SceneConfig> sceneConfigs = new HashMap<>();
 
+    private static SceneType pendingStartSceneType = null;
+
     // Constructor
     public SceneManager() {
         registerSceneConfigs();
@@ -61,22 +62,50 @@ public class SceneManager {
                         2500,
                         422.0
                 )
-        )
+        );
+
+        // MiniGame
+        sceneConfigs.put(SceneType.STREET_ENDLESS,
+                new SceneConfig(
+                        1280,
+                        720,
+                        1120,
+                        452.0
+                )
+        );
 
         // 在此新增場景SceneConfig
-        ;
     }
 
     public void setDeathSystem(DeathSystem deathSystem) { this.deathSystem = deathSystem; }
     public void setAudioSystem(AudioSystem audioSystem) { this.audioSystem = audioSystem; }
     public void setSaveSystem(SaveSystem saveSystem) { this.saveSystem = saveSystem; }
 
+    public static void requestStartScene(SceneType sceneType) {
+        pendingStartSceneType = sceneType;
+    }
+
+    public static boolean hasPendingStartScene() {
+        return pendingStartSceneType != null;
+    }
+
+    public static SceneType consumePendingStartScene() {
+        SceneType result = pendingStartSceneType;
+        pendingStartSceneType = null;
+        return result;
+    }
+
+    public static void clearPendingStartScene() {
+        pendingStartSceneType = null;
+    }
+
     public void loadSceneByType(SceneType sceneType) {
         switch (sceneType) {
             case HOUSE -> loadHouseScene();
 
-            // case STREET -> loadStreetScene();
-            // case miniGame -> loadminiGameScene();
+            // MiniGame
+            case STREET_ENDLESS -> loadStreetEndlessScene();
+
 
             default -> loadHouseScene();
         }
@@ -84,23 +113,89 @@ public class SceneManager {
 
     /**
      * 載入家中場景。
-     *
-     * 清空目前 GameWorld 裡所有 Entity，再重新建立 HouseScene。
      */
     public void loadHouseScene() {
         currentSceneType = SceneType.HOUSE;
 
-        if (houseScene != null) {
-            houseScene.cleanup();
-            houseScene = null;
-        }
+        cleanupCurrentScene();
+        clearCurrentWorld();
 
-        getGameWorld().getEntitiesCopy().forEach(Entity::removeFromWorld);
+        MusicSystem.getInstance().playBGM(
+                "/assets/music/scene1/Kobo Kanaeru - HELP!! (No Vocal).mp3.wav",
+                true
+        );
+
+        /*
+         * 一般故事場景：
+         * 允許存檔、允許成就。
+         */
+        set("saveDisabled", false);
+        set("achievementDisabled", false);
+        set("playerDead", false);
+        set("lastDeathReason", "");
+        set("playerOnBedCollider", false);
 
         SceneConfig homeConfig = getCurrentSceneConfig();
 
         houseScene = new HouseScene(homeConfig, deathSystem, audioSystem);
         player = houseScene.load();
+    }
+
+    // MiniGame
+    public void loadStreetEndlessScene() {
+        currentSceneType = SceneType.STREET_ENDLESS;
+
+        cleanupCurrentScene();
+        clearCurrentWorld();
+
+        MusicSystem.getInstance().playBGM(
+                "/assets/music/scene2/轟はじめ OP.mp3",
+                true
+        );
+
+        set("saveDisabled", true);
+        set("achievementDisabled", true);
+        set("playerDead", false);
+        set("lastDeathReason", "");
+        set("playerOnBedCollider", false);
+
+        set("streetEndlessMode", true);
+        set("streetRunDistance", 0.0);
+        set("streetBestDistanceBeforeRun", StreetEndlessRecordSystem.getInstance().getBestDistance());
+        set("streetBestDistance", StreetEndlessRecordSystem.getInstance().getBestDistance());
+        set("streetNewRecord", false);
+
+        SceneConfig config = getCurrentSceneConfig();
+
+        streetEndlessScene = new StreetEndlessScene(config, deathSystem, audioSystem);
+        player = streetEndlessScene.load();
+
+        refreshPlayerGroundContacts();
+    }
+
+    private void refreshPlayerGroundContacts() {
+        if (player == null) {
+            return;
+        }
+
+        if (!player.hasComponent(PlayerComponent.class)) {
+            return;
+        }
+
+        PlayerComponent pc = player.getComponent(PlayerComponent.class);
+        pc.refreshGroundContacts();
+    }
+
+    private void cleanupCurrentScene() {
+        if (houseScene != null) {
+            houseScene.cleanup();
+            houseScene = null;
+        }
+
+        if (streetEndlessScene != null) {
+            streetEndlessScene.cleanup();
+            streetEndlessScene = null;
+        }
     }
 
     private void clearCurrentWorld() {
@@ -121,6 +216,10 @@ public class SceneManager {
     public void onUpdate(double tpf) {
         if (houseScene != null) {
             houseScene.onUpdate(tpf);
+        }
+
+        if (streetEndlessScene != null) {
+            streetEndlessScene.onUpdate(tpf);
         }
     }
 
@@ -168,16 +267,32 @@ public class SceneManager {
             return;
         }
 
+        if (currentSceneType == SceneType.STREET_ENDLESS) {
+            /*
+             * Street Endless 是小遊戲模式。
+             * 重生時直接重新載入整個場景：
+             * - 清除街景
+             * - 清除障礙物
+             * - 重置距離
+             * - 重置鏡頭
+             * - 重新生成玩家
+             */
+            loadStreetEndlessScene();
+            return;
+        }
+
+
+        clearDeathStateForLoad();
+
         SceneConfig config = getCurrentSceneConfig();
 
         PlayerComponent pc = player.getComponent(PlayerComponent.class);
-
-        pc.respawnAt(
-                config.getPlayerStartX(),
-                config.getPlayerStartY()
-        );
+        pc.respawnAt(config.getPlayerStartX(), config.getPlayerStartY());
 
         resetCurrentSceneRuntimeSystems();
+
+        set("playerDead", false);
+        set("lastDeathReason", "");
 
         pc.setControlEnabled(true);
     }
@@ -197,6 +312,10 @@ public class SceneManager {
     public void resetCurrentSceneRuntimeSystems() {
         if (currentSceneType == SceneType.HOUSE && houseScene != null) {
             houseScene.resetRuntimeSystems();
+        }
+
+        if (currentSceneType == SceneType.STREET_ENDLESS && streetEndlessScene != null) {
+            streetEndlessScene.resetRuntimeSystems();
         }
     }
 
