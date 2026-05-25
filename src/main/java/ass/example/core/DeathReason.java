@@ -76,6 +76,13 @@ public enum DeathReason {
             "death.FALLING_HELI.title",
             "death.FALLING_HELI.subtitle",
             null
+    ),
+
+    JUMPED_IN_BATHTUB(
+            "JUMPED_IN_BATHTUB",
+            "death.JUMPED_IN_BATHTUB.title",
+            "death.JUMPED_IN_BATHTUB.subtitle",
+            null
     );
 
     private final String id;

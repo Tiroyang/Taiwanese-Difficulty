@@ -78,9 +78,10 @@ public class HouseScene {
     public Entity load() {
         spawnTestObjects();
         spawnBackground();
-        spawnCollisions();
 
         player = spawn("player", config.getPlayerStartX(), config.getPlayerStartY());
+
+        spawnCollisions();
 
         initSystems();
 
@@ -155,10 +156,7 @@ public class HouseScene {
                 .put("width", 50.0)
                 .put("height", 720.0));
 
-        // props
-        spawn("wall", new SpawnData(3034, 555)
-                .put("width", 140.0)
-                .put("height", 111.0));
+        spawnBathtubTest(3034, 555, 140, 111, player, deathSystem);
 
         //DEATH_ZONE(碰撞即死)
         // ceiling
@@ -182,6 +180,166 @@ public class HouseScene {
                 .put("width", 14.0)
                 .put("height", 14.0)
                 .put("deathReason", DeathReason.HIT_SHOWER_CURTAIN_ROD));
+    }
+
+    private void spawnBathtubTest(
+            double x,
+            double y,
+            double width,
+            double height,
+            Entity player,
+            DeathSystem deathSystem
+    ) {
+        double thickness = 20;
+
+        /*
+         * 左外牆。
+         */
+        spawn("wall", new SpawnData(x, y)
+                .put("width", thickness)
+                .put("height", height));
+
+        /*
+         * 右外牆。
+         */
+        spawn("wall", new SpawnData(x + width - thickness, y)
+                .put("width", thickness)
+                .put("height", height));
+
+        /*
+         * 底部外牆。
+         */
+        spawn("wall", new SpawnData(x, y + height - thickness)
+                .put("width", width)
+                .put("height", thickness));
+
+        /*
+         * 多段 slope_wall 組成平滑凹面。
+         */
+        spawnSmoothBathtubCurve(x, y, width, height);
+        spawnBathtubSensor(x, y, width, height, player, deathSystem);
+    }
+
+    private void spawnSmoothBathtubCurve(
+            double x,
+            double y,
+            double width,
+            double height
+    ) {
+        /*
+         * U 型凹面參數。
+         * x, y 是浴缸外框左上角。
+         */
+        double centerX = x + width / 2.0;
+
+        /*
+         * 凹面左右範圍。
+         * 數值越大，凹面越寬。
+         */
+        double radiusX = 62;
+
+        /*
+         * 凹面起點與最深點。
+         */
+        double topY = y + 24;
+        double bottomY = y + 74;
+        double depth = bottomY - topY;
+
+        /*
+         * 每段斜面的厚度。
+         */
+        double thickness = 9;
+
+        /*
+         * 段數越多越平滑。
+         * 建議 10～16 之間。
+         */
+        int pieces = 12;
+
+        /*
+         * 使用拋物線：
+         * t = -1 時在左上
+         * t = 0 時在最底
+         * t = 1 時在右上
+         *
+         * curveY = topY + (1 - t^2) * depth
+         */
+        for (int i = 0; i < pieces; i++) {
+            double t1 = -1.0 + 2.0 * i / pieces;
+            double t2 = -1.0 + 2.0 * (i + 1) / pieces;
+
+            double x1 = centerX + t1 * radiusX;
+            double y1 = topY + (1.0 - t1 * t1) * depth;
+
+            double x2 = centerX + t2 * radiusX;
+            double y2 = topY + (1.0 - t2 * t2) * depth;
+
+            spawnSlopeBetweenPoints(x1, y1, x2, y2, thickness);
+        }
+    }
+
+    private void spawnSlopeBetweenPoints(
+            double x1,
+            double y1,
+            double x2,
+            double y2,
+            double thickness
+    ) {
+        double dx = x2 - x1;
+        double dy = y2 - y1;
+
+        double length = Math.sqrt(dx * dx + dy * dy);
+
+        /*
+         * 避免太短的斜面造成奇怪碰撞。
+         */
+        if (length < 4) {
+            return;
+        }
+
+        double angle = Math.toDegrees(Math.atan2(dy, dx));
+
+        /*
+         * 以線段中心作為斜面的中心點。
+         * 這樣比直接用左上角準確，較不會整體偏右。
+         */
+        double centerX = (x1 + x2) / 2.0;
+        double centerY = (y1 + y2) / 2.0;
+
+        double spawnX = centerX - length / 2.0;
+        double spawnY = centerY - thickness / 2.0;
+
+        spawn("slope_wall", new SpawnData(spawnX, spawnY)
+                .put("width", length)
+                .put("height", thickness)
+                .put("angle", angle));
+    }
+
+    private void spawnBathtubSensor(
+            double x,
+            double y,
+            double width,
+            double height,
+            Entity player,
+            DeathSystem deathSystem
+    ) {
+        double sensorWidth = width * 0.55;
+        double sensorHeight = 18;
+
+        /*
+         * 放在浴缸 U 型底部附近。
+         * 如果太容易觸發，可以把 sensorY 往下移。
+         * 如果很難觸發，可以把 sensorHeight 加高。
+         */
+        double sensorX = x + (width - sensorWidth) / 2.0;
+        double sensorY = y + height * 0.48;
+
+        spawn("bathtub_sensor", new SpawnData(sensorX, sensorY)
+                .put("width", sensorWidth)
+                .put("height", sensorHeight)
+                .put("player", player)
+                .put("deathSystem", deathSystem)
+                .put("deathReason", DeathReason.JUMPED_IN_BATHTUB));
     }
 
     /**

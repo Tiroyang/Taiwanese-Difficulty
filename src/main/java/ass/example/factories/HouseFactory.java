@@ -268,7 +268,12 @@ public class HouseFactory implements EntityFactory {
         PhysicsComponent physics = new PhysicsComponent();
         physics.setBodyType(BodyType.STATIC);
 
-        physics.setFixtureDef(createFloorFixtureDef());
+        FixtureDef floorShapeDef = createFloorFixtureDef();
+
+        floorShapeDef.friction(0.8f)
+                .restitution(0.5f);
+
+        physics.setFixtureDef(floorShapeDef);
 
         return entityBuilder(data)
                 .type(EntityType.BED_ONE_WAY_PLATFORM_COLLIDER)
@@ -359,6 +364,31 @@ public class HouseFactory implements EntityFactory {
                         promptOffsetY
                 ))
                 .zIndex(30)
+                .build();
+    }
+
+    @Spawns("bathtub_sensor")
+    public Entity newBathtubSensor(SpawnData data) {
+        double width = data.get("width");
+        double height = data.get("height");
+
+        Entity player = data.get("player");
+        DeathSystem deathSystem = data.get("deathSystem");
+        DeathReason deathReason = data.get("deathReason");
+
+        return entityBuilder(data)
+                .type(EntityType.TRIGGER)
+                .bbox(new HitBox(BoundingShape.box(width, height)))
+                .view(Main.devMode
+                        ? new Rectangle(width, height, Color.rgb(0, 180, 255, 0.32))
+                        : new Rectangle(0, 0, Color.TRANSPARENT))
+                .with(new CollidableComponent(true))
+                .with(new BathtubComponent(
+                        player,
+                        deathSystem,
+                        deathReason
+                ))
+                .zIndex(1000)
                 .build();
     }
 

@@ -412,6 +412,12 @@ public class LanguageSystem {
 
         enUs.put("death.FALLING_HELI.title", "CRASHED BY AN APACHE");
         enUs.put("death.FALLING_HELI.subtitle", "Nothing weird these days.");
+
+        zhTw.put("death.JUMPED_IN_BATHTUB.title", "在浴缸裡滑倒");
+        zhTw.put("death.JUMPED_IN_BATHTUB.subtitle", "至少沒有蛇酒。");
+
+        enUs.put("death.JUMPED_IN_BATHTUB.title", "SLIPPED IN THE BATHTUB");
+        enUs.put("death.JUMPED_IN_BATHTUB.subtitle", "Final Destination Side Story - Granny's Bathtub");
     }
 
     public String text(String key) {

@@ -32,7 +32,7 @@ import static com.almasb.fxgl.dsl.FXGL.*;
  * 1. 玩家從 BED_ONE_WAY_PLATFORM 上方落下時，生成床面 collider
  * 2. 玩家站在床上時，改變玩家 zIndex
  * 3. 玩家在床上按跳躍後，記錄 jumpedFromBed
- * 4. 玩家再次落回床面時，觸發死亡
+ * 4. 玩家再次落回床面3次時，觸發死亡
  * 5. 玩家離開床 collider 上方時，恢復普通狀態
  * 6. 重生時清除所有暫時生成的床 collider 與床狀態
  */
@@ -81,11 +81,24 @@ public class BedSystem {
     private boolean hasLandedOnBed = false;
 
     /**
-     * 是否曾經從床上跳起。
+     * 玩家在床上連續跳躍的次數。
      *
-     * 如果玩家在床上跳起，再次落回床上，觸發死亡。
+     * 每次「站在床上按跳躍」時計數 +1。
+     * 當玩家第 3 次跳起後再次落回床上，觸發死亡。
      */
-    private boolean jumpedFromBed = false;
+    private int bedJumpCount = 0;
+
+    /**
+     * 是否正在等待「跳起後再次落回床上」。
+     *
+     * 避免玩家按跳躍後，在空中重複按鍵導致連續計數。
+     */
+    private boolean waitingForBedLandingAfterJump = false;
+
+    /**
+     * 連續跳幾次後死亡。
+     */
+    private final int bedJumpDeathCount = 2;
 
     /**
      * 重生後短時間內不做床落地判定，避免previousPlayerBottom還殘留死亡前的位置導致誤判。
@@ -224,7 +237,8 @@ public class BedSystem {
 
         hasLandedOnBed = true;
 
-        jumpedFromBed = false;
+        bedJumpCount = 0;
+        waitingForBedLandingAfterJump = false;
 
         previousPlayerBottom = getPlayerBottom();
     }
@@ -240,9 +254,19 @@ public class BedSystem {
             return;
         }
 
-        if (hasLandedOnBed) {
-            jumpedFromBed = true;
+        /*
+         * 只有「已經確定站在床上」時按跳躍，才算一次床上跳躍。
+         * 按下後立刻把 hasLandedOnBed 設回 false，
+         * 避免玩家在空中連按跳躍造成重複計數。
+         */
+        if (!hasLandedOnBed) {
+            return;
         }
+
+        bedJumpCount++;
+
+        waitingForBedLandingAfterJump = true;
+        hasLandedOnBed = false;
     }
 
     /**
@@ -270,7 +294,9 @@ public class BedSystem {
         player.setZIndex(bed.getNormalPlayerZIndex());
 
         currentBedPlatform = null;
-        jumpedFromBed = false;
+        bedJumpCount = 0;
+        waitingForBedLandingAfterJump = false;
+        hasLandedOnBed = false;
 
         set("playerOnBedCollider", false);
 
@@ -346,11 +372,6 @@ public class BedSystem {
 
         set("playerOnBedCollider", true);
         player.setZIndex(bed.getPlayerZIndexOnBed());
-
-        if (jumpedFromBed) {
-            deathSystem.die(bed.getDeathReasonOnSecondLanding());
-            return;
-        }
 
         hasLandedOnBed = true;
     }
@@ -436,9 +457,29 @@ public class BedSystem {
         set("playerOnBedCollider", true);
         player.setZIndex(bed.getPlayerZIndexOnBed());
 
-        hasJustLandedOnCurrentBedCollider();
+        boolean justLandedOnBed = hasJustLandedOnCurrentBedCollider();
 
-        if (jumpedFromBed && hasJustLandedOnCurrentBedCollider()) {
+        if (justLandedOnBed) {
+            handleLandingBackOnBed(bed);
+        }
+    }
+
+    /**
+     * 處理玩家從床上跳起後，再次落回床上的邏輯。
+     *
+     * 第 1、2 次落回床上不死亡。
+     * 第 3 次落回床上才觸發死亡。
+     */
+    private void handleLandingBackOnBed(BedComponent bed) {
+        hasLandedOnBed = true;
+
+        if (!waitingForBedLandingAfterJump) {
+            return;
+        }
+
+        waitingForBedLandingAfterJump = false;
+
+        if (bedJumpCount >= bedJumpDeathCount) {
             deathSystem.die(bed.getDeathReasonOnSecondLanding());
         }
     }
@@ -452,7 +493,8 @@ public class BedSystem {
 
         currentBedPlatform = null;
         hasLandedOnBed = false;
-        jumpedFromBed = false;
+        bedJumpCount = 0;
+        waitingForBedLandingAfterJump = false;
 
         set("playerOnBedCollider", false);
     }
@@ -566,7 +608,8 @@ public class BedSystem {
         previousPlayerBottom = getPlayerBottom();
 
         hasLandedOnBed = false;
-        jumpedFromBed = false;
+        bedJumpCount = 0;
+        waitingForBedLandingAfterJump = false;
 
         set("playerOnBedCollider", false);
 

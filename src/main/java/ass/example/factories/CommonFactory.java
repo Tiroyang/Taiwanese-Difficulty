@@ -107,6 +107,42 @@ public class CommonFactory implements EntityFactory {
                 .build();
     }
 
+    @Spawns("slope_wall")
+    public Entity newSlopeWall(SpawnData data) {
+        double width = data.get("width");
+        double height = data.get("height");
+        double angle = data.get("angle");
+
+        PhysicsComponent physics = new PhysicsComponent();
+        physics.setBodyType(BodyType.STATIC);
+
+        FixtureDef fixtureDef = new FixtureDef()
+                .friction(0.0f)
+                .restitution(0.0f);
+
+        FixtureFilterUtil.applyFilter(
+                fixtureDef,
+                CollisionCategory.WALL,
+                CollisionCategory.PLAYER
+        );
+
+        physics.setFixtureDef(fixtureDef);
+
+        Rectangle view = Main.devMode
+                ? new Rectangle(width, height, Color.rgb(0, 255, 255, 0.35))
+                : new Rectangle(0, 0, Color.TRANSPARENT);
+
+        return entityBuilder(data)
+                .type(EntityType.WALL)
+                .bbox(new HitBox(BoundingShape.box(width, height)))
+                .view(view)
+                .rotate(angle)
+                .with(physics)
+                .with(new CollidableComponent(true))
+                .zIndex(1000)
+                .build();
+    }
+
     @Spawns("death_zone")
     public Entity newDeathZone(SpawnData data) {
         double width = data.get("width");
@@ -138,14 +174,28 @@ public class CommonFactory implements EntityFactory {
 
         DeathReason deathReason = data.get("deathReason");
 
+        short categoryBits = data.hasKey("categoryBits")
+                ? ((Number) data.get("categoryBits")).shortValue()
+                : CollisionCategory.WALL;
+
+        short maskBits = data.hasKey("maskBits")
+                ? ((Number) data.get("maskBits")).shortValue()
+                : CollisionCategory.PLAYER;
+
         PhysicsComponent physics = new PhysicsComponent();
         physics.setBodyType(BodyType.STATIC);
 
-        physics.setFixtureDef(
-                new FixtureDef()
-                        .friction(0.0f)
-                        .restitution(0.0f)
+        FixtureDef fixtureDef = new FixtureDef()
+                .friction(0.0f)
+                .restitution(0.0f);
+
+        FixtureFilterUtil.applyFilter(
+                fixtureDef,
+                categoryBits,
+                maskBits
         );
+
+        physics.setFixtureDef(fixtureDef);
 
         return entityBuilder(data)
                 .type(EntityType.DEATH_ZONE)

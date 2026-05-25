@@ -40,7 +40,7 @@ public class Main extends GameApplication {
 
     private int jumpKeyHoldCount = 0;
 
-    public static boolean devMode = false;
+    public static boolean devMode = true;
 
     @Override
     protected void initSettings(GameSettings settings) {
