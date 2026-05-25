@@ -83,6 +83,13 @@ public enum DeathReason {
             "death.JUMPED_IN_BATHTUB.title",
             "death.JUMPED_IN_BATHTUB.subtitle",
             null
+    ),
+
+    LEFT_WITHOUT_BRUSHING_TEETH(
+            "LEFT_WITHOUT_BRUSHING_TEETH",
+            "death.LEFT_WITHOUT_BRUSHING_TEETH.title",
+            "death.LEFT_WITHOUT_BRUSHING_TEETH.subtitle",
+            null
     );
 
     private final String id;

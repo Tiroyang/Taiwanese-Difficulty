@@ -15,12 +15,45 @@ public class InteractableComponent extends Component {
     private final boolean promptOnEntity;
     private final double promptOffsetY;
 
-    public InteractableComponent(String promptKey, Runnable action) {
-        this(() -> promptKey, action, 220, false, 30);
+    private final Supplier<Boolean> canInteractSupplier;
+
+    public InteractableComponent(String prompt, Runnable action) {
+        this(
+                () -> prompt,
+                action,
+                220,
+                false,
+                30,
+                () -> true
+        );
     }
 
-    public InteractableComponent(String promptKey, Runnable action, double interactRange, boolean promptOnEntity) {
-        this(() -> promptKey, action, interactRange, promptOnEntity, 30);
+    public InteractableComponent(String prompt, Runnable action, double interactRange, boolean promptOnEntity) {
+        this(
+                () -> prompt,
+                action,
+                interactRange,
+                promptOnEntity,
+                30,
+                () -> true
+        );
+    }
+
+    public InteractableComponent(
+            Supplier<String> promptSupplier,
+            Runnable action,
+            double interactRange,
+            boolean promptOnEntity,
+            double promptOffsetY
+    ) {
+        this(
+                promptSupplier,
+                action,
+                interactRange,
+                promptOnEntity,
+                promptOffsetY,
+                () -> true
+        );
     }
 
     public InteractableComponent(
@@ -28,13 +61,19 @@ public class InteractableComponent extends Component {
             Runnable action,
             double interactRange,
             boolean promptOnEntity,
-            double promptOffsetY
+            double promptOffsetY,
+            Supplier<Boolean> canInteractSupplier
     ) {
         this.promptKeySupplier = promptKeySupplier;
         this.action = action;
         this.interactRange = interactRange;
         this.promptOnEntity = promptOnEntity;
         this.promptOffsetY = promptOffsetY;
+        this.canInteractSupplier = canInteractSupplier;
+    }
+
+    public boolean canInteract() {
+        return canInteractSupplier == null || canInteractSupplier.get();
     }
 
     public String getPromptKey() {

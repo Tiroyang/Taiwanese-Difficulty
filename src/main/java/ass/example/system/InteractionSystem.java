@@ -87,7 +87,7 @@ public class InteractionSystem {
         promptContent.getChildren().addAll(keyIcon, actionText);
 
         promptContent.setStyle("""
-            -fx-background-color: rgba(0, 0, 0, 0.76);
+            -fx-background-color: rgba(0, 0, 0, 0.2);
             -fx-background-radius: 16px;
             -fx-border-color: rgba(255, 255, 255, 0.75);
             -fx-border-width: 1.4px;
@@ -262,6 +262,10 @@ public class InteractionSystem {
                 .filter(e -> {
                     InteractableComponent component = e.getComponent(InteractableComponent.class);
                     return distanceXBetweenCenters(e, player) < component.getInteractRange();
+                })
+                .filter(e -> {
+                    InteractableComponent component = e.getComponent(InteractableComponent.class);
+                    return component.canInteract();
                 })
                 .min(Comparator.comparingDouble(e ->
                         distanceXBetweenCenters(e, player)

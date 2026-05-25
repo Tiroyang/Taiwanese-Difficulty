@@ -9,11 +9,14 @@ public enum SoundId {
     BUTTON_PRESSED("useraction/button_pressed.wav", 0.4),
 
     DEATH("characters/player/death.wav", 1),
+    FOOTSTEP("characters/player/footstep.wav", 1),
 
     DOOR_OPEN("props/scene1/door_open.wav", 1),
     DOOR_CLOSE("props/scene1/door_close.wav", 1),
 
-    EATING("props/scene1/eating.wav", 0.6);
+    EATING("props/scene1/eating.wav", 0.6),
+    BRUSHING_TEETH("props/scene1/brushing_teeth.wav", 1),
+    FOLDING_QUILT("props/scene1/folding_quilt.wav", 1);
 
     private final String fileName;
     private final double builtInVolume;

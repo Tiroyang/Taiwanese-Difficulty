@@ -16,6 +16,12 @@ public final class SaveKey {
 
     public static final String SAVED_AT = "savedAt";
 
+    // QUEST
+    public static final String QUEST_VISIBLE_START_INDEX = "questVisibleStartIndex";
+    public static final String QUEST_AMOUNT_PREFIX = "quest_amount_";
+    public static final String QUEST_COMPLETED_PREFIX = "quest_completed_";
+    public static final String QUEST_ANIM_PLAYED_PREFIX = "quest_anim_played_";
+
     //GAMEVARS
     public static final String DEATH_COUNT = "deathCount";
     public static final String PLAYER_DEAD = "playerDead";
@@ -24,6 +30,7 @@ public final class SaveKey {
     // HouseScene
     public static final String QUILT_FOLDED = "quiltFolded";
     public static final String WATER_DRUNK = "waterDrunk";
+    public static final String TEETH_BRUSHED = "teethBrushed";
     public static final String PLAYER_ON_BED_COLLIDER = "playerOnBedCollider";
 
     public static final String ROOM_LIVING_ROOM_REVEALED = "room_LIVING_ROOM_revealed";

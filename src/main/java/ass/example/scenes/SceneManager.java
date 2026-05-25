@@ -4,6 +4,7 @@ import ass.example.components.PlayerComponent;
 import ass.example.core.DeathReason;
 import ass.example.core.SceneType;
 import ass.example.system.*;
+import ass.example.system.quest.QuestSystem;
 import com.almasb.fxgl.entity.Entity;
 import java.util.HashMap;
 import java.util.Map;
@@ -116,6 +117,10 @@ public class SceneManager {
      */
     public void loadHouseScene() {
         currentSceneType = SceneType.HOUSE;
+
+        if (!SaveRequestSystem.hasPendingLoadSlot()) {
+            QuestSystem.getInstance().resetRuntimeState();
+        }
 
         cleanupCurrentScene();
         clearCurrentWorld();

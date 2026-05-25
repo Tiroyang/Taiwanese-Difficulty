@@ -195,7 +195,7 @@ public class StreetFactory implements EntityFactory {
         FixtureDef fixtureDef = new FixtureDef()
                 .density(0.9f)
                 .friction(0.65f)
-                .restitution(0.08f);
+                .restitution(0.0f);
 
         FixtureFilterUtil.applyFilter(
                 fixtureDef,

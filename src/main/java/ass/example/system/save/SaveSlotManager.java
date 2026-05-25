@@ -1,6 +1,7 @@
 package ass.example.system.save;
 
 import ass.example.core.DeathReason;
+import ass.example.core.QuestType;
 import ass.example.core.SaveKey;
 import ass.example.system.SaveSystem;
 import com.almasb.fxgl.core.serialization.Bundle;
@@ -308,6 +309,38 @@ public class SaveSlotManager {
             String key = "death_" + reason.name();
             putBool(props, bundle, key, "bundle." + key);
         }
+
+        putInt(
+                props,
+                bundle,
+                SaveKey.QUEST_VISIBLE_START_INDEX,
+                "bundle." + SaveKey.QUEST_VISIBLE_START_INDEX
+        );
+
+        for (QuestType quest : QuestType.values()) {
+            String id = quest.name();
+
+            putInt(
+                    props,
+                    bundle,
+                    SaveKey.QUEST_AMOUNT_PREFIX + id,
+                    "bundle." + SaveKey.QUEST_AMOUNT_PREFIX + id
+            );
+
+            putBool(
+                    props,
+                    bundle,
+                    SaveKey.QUEST_COMPLETED_PREFIX + id,
+                    "bundle." + SaveKey.QUEST_COMPLETED_PREFIX + id
+            );
+
+            putBool(
+                    props,
+                    bundle,
+                    SaveKey.QUEST_ANIM_PLAYED_PREFIX + id,
+                    "bundle." + SaveKey.QUEST_ANIM_PLAYED_PREFIX + id
+            );
+        }
     }
 
     private Bundle readBundleFromProperties(Properties props) {
@@ -339,6 +372,30 @@ public class SaveSlotManager {
         for (DeathReason reason : DeathReason.values()) {
             String key = "death_" + reason.name();
             bundle.put(key, boolValue(props, "bundle." + key));
+        }
+
+        bundle.put(
+                SaveKey.QUEST_VISIBLE_START_INDEX,
+                intValue(props, "bundle." + SaveKey.QUEST_VISIBLE_START_INDEX)
+        );
+
+        for (QuestType quest : QuestType.values()) {
+            String id = quest.name();
+
+            bundle.put(
+                    SaveKey.QUEST_AMOUNT_PREFIX + id,
+                    intValue(props, "bundle." + SaveKey.QUEST_AMOUNT_PREFIX + id)
+            );
+
+            bundle.put(
+                    SaveKey.QUEST_COMPLETED_PREFIX + id,
+                    boolValue(props, "bundle." + SaveKey.QUEST_COMPLETED_PREFIX + id)
+            );
+
+            bundle.put(
+                    SaveKey.QUEST_ANIM_PLAYED_PREFIX + id,
+                    boolValue(props, "bundle." + SaveKey.QUEST_ANIM_PLAYED_PREFIX + id)
+            );
         }
 
         return bundle;

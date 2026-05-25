@@ -44,7 +44,9 @@ public class RoomSystem {
         previousRoom = currentRoom;
         currentRoom = getRoomByPlayerX();
 
+
         checkBedroomExit();
+        checkEnterLivingRoom();
     }
 
     private RoomType getRoomByPlayerX() {
@@ -89,8 +91,26 @@ public class RoomSystem {
         }
     }
 
+    private void checkEnterLivingRoom() {
+        boolean justEnteredLivingRoom =
+                previousRoom != RoomType.HALLWAY &&
+                        currentRoom == RoomType.HALLWAY;
+
+        if (!justEnteredLivingRoom) {
+            return;
+        }
+
+        if (!getb("teethBrushed")) {
+            triggerDeathBecauseDidNotBrushTeeth();
+        }
+    }
+
     private void triggerDeathBecauseQuiltNotFolded() {
         deathSystem.die(DeathReason.LEFT_BEDROOM_WITHOUT_FOLDING_QUILT);
+    }
+
+    private void triggerDeathBecauseDidNotBrushTeeth() {
+        deathSystem.die(DeathReason.LEFT_WITHOUT_BRUSHING_TEETH);
     }
 
     public RoomType getCurrentRoom() {

@@ -476,7 +476,7 @@ public class StreetEndlessScene {
         double colliderX = spawnX + (transformerWidth - transformerColliderWidth) / 2.0;
         double colliderY = floorY - transformerColliderHeight;
 
-        Entity collider = spawn("wall", new SpawnData(colliderX, colliderY)
+        Entity collider = spawn("floor", new SpawnData(colliderX, colliderY)
                 .put("width", transformerColliderWidth)
                 .put("height", transformerColliderHeight));
 

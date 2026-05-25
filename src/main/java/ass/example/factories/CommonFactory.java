@@ -34,7 +34,7 @@ public class CommonFactory implements EntityFactory {
 
         FixtureDef fixtureDef = new FixtureDef()
                 .friction(0.8f)
-                .restitution(0.1f);
+                .restitution(0.0f);
 
         /*
          * floor 的碰撞分類：

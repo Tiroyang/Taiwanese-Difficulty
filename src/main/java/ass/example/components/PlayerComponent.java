@@ -1,6 +1,8 @@
 package ass.example.components;
 
 import ass.example.core.DeathReason;
+import ass.example.core.SoundId;
+import ass.example.system.AudioSystem;
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.SpawnData;
 import com.almasb.fxgl.entity.component.Component;
@@ -19,6 +21,8 @@ public class PlayerComponent extends Component {
 
     // Physics
     private PhysicsComponent physics;
+
+    private final AudioSystem audioSystem = AudioSystem.getInstance();
 
     // 玩家圖片顯示Node
     private final ImageView playerView;
@@ -57,7 +61,8 @@ public class PlayerComponent extends Component {
     private double walkAnimTimer = 0;
 
     // 走路動畫切換時間
-    private final double walkFrameDuration = 0.12;
+    private final double walkFrameDuration = 0.35;
+    private final double dashFrameDuration = 0.22;
 
     // 玩家速度
     private final double moveSpeed = 260;
@@ -354,6 +359,10 @@ public class PlayerComponent extends Component {
             targetState = PlayerVisualState.WALK_LEFT;
         }
 
+        if (currentImages == null || currentImages.length == 0) {
+            return;
+        }
+
         if (visualState != targetState) {
             visualState = targetState;
             walkFrameIndex = 0;
@@ -364,7 +373,11 @@ public class PlayerComponent extends Component {
         isWalking = true;
         walkAnimTimer += tpf;
 
-        if (walkAnimTimer >= walkFrameDuration) {
+        double currentFrameDuration = dashing
+                ? dashFrameDuration
+                : walkFrameDuration;
+
+        if (walkAnimTimer >= currentFrameDuration) {
             walkAnimTimer = 0;
 
             walkFrameIndex++;
@@ -373,6 +386,10 @@ public class PlayerComponent extends Component {
             }
 
             setPlayerImage(currentImages[walkFrameIndex]);
+
+            if (isOnGround()) {
+                audioSystem.playSFX(SoundId.FOOTSTEP);
+            }
         }
     }
 

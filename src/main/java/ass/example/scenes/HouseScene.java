@@ -9,6 +9,7 @@ import ass.example.core.HouseScene.RoomType;
 import ass.example.system.*;
 import ass.example.system.HouseScene.BedSystem;
 import ass.example.system.HouseScene.RoomSystem;
+import ass.example.ui.QuestHUD;
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.SpawnData;
 import com.almasb.fxgl.entity.component.Component;
@@ -45,6 +46,9 @@ public class HouseScene {
     private OneWayPlatformSystem oneWayPlatformSystem;
     private BedSystem bedSystem;
 
+    // 任務系統
+    private QuestHUD questHUD;
+
     // Constructor
     public HouseScene(
             SceneConfig config,
@@ -60,6 +64,11 @@ public class HouseScene {
         if (interactionSystem != null) {
             interactionSystem.dispose();
             interactionSystem = null;
+        }
+
+        if (questHUD != null) {
+            removeUINode(questHUD);
+            questHUD = null;
         }
 
         getGameScene().getViewport().unbind();
@@ -88,6 +97,9 @@ public class HouseScene {
         spawnRoomCovers();
         spawnProps();
         spawnAnimatedProps();
+
+        questHUD = new QuestHUD();
+        addUINode(questHUD, 0, 0);
 
         setupCamera();
 
@@ -390,7 +402,8 @@ public class HouseScene {
                 .put("height", 80.0)
                 .put("interactRange", 150.0)
                 .put("promptOnEntity", true)
-                .put("promptOffsetY", 40.0));
+                .put("promptOffsetY", 40.0)
+                .put("audioSystem", audioSystem));
 
         // bed
         spawn("bed", 0, 0);
@@ -428,6 +441,15 @@ public class HouseScene {
                 .put("interactRange", 130.0)
                 .put("promptOnEntity", true)
                 .put("promptOffsetY", 40.0)
+                .put("audioSystem", audioSystem));
+
+        // toothbrush
+        spawn("toothbrush_trigger", new SpawnData(2928, 513)
+                .put("width", 80.0)
+                .put("height", 120.0)
+                .put("interactRange", 180.0)
+                .put("promptOnEntity", true)
+                .put("promptOffsetY", 50.0)
                 .put("audioSystem", audioSystem));
 
         // VISUALS
@@ -534,6 +556,10 @@ public class HouseScene {
 
         if (bedSystem != null) {
             bedSystem.update(tpf);
+        }
+
+        if (questHUD != null) {
+            questHUD.update();
         }
     }
 

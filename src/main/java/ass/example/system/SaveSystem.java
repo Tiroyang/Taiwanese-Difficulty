@@ -2,9 +2,12 @@ package ass.example.system;
 
 import ass.example.components.PlayerComponent;
 import ass.example.core.DeathReason;
+import ass.example.core.QuestType;
 import ass.example.core.SaveKey;
 import ass.example.core.SceneType;
 import ass.example.scenes.SceneManager;
+import ass.example.system.quest.QuestState;
+import ass.example.system.quest.QuestSystem;
 import com.almasb.fxgl.core.serialization.Bundle;
 import com.almasb.fxgl.entity.Entity;
 import javafx.embed.swing.SwingFXUtils;
@@ -60,6 +63,7 @@ public class SaveSystem {
 
         saveGameVars(bundle);
         saveDeathAchievements(bundle);
+        saveQuests(bundle);
 
         putBoolIfExists(bundle, SaveKey.PLAYER_DEAD);
         putStringIfExists(bundle, SaveKey.LAST_DEATH_REASON);
@@ -144,6 +148,7 @@ public class SaveSystem {
 
         loadGameVars(bundle);
         loadDeathAchievements(bundle);
+        loadQuests(bundle);
 
         double playerX = bundle.get(SaveKey.PLAYER_X);
         double playerY = bundle.get(SaveKey.PLAYER_Y);
@@ -169,6 +174,7 @@ public class SaveSystem {
 
         putBoolIfExists(bundle, SaveKey.QUILT_FOLDED);
         putBoolIfExists(bundle, SaveKey.WATER_DRUNK);
+        putBoolIfExists(bundle, SaveKey.TEETH_BRUSHED);
         putBoolIfExists(bundle, SaveKey.PLAYER_ON_BED_COLLIDER);
 
         putBoolIfExists(bundle, SaveKey.ROOM_LIVING_ROOM_REVEALED);
@@ -183,6 +189,7 @@ public class SaveSystem {
 
         setBoolIfExists(bundle, SaveKey.QUILT_FOLDED);
         setBoolIfExists(bundle, SaveKey.WATER_DRUNK);
+        setBoolIfExists(bundle, SaveKey.TEETH_BRUSHED);
         setBoolIfExists(bundle, SaveKey.PLAYER_ON_BED_COLLIDER);
 
         setBoolIfExists(bundle, SaveKey.ROOM_LIVING_ROOM_REVEALED);
@@ -207,6 +214,73 @@ public class SaveSystem {
             String key = "death_" + reason.name();
             setBoolIfExists(bundle, key);
         }
+    }
+
+    private void saveQuests(Bundle bundle) {
+        QuestSystem questSystem = QuestSystem.getInstance();
+
+        bundle.put(SaveKey.QUEST_VISIBLE_START_INDEX, questSystem.getVisibleStartIndex());
+
+        for (QuestType quest : questSystem.getStoryQuests()) {
+            QuestState state = questSystem.getState(quest);
+
+            if (state == null) {
+                continue;
+            }
+
+            String id = quest.name();
+
+            bundle.put(SaveKey.QUEST_AMOUNT_PREFIX + id, state.getAmount());
+            bundle.put(SaveKey.QUEST_COMPLETED_PREFIX + id, state.isCompleted());
+            bundle.put(SaveKey.QUEST_ANIM_PLAYED_PREFIX + id, state.isCompletionAnimationPlayed());
+        }
+    }
+
+    private void loadQuests(Bundle bundle) {
+        QuestSystem questSystem = QuestSystem.getInstance();
+
+        questSystem.resetRuntimeState();
+
+        try {
+            int visibleStartIndex = bundle.get(SaveKey.QUEST_VISIBLE_START_INDEX);
+            questSystem.setVisibleStartIndex(visibleStartIndex);
+        } catch (Exception ignored) {
+        }
+
+        for (QuestType quest : questSystem.getStoryQuests()) {
+            QuestState state = questSystem.getState(quest);
+
+            if (state == null) {
+                continue;
+            }
+
+            String id = quest.name();
+
+            try {
+                int amount = bundle.get(SaveKey.QUEST_AMOUNT_PREFIX + id);
+                state.setAmount(amount);
+            } catch (Exception ignored) {
+            }
+
+            try {
+                boolean completed = bundle.get(SaveKey.QUEST_COMPLETED_PREFIX + id);
+                state.setCompleted(completed);
+            } catch (Exception ignored) {
+            }
+
+            try {
+                boolean animationPlayed = bundle.get(SaveKey.QUEST_ANIM_PLAYED_PREFIX + id);
+                state.setCompletionAnimationPlayed(animationPlayed);
+            } catch (Exception ignored) {
+            }
+        }
+
+        /*
+         * 讀檔後整理一次。
+         * 如果前面的任務已經完成且動畫也播過，
+         * 就直接推到下一個任務。
+         */
+        questSystem.advancePastCompletedQuests();
     }
 
     private void putBoolIfExists(Bundle bundle, String key) {

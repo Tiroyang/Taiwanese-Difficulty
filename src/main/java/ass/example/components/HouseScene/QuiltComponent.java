@@ -1,11 +1,17 @@
 package ass.example.components.HouseScene;
 
 import ass.example.components.LoadSaveComponent;
+import ass.example.core.QuestType;
+import ass.example.core.SoundId;
+import ass.example.system.AudioSystem;
+import ass.example.system.quest.QuestSystem;
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.component.Component;
 import static com.almasb.fxgl.dsl.FXGL.*;
 
 public class QuiltComponent extends Component implements LoadSaveComponent {
+
+    private final AudioSystem audioSystem;
 
     private final Entity visualEntity;
 
@@ -17,11 +23,13 @@ public class QuiltComponent extends Component implements LoadSaveComponent {
     public QuiltComponent(
             Entity visualEntity,
             String messyTexture,
-            String foldedTexture
+            String foldedTexture,
+            AudioSystem audioSystem
     ) {
         this.visualEntity = visualEntity;
         this.messyTexture = messyTexture;
         this.foldedTexture = foldedTexture;
+        this.audioSystem = audioSystem;
     }
 
     @Override
@@ -51,6 +59,9 @@ public class QuiltComponent extends Component implements LoadSaveComponent {
 
         folded = true;
         set("quiltFolded", true);
+        QuestSystem.getInstance().completeQuest(QuestType.FOLD_QUILT);
+
+        audioSystem.playSFX(SoundId.FOLDING_QUILT);
 
         setVisualTexture(foldedTexture);
 

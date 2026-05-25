@@ -25,6 +25,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Polygon;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
 import java.util.List;
@@ -975,14 +976,14 @@ public class PauseMenu extends FXGLMenu {
 
         VBox content = new VBox(18);
         content.setAlignment(Pos.CENTER);
-        content.setPadding(new Insets(28));
-        content.setMaxSize(500, 230);
+        content.setPadding(new Insets(24));
+        content.setMaxSize(460, 180);
 
-        Rectangle bg = new Rectangle(500, 230);
-        bg.setArcWidth(20);
-        bg.setArcHeight(20);
-        bg.setFill(Color.rgb(0, 0, 0, 0.9));
-        bg.setStroke(Color.rgb(255, 255, 255, 0.85));
+        Rectangle bg = new Rectangle(460, 180);
+        bg.setArcWidth(18);
+        bg.setArcHeight(18);
+        bg.setFill(Color.rgb(0, 0, 0, 0.88));
+        bg.setStroke(Color.rgb(255, 255, 255, 0.95));
         bg.setStrokeWidth(1.8);
         bg.setEffect(new DropShadow(18, Color.rgb(0, 0, 0, 0.9)));
 
@@ -995,11 +996,12 @@ public class PauseMenu extends FXGLMenu {
         title.setEffect(new DropShadow(8, Color.BLACK));
 
         Text message = new Text(text("pause.exitToMain.confirm"));
-        message.setWrappingWidth(410);
+        message.setWrappingWidth(380);
         message.setStyle("""
             -fx-font-size: 20px;
             -fx-fill: rgba(255,255,255,0.86);
             """);
+        message.setTextAlignment(TextAlignment.CENTER);
 
         HBox buttons = new HBox(18);
         buttons.setAlignment(Pos.CENTER);

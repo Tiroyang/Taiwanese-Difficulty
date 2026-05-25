@@ -214,6 +214,7 @@ public class Main extends GameApplication {
         // HouseScene
         vars.put("quiltFolded", false);
         vars.put("waterDrunk", false);
+        vars.put("teethBrushed", false);
         vars.put("playerOnBedCollider", false);
 
         vars.put("room_LIVING_ROOM_revealed", false);

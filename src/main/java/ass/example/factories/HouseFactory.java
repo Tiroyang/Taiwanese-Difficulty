@@ -5,12 +5,10 @@ import ass.example.components.HouseScene.*;
 import ass.example.components.InteractableComponent;
 import ass.example.components.LethalComponent;
 import ass.example.components.OneWayPlatformComponent;
-import ass.example.core.CollisionCategory;
-import ass.example.core.DeathReason;
-import ass.example.core.EntityType;
-import ass.example.core.FixtureFilterUtil;
+import ass.example.core.*;
 import ass.example.system.AudioSystem;
 import ass.example.system.DeathSystem;
+import ass.example.system.quest.QuestSystem;
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.EntityFactory;
 import com.almasb.fxgl.entity.SpawnData;
@@ -171,10 +169,13 @@ public class HouseFactory implements EntityFactory {
         boolean promptOnEntity = data.get("promptOnEntity");
         double promptOffsetY = data.get("promptOffsetY");
 
+        AudioSystem audioSystem = data.get("audioSystem");
+
         QuiltComponent quiltComponent = new QuiltComponent(
                 quiltVisual,
                 defaultTexture,
-                foldedTexture
+                foldedTexture,
+                audioSystem
         );
 
         return entityBuilder(data)
@@ -387,6 +388,49 @@ public class HouseFactory implements EntityFactory {
                         player,
                         deathSystem,
                         deathReason
+                ))
+                .zIndex(1000)
+                .build();
+    }
+
+    @Spawns("toothbrush_trigger")
+    public Entity newToothbrushTrigger(SpawnData data) {
+        double width = data.get("width");
+        double height = data.get("height");
+
+        double interactRange = data.hasKey("interactRange")
+                ? data.get("interactRange")
+                : 180.0;
+
+        boolean promptOnEntity = data.hasKey("promptOnEntity")
+                ? data.get("promptOnEntity")
+                : true;
+
+        double promptOffsetY = data.hasKey("promptOffsetY")
+                ? data.get("promptOffsetY")
+                : 40.0;
+
+        AudioSystem audioSystem = data.hasKey("audioSystem")
+                ? data.get("audioSystem")
+                : AudioSystem.getInstance();
+
+        return entityBuilder(data)
+                .type(EntityType.INTERACTABLE)
+                .bbox(new HitBox(BoundingShape.box(width, height)))
+                .view(Main.devMode ? new Rectangle(width, height, Color.rgb(255, 255, 0, 0.35)) : new Rectangle(0, 0, Color.TRANSPARENT))
+                .with(new InteractableComponent(
+                        () -> "story.house.brush_teeth",
+                        () -> {
+                            audioSystem.playSFX(SoundId.BRUSHING_TEETH);
+
+                            set("teethBrushed", true);
+
+                            QuestSystem.getInstance().completeQuest(QuestType.BRUSH_TEETH);
+                        },
+                        interactRange,
+                        promptOnEntity,
+                        promptOffsetY,
+                        () -> !getb("teethBrushed")
                 ))
                 .zIndex(1000)
                 .build();

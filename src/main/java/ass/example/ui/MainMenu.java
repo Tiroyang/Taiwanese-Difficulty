@@ -2487,7 +2487,9 @@ public class MainMenu extends FXGLMenu {
         bg.setArcWidth(18);
         bg.setArcHeight(18);
         bg.setFill(Color.rgb(0, 0, 0, 0.88));
-        bg.setStroke(Color.WHITE);
+        bg.setStroke(Color.rgb(255, 255, 255, 0.95));
+        bg.setStrokeWidth(1.8);
+        bg.setEffect(new DropShadow(18, Color.rgb(0, 0, 0, 0.9)));
 
         Text textNode = createTextBlock(message);
         textNode.setWrappingWidth(380);

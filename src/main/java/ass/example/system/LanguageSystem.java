@@ -343,10 +343,24 @@ public class LanguageSystem {
         zhTw.put("story.house.drinkWater", "喝水");
         enUs.put("story.house.drinkWater", "Drink Water");
 
+        zhTw.put("story.house.brush_teeth", "刷牙");
+        enUs.put("story.house.brush_teeth", "Brush teeth");
+
         zhTw.put("story.house.openDoor", "開門");
         zhTw.put("story.house.closeDoor", "關門");
         enUs.put("story.house.openDoor", "Open Door");
         enUs.put("story.house.closeDoor", "Close Door");
+
+        // Quest
+        zhTw.put("quest.fold_quilt", "摺好被子");
+        zhTw.put("quest.brush_teeth", "刷牙");
+        zhTw.put("quest.talk_to_mom", "跟媽媽講話");
+        zhTw.put("quest.wear_shoes", "穿鞋");
+
+        enUs.put("quest.fold_quilt", "Fold the quilt");
+        enUs.put("quest.brush_teeth", "Brush your teeth");
+        enUs.put("quest.talk_to_mom", "Talk to mom");
+        enUs.put("quest.enter_living_room", "Wear shoes");
 
         // Mini Game
         zhTw.put("pause.save.disabled", "此模式無法使用存檔功能。");
@@ -414,10 +428,16 @@ public class LanguageSystem {
         enUs.put("death.FALLING_HELI.subtitle", "Nothing weird these days.");
 
         zhTw.put("death.JUMPED_IN_BATHTUB.title", "在浴缸裡滑倒");
-        zhTw.put("death.JUMPED_IN_BATHTUB.subtitle", "至少沒有蛇酒。");
+        zhTw.put("death.JUMPED_IN_BATHTUB.subtitle", "你也要泡酒是吧。");
 
         enUs.put("death.JUMPED_IN_BATHTUB.title", "SLIPPED IN THE BATHTUB");
         enUs.put("death.JUMPED_IN_BATHTUB.subtitle", "Final Destination Side Story - Granny's Bathtub");
+
+        zhTw.put("death.LEFT_WITHOUT_BRUSHING_TEETH.title", "起床沒刷牙");
+        zhTw.put("death.LEFT_WITHOUT_BRUSHING_TEETH.subtitle", "早上起來刷刷牙。");
+
+        enUs.put("death.LEFT_WITHOUT_BRUSHING_TEETH.title", "FORGET TO BRUSH TEETH");
+        enUs.put("death.LEFT_WITHOUT_BRUSHING_TEETH.subtitle", "I guess it starts from a quarter to one.");
     }
 
     public String text(String key) {
