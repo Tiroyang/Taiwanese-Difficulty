@@ -31,6 +31,7 @@ public final class SaveKey {
     public static final String QUILT_FOLDED = "quiltFolded";
     public static final String WATER_DRUNK = "waterDrunk";
     public static final String TEETH_BRUSHED = "teethBrushed";
+    public static final String SHOES_WORN = "shoesWorn";
     public static final String PLAYER_ON_BED_COLLIDER = "playerOnBedCollider";
 
     public static final String ROOM_LIVING_ROOM_REVEALED = "room_LIVING_ROOM_revealed";

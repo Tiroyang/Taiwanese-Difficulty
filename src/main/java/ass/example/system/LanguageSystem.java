@@ -351,16 +351,22 @@ public class LanguageSystem {
         enUs.put("story.house.openDoor", "Open Door");
         enUs.put("story.house.closeDoor", "Close Door");
 
+        zhTw.put("story.house.wearShoes", "穿鞋");
+        zhTw.put("story.house.takeOffShoes", "脫鞋");
+
+        enUs.put("story.house.wearShoes", "Put on shoes");
+        enUs.put("story.house.takeOffShoes", "Take off shoes");
+
         // Quest
         zhTw.put("quest.fold_quilt", "摺好被子");
         zhTw.put("quest.brush_teeth", "刷牙");
         zhTw.put("quest.talk_to_mom", "跟媽媽講話");
-        zhTw.put("quest.wear_shoes", "穿鞋");
+        zhTw.put("quest.wear_shoes", "穿上鞋子");
 
         enUs.put("quest.fold_quilt", "Fold the quilt");
         enUs.put("quest.brush_teeth", "Brush your teeth");
         enUs.put("quest.talk_to_mom", "Talk to mom");
-        enUs.put("quest.enter_living_room", "Wear shoes");
+        enUs.put("quest.wear_shoes", "Put on shoes");
 
         // Mini Game
         zhTw.put("pause.save.disabled", "此模式無法使用存檔功能。");
@@ -428,7 +434,7 @@ public class LanguageSystem {
         enUs.put("death.FALLING_HELI.subtitle", "Nothing weird these days.");
 
         zhTw.put("death.JUMPED_IN_BATHTUB.title", "在浴缸裡滑倒");
-        zhTw.put("death.JUMPED_IN_BATHTUB.subtitle", "你也要泡酒是吧。");
+        zhTw.put("death.JUMPED_IN_BATHTUB.subtitle", "要泡蛇酒是嗎？");
 
         enUs.put("death.JUMPED_IN_BATHTUB.title", "SLIPPED IN THE BATHTUB");
         enUs.put("death.JUMPED_IN_BATHTUB.subtitle", "Final Destination Side Story - Granny's Bathtub");
@@ -438,6 +444,18 @@ public class LanguageSystem {
 
         enUs.put("death.LEFT_WITHOUT_BRUSHING_TEETH.title", "FORGET TO BRUSH TEETH");
         enUs.put("death.LEFT_WITHOUT_BRUSHING_TEETH.subtitle", "I guess it starts from a quarter to one.");
+
+        zhTw.put("death.ENTER_LIVING_ROOM_WITH_SHOES.title", "穿鞋在室內亂跑被制裁");
+        zhTw.put("death.ENTER_LIVING_ROOM_WITH_SHOES.subtitle", "被管家活活打斷雙腿。");
+
+        enUs.put("death.ENTER_LIVING_ROOM_WITH_SHOES.title", "WANDERING AROUND THE HOUSE WITH SHOES ON");
+        enUs.put("death.ENTER_LIVING_ROOM_WITH_SHOES.subtitle", "Sent to Jesus by Mom.");
+
+        zhTw.put("death.LOCK_YOURSELF_IN_THE_CLOSET.title", "把自己關在衣櫃");
+        zhTw.put("death.LOCK_YOURSELF_IN_THE_CLOSET.subtitle", "衣櫃並不能免於核爆，冰箱也不行。");
+
+        enUs.put("death.LOCK_YOURSELF_IN_THE_CLOSET.title", "TRAP YOURSELF IN THE CLOSET");
+        enUs.put("death.LOCK_YOURSELF_IN_THE_CLOSET.subtitle", "ThE ClOsEt eNdInG Is mY FaVoRiTe!");
     }
 
     public String text(String key) {

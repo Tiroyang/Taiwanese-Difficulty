@@ -90,6 +90,20 @@ public enum DeathReason {
             "death.LEFT_WITHOUT_BRUSHING_TEETH.title",
             "death.LEFT_WITHOUT_BRUSHING_TEETH.subtitle",
             null
+    ),
+
+    ENTER_LIVING_ROOM_WITH_SHOES(
+            "ENTER_LIVING_ROOM_WITH_SHOES",
+            "death.ENTER_LIVING_ROOM_WITH_SHOES.title",
+            "death.ENTER_LIVING_ROOM_WITH_SHOES.subtitle",
+            null
+    ),
+
+    LOCK_YOURSELF_IN_THE_CLOSET(
+            "LOCK_YOURSELF_IN_THE_CLOSET",
+            "death.LOCK_YOURSELF_IN_THE_CLOSET.title",
+            "death.LOCK_YOURSELF_IN_THE_CLOSET.subtitle",
+            null
     );
 
     private final String id;

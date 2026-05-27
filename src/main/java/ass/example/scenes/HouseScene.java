@@ -452,6 +452,19 @@ public class HouseScene {
                 .put("promptOffsetY", 50.0)
                 .put("audioSystem", audioSystem));
 
+        // Shoe Cabinet
+        Entity shoeCabinet = spawn("shoe_cabinet", new SpawnData(0, 0));
+
+        spawn("shoe_trigger", new SpawnData(132, 371)
+                .put("width", 342.0)
+                .put("height", 322.0)
+                .put("visual", shoeCabinet)
+                .put("player", player)
+                .put("interactRange", 180.0)
+                .put("promptOnEntity", true)
+                .put("promptOffsetY", 50.0)
+                .put("audioSystem", audioSystem));
+
         // VISUALS
         spawn("cabinet", 0, 0);
     }
@@ -493,6 +506,16 @@ public class HouseScene {
     public void applySavedState() {
         applyRoomCoverState();
         applyPropsState();
+
+        getGameWorld()
+                .getEntitiesCopy()
+                .forEach(entity -> {
+                    for (Component component : entity.getComponents()) {
+                        if (component instanceof LoadSaveComponent loadSaveComponent) {
+                            loadSaveComponent.applySavedState();
+                        }
+                    }
+                });
     }
 
     private void applyRoomCoverState() {

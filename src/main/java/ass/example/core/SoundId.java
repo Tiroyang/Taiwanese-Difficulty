@@ -16,7 +16,8 @@ public enum SoundId {
 
     EATING("props/scene1/eating.wav", 0.6),
     BRUSHING_TEETH("props/scene1/brushing_teeth.wav", 1),
-    FOLDING_QUILT("props/scene1/folding_quilt.wav", 1);
+    FOLDING_QUILT("props/scene1/folding_quilt.wav", 1),
+    EQUIP("props/scene1/equip.wav", 1);
 
     private final String fileName;
     private final double builtInVolume;

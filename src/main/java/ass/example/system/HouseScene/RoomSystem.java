@@ -1,5 +1,6 @@
 package ass.example.system.HouseScene;
 
+import ass.example.components.PlayerComponent;
 import ass.example.core.DeathReason;
 import ass.example.core.HouseScene.RoomType;
 import ass.example.system.DeathSystem;
@@ -46,7 +47,8 @@ public class RoomSystem {
 
 
         checkBedroomExit();
-        checkEnterLivingRoom();
+        checkInLivingRoom();
+        checkEnterHallway();
     }
 
     private RoomType getRoomByPlayerX() {
@@ -77,6 +79,14 @@ public class RoomSystem {
         return RoomType.NONE;
     }
 
+    private boolean isPlayerOnGround() {
+        if (player == null || !player.hasComponent(PlayerComponent.class)) {
+            return false;
+        }
+
+        return player.getComponent(PlayerComponent.class).isOnGround();
+    }
+
     private void checkBedroomExit() {
         boolean justLeftBedroom =
                 previousRoom == RoomType.BEDROOM &&
@@ -91,7 +101,7 @@ public class RoomSystem {
         }
     }
 
-    private void checkEnterLivingRoom() {
+    private void checkEnterHallway() {
         boolean justEnteredLivingRoom =
                 previousRoom != RoomType.HALLWAY &&
                         currentRoom == RoomType.HALLWAY;
@@ -105,12 +115,28 @@ public class RoomSystem {
         }
     }
 
+    private void checkInLivingRoom() {
+        boolean inLivingRoom = currentRoom == RoomType.LIVING_ROOM;
+
+        if (!inLivingRoom) {
+            return;
+        }
+
+        if (getb("shoesWorn") && isPlayerOnGround()) {
+            triggerDeathBecauseWanderInRoomWithShoes();
+        }
+    }
+
     private void triggerDeathBecauseQuiltNotFolded() {
         deathSystem.die(DeathReason.LEFT_BEDROOM_WITHOUT_FOLDING_QUILT);
     }
 
     private void triggerDeathBecauseDidNotBrushTeeth() {
         deathSystem.die(DeathReason.LEFT_WITHOUT_BRUSHING_TEETH);
+    }
+
+    private void triggerDeathBecauseWanderInRoomWithShoes() {
+        deathSystem.die(DeathReason.ENTER_LIVING_ROOM_WITH_SHOES);
     }
 
     public RoomType getCurrentRoom() {

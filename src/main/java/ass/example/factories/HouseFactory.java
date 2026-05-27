@@ -364,7 +364,7 @@ public class HouseFactory implements EntityFactory {
                         promptOnEntity,
                         promptOffsetY
                 ))
-                .zIndex(30)
+                .zIndex(1000)
                 .build();
     }
 
@@ -431,6 +431,70 @@ public class HouseFactory implements EntityFactory {
                         promptOnEntity,
                         promptOffsetY,
                         () -> !getb("teethBrushed")
+                ))
+                .zIndex(1000)
+                .build();
+    }
+
+    @Spawns("shoe_cabinet")
+    public Entity newShoeCabinet(SpawnData data) {
+        return entityBuilder(data)
+                .type(EntityType.PROP)
+                .view("/Scene1/props/Shoes.png")
+                .zIndex(-5)
+                .build();
+    }
+
+    @Spawns("shoe_trigger")
+    public Entity newShoeTrigger(SpawnData data) {
+        Entity shoeVisual = data.get("visual");
+        Entity player = data.get("player");
+
+        double width = data.get("width");
+        double height = data.get("height");
+
+        double interactRange = data.hasKey("interactRange")
+                ? data.get("interactRange")
+                : 180.0;
+
+        boolean promptOnEntity = data.hasKey("promptOnEntity")
+                ? data.get("promptOnEntity")
+                : true;
+
+        double promptOffsetY = data.hasKey("promptOffsetY")
+                ? data.get("promptOffsetY")
+                : 45.0;
+
+        AudioSystem audioSystem = data.hasKey("audioSystem")
+                ? data.get("audioSystem")
+                : AudioSystem.getInstance();
+
+        String defaultTexture = "Scene1/props/Shoes.png";
+        String wornTexture = "Scene1/props/Shoes_worn.png";
+
+        ShoeComponent shoeComponent = new ShoeComponent(
+                shoeVisual,
+                player,
+                defaultTexture,
+                wornTexture,
+                audioSystem
+        );
+
+        return entityBuilder(data)
+                .type(EntityType.INTERACTABLE)
+                .bbox(new HitBox(BoundingShape.box(width, height)))
+                .view(Main.devMode
+                        ? new Rectangle(width, height, Color.rgb(255, 255, 0, 0.35))
+                        : new Rectangle(0, 0, Color.TRANSPARENT))
+                .with(shoeComponent)
+                .with(new InteractableComponent(
+                        () -> shoeComponent.isWorn()
+                                ? "story.house.takeOffShoes"
+                                : "story.house.wearShoes",
+                        shoeComponent::toggle,
+                        interactRange,
+                        promptOnEntity,
+                        promptOffsetY
                 ))
                 .zIndex(1000)
                 .build();

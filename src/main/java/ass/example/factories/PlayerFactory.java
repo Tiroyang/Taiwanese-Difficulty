@@ -61,15 +61,29 @@ public class PlayerFactory implements EntityFactory {
         Image dashl0 = image("characters/player/dashl1.png");
         Image dashl1 = image("characters/player/dashl2.png");
         Image dead = image("characters/player/dead.png");
+        Image standShoeless = image("characters/player/stand_shoeless.png");
+        Image walkr0Shoeless = image("characters/player/walkr1_shoeless.png");
+        Image walkr1Shoeless = image("characters/player/walkr2_shoeless.png");
+        Image walkr2Shoeless = image("characters/player/walkr3_shoeless.png");
+        Image walkl0Shoeless = image("characters/player/walkl1_shoeless.png");
+        Image walkl1Shoeless = image("characters/player/walkl2_shoeless.png");
+        Image walkl2Shoeless = image("characters/player/walkl3_shoeless.png");
+        Image dashr0Shoeless = image("characters/player/dashr1_shoeless.png");
+        Image dashr1Shoeless = image("characters/player/dashr2_shoeless.png");
+        Image dashl0Shoeless = image("characters/player/dashl1_shoeless.png");
+        Image dashl1Shoeless = image("characters/player/dashl2_shoeless.png");
 
         ImageView playerView = new ImageView(stand);
+        playerView.setFitHeight(242);
+        playerView.setPreserveRatio(true);
+        playerView.setSmooth(false);
 
         /*
          * 碰撞箱依角色實際大小調整。
          */
-        double bodyOffsetX = 13;
+        double bodyOffsetX = 50;
         double bodyOffsetY = 0;
-        double bodyWidth = 41;
+        double bodyWidth = 39;
         double bodyHeight = 242;
 
         return entityBuilder(data)
@@ -85,10 +99,15 @@ public class PlayerFactory implements EntityFactory {
                 .with(new PlayerComponent(
                         playerView,
                         stand,
-                        new Image[]{walkr0, walkr1, walkr2},
-                        new Image[]{walkl0, walkl1, walkl2},
+                        new Image[]{walkr0, walkr1, walkr2, walkr1},
+                        new Image[]{walkl0, walkl1, walkl2, walkl1},
                         new Image[]{dashr0, dashr1},
                         new Image[]{dashl0, dashl1},
+                        standShoeless,
+                        new Image[]{walkr0Shoeless, walkr1Shoeless, walkr2Shoeless, walkr1Shoeless},
+                        new Image[]{walkl0Shoeless, walkl1Shoeless, walkl2Shoeless, walkl1Shoeless},
+                        new Image[]{dashr0Shoeless, dashr1Shoeless},
+                        new Image[]{dashl0Shoeless, dashl1Shoeless},
                         dead
                 ))
                 .zIndex(0)

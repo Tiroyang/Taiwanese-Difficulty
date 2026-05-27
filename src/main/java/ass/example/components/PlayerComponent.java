@@ -34,6 +34,14 @@ public class PlayerComponent extends Component {
     private final Image[] dashRightImages;
     private final Image deadImage;
 
+    private boolean shoesWorn = true;
+
+    private final Image standShoelessImage;
+    private final Image[] walkRightShoelessImages;
+    private final Image[] walkLeftShoelessImages;
+    private final Image[] dashRightShoelessImages;
+    private final Image[] dashLeftShoelessImages;
+
     // Control State
     private boolean controlEnabled = true;
 
@@ -117,19 +125,35 @@ public class PlayerComponent extends Component {
     // Constructor
     public PlayerComponent(
             ImageView playerView,
+
             Image standImage,
             Image[] walkRightImages,
             Image[] walkLeftImages,
             Image[] dashRightImages,
             Image[] dashLeftImages,
+
+            Image standShoelessImage,
+            Image[] walkRightShoelessImages,
+            Image[] walkLeftShoelessImages,
+            Image[] dashRightShoelessImages,
+            Image[] dashLeftShoelessImages,
+
             Image deadImage
     ) {
         this.playerView = playerView;
+
         this.standImage = standImage;
         this.walkRightImages = walkRightImages;
         this.walkLeftImages = walkLeftImages;
         this.dashRightImages = dashRightImages;
         this.dashLeftImages = dashLeftImages;
+
+        this.standShoelessImage = standShoelessImage;
+        this.walkRightShoelessImages = walkRightShoelessImages;
+        this.walkLeftShoelessImages = walkLeftShoelessImages;
+        this.dashRightShoelessImages = dashRightShoelessImages;
+        this.dashLeftShoelessImages = dashLeftShoelessImages;
+
         this.deadImage = deadImage;
     }
 
@@ -139,8 +163,10 @@ public class PlayerComponent extends Component {
         createGroundSensor();
         createDashChargeUI();
 
+        shoesWorn = getb("shoesWorn");
+
         visualState = PlayerVisualState.STAND;
-        setPlayerImage(standImage);
+        setPlayerImage(shoesWorn ? standImage : standShoelessImage);
     }
 
     @Override
@@ -340,7 +366,7 @@ public class PlayerComponent extends Component {
             return;
         }
 
-        if (currentDirection == Direction.NONE && !dashing) {
+        if (currentDirection == Direction.NONE) {
             showStandImage();
             isWalking = false;
             walkAnimTimer = 0;
@@ -352,10 +378,14 @@ public class PlayerComponent extends Component {
         PlayerVisualState targetState;
 
         if (currentDirection == Direction.RIGHT) {
-            currentImages = dashing ? dashRightImages : walkRightImages;
+            currentImages = shoesWorn
+                    ? (dashing ? dashRightImages : walkRightImages)
+                    : (dashing ? dashRightShoelessImages : walkRightShoelessImages);
             targetState = PlayerVisualState.WALK_RIGHT;
         } else {
-            currentImages = dashing ? dashLeftImages : walkLeftImages;
+            currentImages = shoesWorn
+                    ? (dashing ? dashLeftImages : walkLeftImages)
+                    : (dashing ? dashLeftShoelessImages : walkLeftShoelessImages);
             targetState = PlayerVisualState.WALK_LEFT;
         }
 
@@ -393,6 +423,26 @@ public class PlayerComponent extends Component {
         }
     }
 
+    public void setShoesWorn(boolean shoesWorn) {
+        this.shoesWorn = shoesWorn;
+
+        if (visualState == PlayerVisualState.DEAD) {
+            return;
+        }
+
+        if (currentDirection == Direction.NONE) {
+            showStandImage();
+        } else {
+            visualState = PlayerVisualState.STAND;
+            walkFrameIndex = 0;
+            walkAnimTimer = 0;
+        }
+    }
+
+    public boolean isShoesWorn() {
+        return shoesWorn;
+    }
+
     /**
      * 設定站立圖
      */
@@ -406,7 +456,7 @@ public class PlayerComponent extends Component {
         }
 
         visualState = PlayerVisualState.STAND;
-        setPlayerImage(standImage);
+        setPlayerImage(shoesWorn ? standImage : standShoelessImage);
     }
 
     //
@@ -707,8 +757,9 @@ public class PlayerComponent extends Component {
             updateGroundSensorPosition();
         }
 
+        shoesWorn = getb("shoesWorn");
         visualState = PlayerVisualState.STAND;
-        setPlayerImage(standImage);
+        setPlayerImage(shoesWorn ? standImage : standShoelessImage);
 
         refreshGroundContacts();
 

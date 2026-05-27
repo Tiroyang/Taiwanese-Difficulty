@@ -142,7 +142,7 @@ public class SaveSystem {
         String sceneTypeName = bundle.get(SaveKey.SCENE_TYPE);
         SceneType sceneType = SceneType.valueOf(sceneTypeName);
 
-        sceneManager.loadSceneByType(sceneType);
+        sceneManager.loadSceneByTypeFromSave(sceneType);
 
         sceneManager.resetCurrentSceneRuntimeSystems();
 
@@ -175,6 +175,7 @@ public class SaveSystem {
         putBoolIfExists(bundle, SaveKey.QUILT_FOLDED);
         putBoolIfExists(bundle, SaveKey.WATER_DRUNK);
         putBoolIfExists(bundle, SaveKey.TEETH_BRUSHED);
+        putBoolIfExists(bundle, SaveKey.SHOES_WORN);
         putBoolIfExists(bundle, SaveKey.PLAYER_ON_BED_COLLIDER);
 
         putBoolIfExists(bundle, SaveKey.ROOM_LIVING_ROOM_REVEALED);
@@ -190,6 +191,7 @@ public class SaveSystem {
         setBoolIfExists(bundle, SaveKey.QUILT_FOLDED);
         setBoolIfExists(bundle, SaveKey.WATER_DRUNK);
         setBoolIfExists(bundle, SaveKey.TEETH_BRUSHED);
+        setBoolIfExists(bundle, SaveKey.SHOES_WORN);
         setBoolIfExists(bundle, SaveKey.PLAYER_ON_BED_COLLIDER);
 
         setBoolIfExists(bundle, SaveKey.ROOM_LIVING_ROOM_REVEALED);

@@ -100,11 +100,11 @@ public class Main extends GameApplication {
 
         if (SceneManager.hasPendingStartScene()) {
             SceneType sceneType = SceneManager.consumePendingStartScene();
-            sceneManager.loadSceneByType(sceneType);
+            sceneManager.loadSceneByTypeForNewGame(sceneType);
             return;
         }
 
-        sceneManager.loadHouseScene();
+        sceneManager.loadHouseSceneForNewGame();
     }
 
     @Override
@@ -215,6 +215,7 @@ public class Main extends GameApplication {
         vars.put("quiltFolded", false);
         vars.put("waterDrunk", false);
         vars.put("teethBrushed", false);
+        vars.put("shoesWorn", false);
         vars.put("playerOnBedCollider", false);
 
         vars.put("room_LIVING_ROOM_revealed", false);

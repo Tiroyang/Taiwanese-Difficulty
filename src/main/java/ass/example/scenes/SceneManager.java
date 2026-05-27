@@ -100,22 +100,33 @@ public class SceneManager {
         pendingStartSceneType = null;
     }
 
-    public void loadSceneByType(SceneType sceneType) {
+    public void loadSceneByTypeFromSave(SceneType sceneType) {
         switch (sceneType) {
-            case HOUSE -> loadHouseScene();
-
-            // MiniGame
-            case STREET_ENDLESS -> loadStreetEndlessScene();
-
-
-            default -> loadHouseScene();
+            case HOUSE -> loadHouseSceneFromSave();
+            default -> loadHouseSceneFromSave();
         }
+    }
+
+    public void loadSceneByTypeForNewGame(SceneType sceneType) {
+        switch (sceneType) {
+            case HOUSE -> loadHouseSceneForNewGame();
+            case STREET_ENDLESS -> loadStreetEndlessScene();
+            default -> loadHouseSceneForNewGame();
+        }
+    }
+
+    public void loadHouseSceneForNewGame() {
+        loadHouseScene(false);
+    }
+
+    public void loadHouseSceneFromSave() {
+        loadHouseScene(true);
     }
 
     /**
      * 載入家中場景。
      */
-    public void loadHouseScene() {
+    public void loadHouseScene(boolean fromSave) {
         currentSceneType = SceneType.HOUSE;
 
         if (!SaveRequestSystem.hasPendingLoadSlot()) {
@@ -130,15 +141,14 @@ public class SceneManager {
                 true
         );
 
-        /*
-         * 一般故事場景：
-         * 允許存檔、允許成就。
-         */
         set("saveDisabled", false);
         set("achievementDisabled", false);
         set("playerDead", false);
         set("lastDeathReason", "");
         set("playerOnBedCollider", false);
+        if (!fromSave) {
+            set("shoesWorn", false);
+        }
 
         SceneConfig homeConfig = getCurrentSceneConfig();
 
@@ -169,6 +179,8 @@ public class SceneManager {
         set("streetBestDistanceBeforeRun", StreetEndlessRecordSystem.getInstance().getBestDistance());
         set("streetBestDistance", StreetEndlessRecordSystem.getInstance().getBestDistance());
         set("streetNewRecord", false);
+
+        set("shoesWorn", true);
 
         SceneConfig config = getCurrentSceneConfig();
 
@@ -286,6 +298,7 @@ public class SceneManager {
             return;
         }
 
+        resetCurrentSceneStateForRespawn();
 
         clearDeathStateForLoad();
 
@@ -328,6 +341,31 @@ public class SceneManager {
         if (deathSystem != null) {
             deathSystem.restoreDeathFromSave(reason);
         }
+    }
+
+    public void resetCurrentSceneStateForRespawn() {
+        if (currentSceneType == SceneType.HOUSE) {
+            resetHouseSceneStateForRespawn();
+            return;
+        }
+    }
+
+    private void resetHouseSceneStateForRespawn() {
+        /*
+         * HouseScene 死亡重生時，鞋子重置為未穿。
+         */
+        set("shoesWorn", false);
+
+        /*
+         * 讓鞋櫃、門、被子、水等有 LoadSaveComponent 的物件
+         * 根據目前 vars 重新刷新外觀。
+         *
+         * shoesWorn=false 後，ShoeComponent.applySavedState()
+         * 應該會把鞋櫃外觀恢復成 Shoes.png。
+         */
+        applySavedState();
+
+        refreshPlayerGroundContacts();
     }
 
     /**
