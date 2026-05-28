@@ -10,6 +10,9 @@ public enum SoundId {
 
     DEATH("characters/player/death.wav", 1),
     FOOTSTEP("characters/player/footstep.wav", 1),
+    JUMP("characters/player/jump.wav", 0.8),
+
+    DIALOG_BLIP("characters/dialog_blip.wav", 1),
 
     DOOR_OPEN("props/scene1/door_open.wav", 1),
     DOOR_CLOSE("props/scene1/door_close.wav", 1),

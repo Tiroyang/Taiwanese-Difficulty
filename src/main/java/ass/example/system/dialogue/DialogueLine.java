@@ -17,6 +17,8 @@ public class DialogueLine {
     private final String nextId;
     private final boolean endDialogue;
 
+    private Runnable onFinish;
+
     private final List<DialogueButton> buttons = new ArrayList<>();
 
     public DialogueLine(
@@ -37,6 +39,17 @@ public class DialogueLine {
         this.allowClickNext = allowClickNext;
         this.nextId = nextId;
         this.endDialogue = endDialogue;
+    }
+
+    public DialogueLine onFinish(Runnable onFinish) {
+        this.onFinish = onFinish;
+        return this;
+    }
+
+    public void runOnFinish() {
+        if (onFinish != null) {
+            onFinish.run();
+        }
     }
 
     public DialogueLine addButton(DialogueButton button) {

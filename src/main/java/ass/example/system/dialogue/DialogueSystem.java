@@ -1,7 +1,10 @@
 package ass.example.system.dialogue;
 
 import ass.example.components.PlayerComponent;
+import ass.example.core.QuestType;
 import ass.example.system.MusicSystem;
+import ass.example.system.quest.QuestSystem;
+import ass.example.ui.DialogueUI;
 import com.almasb.fxgl.entity.Entity;
 
 import java.util.HashMap;
@@ -32,68 +35,71 @@ public class DialogueSystem {
 
     private void registerDialogues() {
         /*
-         * 範例：媽媽第一次對話。
-         * 之後你可以把這裡拆到 DialogueDatabase，但目前先不需要新增太多檔案。
+         * 之後拆到 DialogueDatabase 。
          */
-        lines.put("mom_intro_001", new DialogueLine(
-                "mom_intro_001",
-                "/assets/textures/dialogue/mom_default.png",
-                "/assets/textures/dialogue/mom_speaking.png",
+        lines.put("mom_001", new DialogueLine(
+                "mom_001",
+                "/assets/textures/characters/mom/mom_default.png",
+                "/assets/textures/characters/mom/mom_speaking.png",
                 "媽媽",
-                "你是不是又想穿著鞋子在客廳裡亂跑？",
+                "崽，你還在玩那些尪仔喔。",
                 true,
-                "mom_intro_002",
+                "mom_002",
                 false
         ));
 
-        lines.put("mom_intro_002", new DialogueLine(
-                "mom_intro_002",
-                "/assets/textures/dialogue/mom_default.png",
-                "/assets/textures/dialogue/mom_speaking.png",
+        DialogueLine mom_002 = new DialogueLine(
+                "mom_002",
+                "/assets/textures/characters/mom/mom.png",
+                "/assets/textures/characters/mom/mom_speaking.png",
                 "媽媽",
-                "先去把該做的事情做完，再來想出門。",
-                true,
-                "mom_intro_choice",
-                false
-        ));
-
-        DialogueLine choice = new DialogueLine(
-                "mom_intro_choice",
-                "/assets/textures/dialogue/mom_default.png",
-                "/assets/textures/dialogue/mom_speaking.png",
-                "媽媽",
-                "聽懂了嗎？",
+                "休息一下吧，去幫我買個東西好不好。",
                 false,
                 null,
                 false
         );
+        mom_002.addButton(new DialogueButton("好", () -> goToLine("mom_003_1")));
+        mom_002.addButton(new DialogueButton("煩耶", () -> goToLine("mom_003_2")));
+        lines.put("mom_002", mom_002);
 
-        choice.addButton(new DialogueButton("知道了", () -> goToLine("mom_intro_end")));
-        choice.addButton(new DialogueButton("假裝沒聽到", () -> goToLine("mom_intro_angry")));
-
-        lines.put("mom_intro_choice", choice);
-
-        lines.put("mom_intro_angry", new DialogueLine(
-                "mom_intro_angry",
-                "/assets/textures/dialogue/mom_default.png",
-                "/assets/textures/dialogue/mom_speaking.png",
+        lines.put("mom_003_1", new DialogueLine(
+                "mom_003_1",
+                "/assets/textures/characters/mom/mom.png",
+                "/assets/textures/characters/mom/mom_speaking.png",
                 "媽媽",
-                "你再裝傻看看。",
-                true,
-                "mom_intro_end",
-                false
-        ));
-
-        lines.put("mom_intro_end", new DialogueLine(
-                "mom_intro_end",
-                "/assets/textures/dialogue/mom_default.png",
-                "/assets/textures/dialogue/mom_speaking.png",
-                "媽媽",
-                "去吧。",
+                "幫我去買一打雞蛋、兩支青蔥跟一顆高麗菜。",
                 true,
                 null,
                 true
+        ).onFinish(() -> {
+            QuestSystem.getInstance().completeQuest(QuestType.TALK_TO_MOM);
+        }));
+
+        lines.put("mom_003_2", new DialogueLine(
+                "mom_003_2",
+                "/assets/textures/characters/mom/mom_rage.png",
+                "/assets/textures/characters/mom/mom_rage_speaking.png",
+                "媽媽",
+                "我才講你兩句，你就說我煩，翅膀硬了是不是？",
+                true,
+                "mom_004_2",
+                false
         ));
+
+        DialogueLine mom_004_2 = new DialogueLine(
+                "mom_004_2",
+                "/assets/textures/characters/mom/mom_rage.png",
+                "/assets/textures/characters/mom/mom_rage_speaking.png",
+                null,
+                "媽媽看起來好像有點生氣了。",
+                false,
+                null,
+                false
+        );
+        mom_002.addButton(new DialogueButton("戰鬥", this::endDialogue));
+        mom_002.addButton(new DialogueButton("跳舞", this::endDialogue));
+        mom_002.addButton(new DialogueButton("逃跑", this::endDialogue));
+        lines.put("mom_002", mom_002);
     }
 
     public void startDialogue(
@@ -157,6 +163,7 @@ public class DialogueSystem {
         }
 
         if (currentLine.isEndDialogue()) {
+            currentLine.runOnFinish();
             endDialogue();
             return;
         }
@@ -164,6 +171,7 @@ public class DialogueSystem {
         String nextId = currentLine.getNextId();
 
         if (nextId == null || nextId.isBlank()) {
+            currentLine.runOnFinish();
             endDialogue();
             return;
         }

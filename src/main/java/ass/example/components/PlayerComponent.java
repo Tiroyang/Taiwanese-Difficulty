@@ -15,6 +15,8 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 
+import java.awt.*;
+
 import static com.almasb.fxgl.dsl.FXGL.*;
 
 public class PlayerComponent extends Component {
@@ -495,6 +497,9 @@ public class PlayerComponent extends Component {
         if (!isOnGround()) {
             return;
         }
+
+        audioSystem.playSFX(SoundId.JUMP);
+        System.out.println("Jump sound played");
 
         isJumping = true;
         jumpHoldTimer = 0;
