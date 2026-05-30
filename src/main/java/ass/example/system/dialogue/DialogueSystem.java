@@ -1,15 +1,25 @@
 package ass.example.system.dialogue;
 
 import ass.example.components.PlayerComponent;
+import ass.example.core.DeathReason;
 import ass.example.core.QuestType;
+import ass.example.core.SoundId;
+import ass.example.system.AudioSystem;
+import ass.example.system.DeathSystem;
 import ass.example.system.MusicSystem;
 import ass.example.system.quest.QuestSystem;
 import ass.example.ui.DialogueUI;
+import ass.example.ui.MomBattleMiniGame;
 import com.almasb.fxgl.entity.Entity;
+import javafx.animation.PauseTransition;
+import javafx.util.Duration;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
+import static ass.example.core.DeathReason.MOM_DANCE_OFF;
 import static com.almasb.fxgl.dsl.FXGL.*;
 
 public class DialogueSystem {
@@ -29,6 +39,9 @@ public class DialogueSystem {
 
     private boolean active = false;
 
+    private final AudioSystem audioSystem = AudioSystem.getInstance();
+    private final DeathSystem deathSystem = DeathSystem.getInstance();
+
     private DialogueSystem() {
         registerDialogues();
     }
@@ -39,10 +52,10 @@ public class DialogueSystem {
          */
         lines.put("mom_001", new DialogueLine(
                 "mom_001",
-                "/assets/textures/characters/mom/mom_default.png",
-                "/assets/textures/characters/mom/mom_speaking.png",
-                "媽媽",
-                "崽，你還在玩那些尪仔喔。",
+                "/assets/textures/characters/mom/mom_chat.png",
+                "/assets/textures/characters/mom/mom_chat_speak.png",
+                "dialog.character.mom",
+                "dialog.mom.001",
                 true,
                 "mom_002",
                 false
@@ -50,24 +63,24 @@ public class DialogueSystem {
 
         DialogueLine mom_002 = new DialogueLine(
                 "mom_002",
-                "/assets/textures/characters/mom/mom.png",
-                "/assets/textures/characters/mom/mom_speaking.png",
-                "媽媽",
-                "休息一下吧，去幫我買個東西好不好。",
+                "/assets/textures/characters/mom/mom_chat.png",
+                "/assets/textures/characters/mom/mom_chat_speak.png",
+                "dialog.character.mom",
+                "dialog.mom.002",
                 false,
                 null,
                 false
         );
-        mom_002.addButton(new DialogueButton("好", () -> goToLine("mom_003_1")));
-        mom_002.addButton(new DialogueButton("煩耶", () -> goToLine("mom_003_2")));
+        mom_002.addButton(new DialogueButton("dialog.mom.option.1.1", () -> goToLine("mom_003_1")));
+        mom_002.addButton(new DialogueButton("dialog.mom.option.1.2", () -> goToLine("mom_003_2")));
         lines.put("mom_002", mom_002);
 
         lines.put("mom_003_1", new DialogueLine(
                 "mom_003_1",
-                "/assets/textures/characters/mom/mom.png",
-                "/assets/textures/characters/mom/mom_speaking.png",
-                "媽媽",
-                "幫我去買一打雞蛋、兩支青蔥跟一顆高麗菜。",
+                "/assets/textures/characters/mom/mom_chat.png",
+                "/assets/textures/characters/mom/mom_chat_speak.png",
+                "dialog.character.mom",
+                "dialog.mom.003.1",
                 true,
                 null,
                 true
@@ -77,10 +90,10 @@ public class DialogueSystem {
 
         lines.put("mom_003_2", new DialogueLine(
                 "mom_003_2",
-                "/assets/textures/characters/mom/mom_rage.png",
-                "/assets/textures/characters/mom/mom_rage_speaking.png",
-                "媽媽",
-                "我才講你兩句，你就說我煩，翅膀硬了是不是？",
+                "/assets/textures/characters/mom/mom_chat_rage.png",
+                "/assets/textures/characters/mom/mom_chat_rage_speak.png",
+                "dialog.character.mom",
+                "dialog.mom.003.2",
                 true,
                 "mom_004_2",
                 false
@@ -88,18 +101,18 @@ public class DialogueSystem {
 
         DialogueLine mom_004_2 = new DialogueLine(
                 "mom_004_2",
-                "/assets/textures/characters/mom/mom_rage.png",
-                "/assets/textures/characters/mom/mom_rage_speaking.png",
+                "/assets/textures/characters/mom/mom_chat_rage.png",
+                "/assets/textures/characters/mom/mom_chat_rage_speak.png",
                 null,
-                "媽媽看起來好像有點生氣了。",
+                "dialog.mom.004.2",
                 false,
                 null,
                 false
         );
-        mom_002.addButton(new DialogueButton("戰鬥", this::endDialogue));
-        mom_002.addButton(new DialogueButton("跳舞", this::endDialogue));
-        mom_002.addButton(new DialogueButton("逃跑", this::endDialogue));
-        lines.put("mom_002", mom_002);
+        mom_004_2.addButton(new DialogueButton("dialog.mom.option.2.1", this::startMomBattleMiniGame));
+        mom_004_2.addButton(new DialogueButton("dialog.mom.option.2.2", this::callMomDanceOff));
+        mom_004_2.addButton(new DialogueButton("dialog.mom.option.2.3", this::endDialogue));
+        lines.put("mom_004_2", mom_004_2);
     }
 
     public void startDialogue(
@@ -180,6 +193,10 @@ public class DialogueSystem {
     }
 
     public void endDialogue() {
+        endDialogue(0, null);
+    }
+
+    private void endDialogue(double delaySeconds, Runnable afterEnd) {
         if (!active) {
             return;
         }
@@ -191,20 +208,35 @@ public class DialogueSystem {
             dialogueUI = null;
         }
 
-        enablePlayerControl();
+        Runnable finishEndDialogue = () -> {
+            enablePlayerControl();
 
-        /*
-         * 對話結束後，播回場景 BGM。
-         * 如果你希望回到原本播放秒數，要再擴充 MusicSystem 記錄 current time。
-         */
-        if (sceneBgmPath != null && !sceneBgmPath.isBlank()) {
-            MusicSystem.getInstance().playBGM(sceneBgmPath, true);
-        } else {
-            MusicSystem.getInstance().resumeBGM();
+            /*
+             * 對話結束後，播回場景 BGM。
+             * 如果你希望回到原本播放秒數，要再擴充 MusicSystem 記錄 current time。
+             */
+            if (sceneBgmPath != null && !sceneBgmPath.isBlank()) {
+                MusicSystem.getInstance().playBGM(sceneBgmPath, true);
+            } else {
+                MusicSystem.getInstance().resumeBGM();
+            }
+
+            player = null;
+            sceneBgmPath = null;
+
+            if (afterEnd != null) {
+                afterEnd.run();
+            }
+        };
+
+        if (delaySeconds <= 0) {
+            finishEndDialogue.run();
+            return;
         }
 
-        player = null;
-        sceneBgmPath = null;
+        PauseTransition wait = new PauseTransition(Duration.seconds(delaySeconds));
+        wait.setOnFinished(e -> finishEndDialogue.run());
+        wait.play();
     }
 
     private void disablePlayerControl() {
@@ -235,5 +267,25 @@ public class DialogueSystem {
 
     public boolean isActive() {
         return active;
+    }
+
+    private void startMomBattleMiniGame() {
+        MomBattleMiniGame layer = new MomBattleMiniGame(
+                this,
+                DeathReason.MOM_BATTLE_LOSE_A,
+                DeathReason.MOM_BATTLE_LOSE_B,
+                DeathReason.MOM_BATTLE_LOSE_C
+        );
+
+        addUINode(layer, 0, 0);
+        layer.start();
+    }
+
+    private void callMomDanceOff() {
+        audioSystem.playSFX(SoundId.MOM_DANCE_OFF);
+
+        endDialogue(3.0, () -> {
+            deathSystem.die(MOM_DANCE_OFF);
+        });
     }
 }

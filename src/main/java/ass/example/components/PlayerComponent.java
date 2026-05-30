@@ -499,7 +499,6 @@ public class PlayerComponent extends Component {
         }
 
         audioSystem.playSFX(SoundId.JUMP);
-        System.out.println("Jump sound played");
 
         isJumping = true;
         jumpHoldTimer = 0;

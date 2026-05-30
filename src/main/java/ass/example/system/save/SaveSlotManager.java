@@ -291,6 +291,7 @@ public class SaveSlotManager {
 
         putBool(props, bundle, SaveKey.QUILT_FOLDED, "bundle.quiltFolded");
         putBool(props, bundle, SaveKey.WATER_DRUNK, "bundle.waterDrunk");
+        putBool(props, bundle, SaveKey.TEETH_BRUSHED, "bundle.teethBrushed");
         putBool(props, bundle, SaveKey.PLAYER_ON_BED_COLLIDER, "bundle.playerOnBedCollider");
 
         putBool(props, bundle, SaveKey.ROOM_LIVING_ROOM_REVEALED, "bundle.roomLivingRoomRevealed");
@@ -355,6 +356,7 @@ public class SaveSlotManager {
 
         bundle.put(SaveKey.QUILT_FOLDED, boolValue(props, "bundle.quiltFolded"));
         bundle.put(SaveKey.WATER_DRUNK, boolValue(props, "bundle.waterDrunk"));
+        bundle.put(SaveKey.TEETH_BRUSHED, boolValue(props, "bundle.teethBrushed"));
         bundle.put(SaveKey.PLAYER_ON_BED_COLLIDER, boolValue(props, "bundle.playerOnBedCollider"));
 
         bundle.put(SaveKey.ROOM_LIVING_ROOM_REVEALED, boolValue(props, "bundle.roomLivingRoomRevealed"));

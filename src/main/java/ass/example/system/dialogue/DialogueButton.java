@@ -2,16 +2,16 @@ package ass.example.system.dialogue;
 
 public class DialogueButton {
 
-    private final String text;
+    private final String textKey;
     private final Runnable action;
 
-    public DialogueButton(String text, Runnable action) {
-        this.text = text;
+    public DialogueButton(String textKey, Runnable action) {
+        this.textKey = textKey;
         this.action = action;
     }
 
-    public String getText() {
-        return text;
+    public String getTextKey() {
+        return textKey;
     }
 
     public void run() {

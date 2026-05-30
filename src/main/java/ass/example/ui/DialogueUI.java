@@ -2,6 +2,7 @@ package ass.example.ui;
 
 import ass.example.core.SoundId;
 import ass.example.system.AudioSystem;
+import ass.example.system.LanguageSystem;
 import ass.example.system.dialogue.DialogueButton;
 import ass.example.system.dialogue.DialogueLine;
 import ass.example.system.dialogue.DialogueSystem;
@@ -9,11 +10,16 @@ import javafx.animation.*;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.SnapshotParameters;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.image.WritableImage;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.util.Duration;
@@ -36,7 +42,7 @@ public class DialogueUI extends StackPane {
     private final Rectangle dialogueBoxBg = new Rectangle(980, 168);
 
     private final StackPane nameBox = new StackPane();
-    private final Rectangle nameBoxBg = new Rectangle(220, 46);
+    private final Rectangle nameBoxBg = new Rectangle(110, 46);
     private final Text nameText = new Text();
 
     private final Text dialogueText = new Text();
@@ -49,6 +55,8 @@ public class DialogueUI extends StackPane {
     private boolean typing = false;
     private String fullText = "";
     private int currentCharIndex = 0;
+
+    private final LanguageSystem languageSystem = LanguageSystem.getInstance();
 
     public DialogueUI(DialogueSystem dialogueSystem) {
         this.dialogueSystem = dialogueSystem;
@@ -65,8 +73,8 @@ public class DialogueUI extends StackPane {
         getChildren().addAll(
                 darkOverlay,
                 portraitView,
-                dialogueBox,
                 nameBox,
+                dialogueBox,
                 buttonBox
         );
 
@@ -84,10 +92,14 @@ public class DialogueUI extends StackPane {
         });
     }
 
+    private String text(String key) {
+        return languageSystem.text(key);
+    }
+
     private boolean hasCharacterName(DialogueLine line) {
         return line != null
-                && line.getCharacterName() != null
-                && !line.getCharacterName().isBlank();
+                && line.getCharacterNameKey() != null
+                && !line.getCharacterNameKey().isBlank();
     }
 
     private void setupOverlay() {
@@ -96,29 +108,78 @@ public class DialogueUI extends StackPane {
     }
 
     private void setupPortrait() {
-        portraitView.setFitHeight(560);
+        portraitView.setFitHeight(1000);
         portraitView.setPreserveRatio(true);
         portraitView.setSmooth(false);
         portraitView.setOpacity(0);
+        portraitView.setManaged(false);
 
-        StackPane.setAlignment(portraitView, Pos.BOTTOM_LEFT);
-        StackPane.setMargin(portraitView, new Insets(0, 0, 108, 70));
+        portraitView.setLayoutX(100);
+        portraitView.setLayoutY(50);
+    }
+
+    private ImagePattern createPinkDotPattern() {
+        int size = 50;
+
+        Canvas canvas = new Canvas(size, size);
+        GraphicsContext g = canvas.getGraphicsContext2D();
+
+        g.clearRect(0, 0, size, size);
+
+        /*
+         * 底色：rgba(253,172,203,0.7)
+         */
+        g.setFill(Color.rgb(253, 172, 203, 0.80));
+        g.fillRect(0, 0, size, size);
+
+        /*
+         * 左上粉紅點
+         */
+        g.setFill(Color.rgb(234, 39, 130, 0.10));
+        g.fillOval(0, 0, size * 0.4, size * 0.4);
+
+        /*
+         * 右下粉紅點
+         */
+        g.fillOval(size * 0.5, size * 0.5, size * 0.4, size * 0.4);
+
+        SnapshotParameters params = new SnapshotParameters();
+        params.setFill(Color.TRANSPARENT);
+
+        WritableImage image = new WritableImage(size, size);
+        canvas.snapshot(params, image);
+
+        return new ImagePattern(
+                image,
+                0,
+                0,
+                size,
+                size,
+                false
+        );
     }
 
     private void setupDialogueBox() {
         dialogueBoxBg.setArcWidth(24);
         dialogueBoxBg.setArcHeight(24);
-        dialogueBoxBg.setFill(Color.rgb(0, 0, 0, 0.82));
-        dialogueBoxBg.setStroke(Color.rgb(255, 255, 255, 0.75));
+
+        /*
+         * 重複交錯粉紅斑點背景。
+         */
+        dialogueBoxBg.setFill(createPinkDotPattern());
+
+        dialogueBoxBg.setStroke(Color.WHITE);
         dialogueBoxBg.setStrokeWidth(2.0);
-        dialogueBoxBg.setEffect(new DropShadow(18, Color.rgb(0, 0, 0, 0.85)));
+        dialogueBoxBg.setEffect(new DropShadow(18, Color.rgb(0, 0, 0, 0.35)));
 
         dialogueText.setWrappingWidth(890);
         dialogueText.setStyle("""
-                -fx-font-size: 26px;
-                -fx-fill: white;
-                -fx-font-weight: bold;
-                """);
+        -fx-font-size: 26px;
+        -fx-fill: white;
+        -fx-font-weight: bold;
+        -fx-stroke: black;
+        -fx-stroke-width: 0.4px;
+        """);
         dialogueText.setEffect(new DropShadow(5, Color.BLACK));
 
         StackPane.setAlignment(dialogueText, Pos.TOP_LEFT);
@@ -126,6 +187,7 @@ public class DialogueUI extends StackPane {
 
         dialogueBox.getChildren().addAll(dialogueBoxBg, dialogueText);
         dialogueBox.setPrefSize(980, 168);
+        dialogueBox.setMinSize(980, 168);
         dialogueBox.setMaxSize(980, 168);
 
         StackPane.setAlignment(dialogueBox, Pos.BOTTOM_CENTER);
@@ -135,7 +197,7 @@ public class DialogueUI extends StackPane {
     private void setupNameBox() {
         nameBoxBg.setArcWidth(16);
         nameBoxBg.setArcHeight(16);
-        nameBoxBg.setFill(Color.rgb(213, 105, 16, 0.92));
+        nameBoxBg.setFill(Color.rgb(247, 230, 238, 0.92));
         nameBoxBg.setStroke(Color.WHITE);
         nameBoxBg.setStrokeWidth(1.5);
 
@@ -143,18 +205,20 @@ public class DialogueUI extends StackPane {
                 -fx-font-size: 24px;
                 -fx-fill: white;
                 -fx-font-weight: bold;
+                -fx-stroke: HotPink;
+                -fx-stroke-width: 1.5px;
+                -fx-stroke-type: outside;
                 """);
-        nameText.setEffect(new DropShadow(4, Color.BLACK));
 
         nameBox.getChildren().addAll(nameBoxBg, nameText);
-        nameBox.setPrefSize(220, 46);
-        nameBox.setMaxSize(220, 46);
+        nameBox.setPrefSize(110, 46);
+        nameBox.setMaxSize(110, 46);
 
         /*
          * 名稱框壓在對話框上方偏左。
          */
         StackPane.setAlignment(nameBox, Pos.BOTTOM_LEFT);
-        StackPane.setMargin(nameBox, new Insets(0, 0, 188, 200));
+        StackPane.setMargin(nameBox, new Insets(0, 0, 200, 200));
     }
 
     private void setupButtonBox() {
@@ -181,7 +245,7 @@ public class DialogueUI extends StackPane {
         nameBox.setManaged(hasCharacter);
 
         if (hasCharacter) {
-            nameText.setText(line.getCharacterName());
+            nameText.setText(text(line.getCharacterNameKey()));
         } else {
             nameText.setText("");
         }
@@ -194,7 +258,7 @@ public class DialogueUI extends StackPane {
     }
 
     private void startTypewriter(DialogueLine line) {
-        fullText = line.getText();
+        fullText = text(line.getTextKey());
         currentCharIndex = 0;
         dialogueText.setText("");
 
@@ -207,8 +271,8 @@ public class DialogueUI extends StackPane {
             loadPortrait(line.getSpeakingPortraitPath());
 
             ScaleTransition speakScale = new ScaleTransition(Duration.seconds(0.14), portraitView);
-            speakScale.setToX(1.06);
-            speakScale.setToY(1.06);
+            speakScale.setToX(1.03);
+            speakScale.setToY(1.03);
             speakScale.setInterpolator(Interpolator.EASE_OUT);
             speakScale.play();
         } else {
@@ -343,7 +407,7 @@ public class DialogueUI extends StackPane {
         bg.setStroke(Color.rgb(255, 255, 255, 0.72));
         bg.setStrokeWidth(1.4);
 
-        Text label = new Text(buttonData.getText());
+        Text label = new Text(text(buttonData.getTextKey()));
         label.setStyle("""
                 -fx-font-size: 20px;
                 -fx-fill: white;
@@ -356,7 +420,7 @@ public class DialogueUI extends StackPane {
         button.setPickOnBounds(true);
 
         button.setOnMouseEntered(e -> {
-            bg.setFill(Color.rgb(255, 255, 255, 0.86));
+            bg.setFill(Color.rgb(213, 105, 16, 0.86));
             label.setFill(Color.BLACK);
             audioSystem.playSFX(SoundId.BUTTON_HOVER);
         });

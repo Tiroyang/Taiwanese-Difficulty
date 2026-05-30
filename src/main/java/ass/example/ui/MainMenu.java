@@ -81,19 +81,15 @@ public class MainMenu extends FXGLMenu {
 
             resetToMainMenuFirst();
             playIntroAnimation();
-            musicSystem.playBGMFrom(
-                    "/assets/music/mainmenu/Tom Petty - Love Is A Long Road.mp3",
-                    16.5,
-                    true
-            );
         } else {
             resetToMainMenuSecondary();
-            musicSystem.playBGMFrom(
-                    "/assets/music/mainmenu/Tom Petty - Love Is A Long Road.mp3",
-                    0.0,
-                    true
-            );
         }
+
+        musicSystem.playBGMIntroThenLoop(
+                "/assets/music/mainmenu/Happy Wheels Theme.mp3",
+                1.0,
+                20.5
+        );
     }
 
     @Override
@@ -258,9 +254,9 @@ public class MainMenu extends FXGLMenu {
 
         SequentialTransition seq = new SequentialTransition(
                 bgIntro,
-                new PauseTransition(Duration.seconds(1.5)),
+                // new PauseTransition(Duration.seconds(1.5)),
                 logoPop,
-                new PauseTransition(Duration.seconds(0.13)),
+                // new PauseTransition(Duration.seconds(0.13)),
                 buttonAnim
         );
 
@@ -391,23 +387,6 @@ public class MainMenu extends FXGLMenu {
         page.setCenter(createInfoPanel(text("menu.story"), text("menu.storyMode.description")));
 
         showPage(page);
-    }
-
-    private VBox createSaveList(String title) {
-        VBox box = new VBox(14);
-        box.setPadding(new Insets(40));
-        box.setAlignment(Pos.TOP_LEFT);
-
-        Text titleText = createPageTitle(title);
-
-        box.getChildren().addAll(
-                titleText,
-                createTextBlock("存檔 1：尚無資料"),
-                createTextBlock("存檔 2：尚無資料"),
-                createTextBlock("存檔 3：尚無資料")
-        );
-
-        return box;
     }
 
     // =========================

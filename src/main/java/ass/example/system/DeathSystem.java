@@ -13,6 +13,19 @@ import static com.almasb.fxgl.dsl.FXGL.*;
  */
 public class DeathSystem {
 
+    private static DeathSystem INSTANCE;
+
+    public static void init(DeathSystem deathSystem) {
+        INSTANCE = deathSystem;
+    }
+
+    public static DeathSystem getInstance() {
+        if (INSTANCE == null) {
+            throw new IllegalStateException("DeathSystem has not been initialized.");
+        }
+        return INSTANCE;
+    }
+
     private final SceneManager sceneManager;
     private final DeathScreen deathScreen;
 

@@ -353,9 +353,11 @@ public class LanguageSystem {
 
         zhTw.put("story.house.wearShoes", "穿鞋");
         zhTw.put("story.house.takeOffShoes", "脫鞋");
-
         enUs.put("story.house.wearShoes", "Put on shoes");
         enUs.put("story.house.takeOffShoes", "Take off shoes");
+
+        zhTw.put("story.house.talkToMom", "跟 媽咪 對話");
+        enUs.put("story.house.talkToMom", "Talk to Mom");
 
         // Quest
         zhTw.put("quest.fold_quilt", "摺好被子");
@@ -368,11 +370,39 @@ public class LanguageSystem {
         enUs.put("quest.talk_to_mom", "Talk to mom");
         enUs.put("quest.wear_shoes", "Put on shoes");
 
+        // Dialog
+        zhTw.put("dialog.character.mom", "媽媽");
+        enUs.put("dialog.character.mom", "Mom");
+
+        zhTw.put("dialog.mom.001", "崽，你還在玩那些尪仔喔。");
+        zhTw.put("dialog.mom.002", "休息一下吧，去幫我買個東西好不好。");
+        zhTw.put("dialog.mom.003.1", "幫我去買一打雞蛋、兩支青蔥跟一顆高麗菜。");
+        zhTw.put("dialog.mom.003.2", "我才講你兩句，你就說我煩，翅膀硬了是不是？");
+        zhTw.put("dialog.mom.004.2", "媽媽看起來好像有點生氣了。");
+
+        enUs.put("dialog.mom.001", "Wei, you still doing that video-making dream thing?");
+        enUs.put("dialog.mom.002", "Stop being a failure. Be a lawyer or go buy me something lah, okay?");
+        enUs.put("dialog.mom.003.1", "Buy a dozen eggs, two green onions, and a cabbage.");
+        enUs.put("dialog.mom.003.2", "Are you talking back right now? Say one word...");
+        enUs.put("dialog.mom.004.2", "Mom looks ticked off. You should...");
+
+        zhTw.put("dialog.mom.option.1.1", "好");
+        zhTw.put("dialog.mom.option.1.2", "煩耶");
+        zhTw.put("dialog.mom.option.2.1", "戰鬥");
+        zhTw.put("dialog.mom.option.2.2", "跳舞");
+        zhTw.put("dialog.mom.option.2.3", "逃跑");
+
+        enUs.put("dialog.mom.option.1.1", "Sure");
+        enUs.put("dialog.mom.option.1.2", "Nah");
+        enUs.put("dialog.mom.option.2.1", "\"Gubernatorial\"");
+        enUs.put("dialog.mom.option.2.2", "Dance Off");
+        enUs.put("dialog.mom.option.2.3", "Run");
+
         // Mini Game
         zhTw.put("pause.save.disabled", "此模式無法使用存檔功能。");
         enUs.put("pause.save.disabled", "Saving is not available in this mode.");
 
-        // deaths
+        // Deaths
         zhTw.put("death.LEFT_BEDROOM_WITHOUT_FOLDING_QUILT.title", "沒折被子");
         zhTw.put("death.LEFT_BEDROOM_WITHOUT_FOLDING_QUILT.subtitle", "人家是西點軍校，你們是西點麵包啊。");
 
@@ -456,6 +486,30 @@ public class LanguageSystem {
 
         enUs.put("death.LOCK_YOURSELF_IN_THE_CLOSET.title", "TRAP YOURSELF IN THE CLOSET");
         enUs.put("death.LOCK_YOURSELF_IN_THE_CLOSET.subtitle", "ThE ClOsEt eNdInG Is mY FaVoRiTe!");
+
+        zhTw.put("death.MOM_BATTLE_LOSE_A.title", "被媽媽擊敗");
+        zhTw.put("death.MOM_BATTLE_LOSE_A.subtitle", "Yo Battle。");
+
+        enUs.put("death.MOM_BATTLE_LOSE_A.title", "ONE-SHOTTED BY MOM'S LA CHANCLE");
+        enUs.put("death.MOM_BATTLE_LOSE_A.subtitle", "No dinner tonight.");
+
+        zhTw.put("death.MOM_BATTLE_LOSE_B.title", "被媽媽擊敗");
+        zhTw.put("death.MOM_BATTLE_LOSE_B.subtitle", "別試了，打不贏的。");
+
+        enUs.put("death.MOM_BATTLE_LOSE_B.title", "ONE-SHOTTED BY MOM'S LA CHANCLE");
+        enUs.put("death.MOM_BATTLE_LOSE_B.subtitle", "Nt, stop trying, there is no end.");
+
+        zhTw.put("death.MOM_BATTLE_LOSE_C.title", "被媽媽擊敗");
+        zhTw.put("death.MOM_BATTLE_LOSE_C.subtitle", "你有甚麼問題，後面真沒了。");
+
+        enUs.put("death.MOM_BATTLE_LOSE_C.title", "ONE-SHOTTED BY MOM'S LA CHANCLE");
+        enUs.put("death.MOM_BATTLE_LOSE_C.subtitle", "What's wrong with you, there's no more.");
+
+        zhTw.put("death.MOM_DANCE_OFF.title", "激怒媽媽");
+        zhTw.put("death.MOM_DANCE_OFF.subtitle", "假如你生氣，假如你生氣，仰望耶穌，仰望耶穌。");
+
+        enUs.put("death.MOM_DANCE_OFF.title", "TRIGGERED MOM");
+        enUs.put("death.MOM_DANCE_OFF.subtitle", "What do you expect?");
     }
 
     public String text(String key) {

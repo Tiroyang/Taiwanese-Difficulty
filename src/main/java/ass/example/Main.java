@@ -40,7 +40,7 @@ public class Main extends GameApplication {
 
     private int jumpKeyHoldCount = 0;
 
-    public static boolean devMode = true;
+    public static boolean devMode = false;
 
     @Override
     protected void initSettings(GameSettings settings) {
@@ -85,6 +85,7 @@ public class Main extends GameApplication {
                 audioSystem,
                 achievementSystem
         );
+        DeathSystem.init(deathSystem);
 
         sceneManager.setDeathSystem(deathSystem);
         sceneManager.setAudioSystem(audioSystem);

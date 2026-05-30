@@ -10,8 +10,8 @@ public class DialogueLine {
     private final String defaultPortraitPath;
     private final String speakingPortraitPath;
 
-    private final String characterName;
-    private final String text;
+    private final String characterNameKey;
+    private final String textKey;
 
     private final boolean allowClickNext;
     private final String nextId;
@@ -25,8 +25,8 @@ public class DialogueLine {
             String id,
             String defaultPortraitPath,
             String speakingPortraitPath,
-            String characterName,
-            String text,
+            String characterNameKey,
+            String textKey,
             boolean allowClickNext,
             String nextId,
             boolean endDialogue
@@ -34,8 +34,8 @@ public class DialogueLine {
         this.id = id;
         this.defaultPortraitPath = defaultPortraitPath;
         this.speakingPortraitPath = speakingPortraitPath;
-        this.characterName = characterName;
-        this.text = text;
+        this.characterNameKey = characterNameKey;
+        this.textKey = textKey;
         this.allowClickNext = allowClickNext;
         this.nextId = nextId;
         this.endDialogue = endDialogue;
@@ -69,12 +69,12 @@ public class DialogueLine {
         return speakingPortraitPath;
     }
 
-    public String getCharacterName() {
-        return characterName;
+    public String getCharacterNameKey() {
+        return characterNameKey;
     }
 
-    public String getText() {
-        return text;
+    public String getTextKey() {
+        return textKey;
     }
 
     public boolean isAllowClickNext() {

@@ -465,8 +465,24 @@ public class HouseScene {
                 .put("promptOffsetY", 50.0)
                 .put("audioSystem", audioSystem));
 
+        //CHARACTERS
+        //Mom
+        Entity mom = spawn("mom", new SpawnData(690, 384)
+                .put("height", 282.0));
+
+        spawn("mom_trigger", new SpawnData(686, 384)
+                .put("width", 90.0)
+                .put("height", 282.0)
+                .put("player", player)
+                .put("interactRange", 220.0)
+                .put("promptOnEntity", true)
+                .put("promptOffsetY", 55.0)
+                .put("sceneBgmPath", "/assets/music/scene1/Kobo Kanaeru - HELP!! (No Vocal).mp3.wav")
+                .put("dialogueBgmPath", "/assets/music/dialogue/MiSide OST.mp3"));
+
         // VISUALS
         spawn("cabinet", 0, 0);
+        spawn("kitchen", new SpawnData(0, 0));
     }
 
     /**

@@ -104,7 +104,46 @@ public enum DeathReason {
             "death.LOCK_YOURSELF_IN_THE_CLOSET.title",
             "death.LOCK_YOURSELF_IN_THE_CLOSET.subtitle",
             null
-    );
+    ),
+
+    MOM_BATTLE_LOSE_A(
+            "MOM_BATTLE_LOSE_A",
+            "death.MOM_BATTLE_LOSE_A.title",
+            "death.MOM_BATTLE_LOSE_A.subtitle",
+            null
+    ),
+
+    MOM_BATTLE_LOSE_B(
+            "MOM_BATTLE_LOSE_B",
+            "death.MOM_BATTLE_LOSE_B.title",
+            "death.MOM_BATTLE_LOSE_B.subtitle",
+            null
+    ),
+
+    MOM_BATTLE_LOSE_C(
+            "MOM_BATTLE_LOSE_C",
+            "death.MOM_BATTLE_LOSE_C.title",
+            "death.MOM_BATTLE_LOSE_C.subtitle",
+            null
+    ),
+
+    MOM_DANCE_OFF(
+            "MOM_BATTLE_LOSE_C",
+            "death.MOM_DANCE_OFF.title",
+            "death.MOM_DANCE_OFF.subtitle",
+            null
+    ),
+
+    /*
+    MOM_RUN(
+            "MOM_RUN",
+            "death.MOM_RUN.title",
+            "death.MOM_RUN.subtitle",
+            null
+    )
+     */
+    ;
+
 
     private final String id;
     private final String titleKey;

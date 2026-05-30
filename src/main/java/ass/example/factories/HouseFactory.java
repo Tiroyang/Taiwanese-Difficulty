@@ -8,6 +8,7 @@ import ass.example.components.OneWayPlatformComponent;
 import ass.example.core.*;
 import ass.example.system.AudioSystem;
 import ass.example.system.DeathSystem;
+import ass.example.system.dialogue.DialogueSystem;
 import ass.example.system.quest.QuestSystem;
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.EntityFactory;
@@ -19,6 +20,8 @@ import com.almasb.fxgl.physics.BoundingShape;
 import com.almasb.fxgl.physics.PhysicsComponent;
 import com.almasb.fxgl.physics.box2d.dynamics.BodyType;
 import com.almasb.fxgl.physics.box2d.dynamics.FixtureDef;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import static com.almasb.fxgl.dsl.FXGL.*;
@@ -492,6 +495,87 @@ public class HouseFactory implements EntityFactory {
                                 ? "story.house.takeOffShoes"
                                 : "story.house.wearShoes",
                         shoeComponent::toggle,
+                        interactRange,
+                        promptOnEntity,
+                        promptOffsetY
+                ))
+                .zIndex(1000)
+                .build();
+    }
+
+    @Spawns("kitchen")
+    public Entity newKitchen(SpawnData data) {
+        return entityBuilder(data)
+                .type(EntityType.PROP)
+                .view("Scene1/props/Kitchen.png")
+                .zIndex(-100)
+                .build();
+    }
+
+    @Spawns("mom")
+    public Entity newMom(SpawnData data) {
+        double height = data.hasKey("height")
+                ? data.get("height")
+                : 282;
+
+        ImageView view = new ImageView(
+                new Image(getClass().getResource("/assets/textures/characters/mom/mom.png").toExternalForm())
+        );
+
+        view.setFitHeight(height);
+        view.setPreserveRatio(true);
+        view.setSmooth(false);
+
+        return entityBuilder(data)
+                .type(EntityType.PROP)
+                .view(view)
+                .zIndex(-150)
+                .build();
+    }
+
+    @Spawns("mom_trigger")
+    public Entity newMomTrigger(SpawnData data) {
+        Entity player = data.get("player");
+
+        double width = data.get("width");
+        double height = data.get("height");
+
+        double interactRange = data.hasKey("interactRange")
+                ? data.get("interactRange")
+                : 180.0;
+
+        boolean promptOnEntity = data.hasKey("promptOnEntity")
+                ? data.get("promptOnEntity")
+                : true;
+
+        double promptOffsetY = data.hasKey("promptOffsetY")
+                ? data.get("promptOffsetY")
+                : 45.0;
+
+        String sceneBgmPath = data.hasKey("sceneBgmPath")
+                ? data.get("sceneBgmPath")
+                : "/assets/music/stage/house_bgm.mp3";
+
+        String dialogueBgmPath = data.hasKey("dialogueBgmPath")
+                ? data.get("dialogueBgmPath")
+                : "/assets/music/dialogue/mom_theme.mp3";
+
+        return entityBuilder(data)
+                .type(EntityType.INTERACTABLE)
+                .bbox(new HitBox(BoundingShape.box(width, height)))
+                .view(Main.devMode
+                        ? new Rectangle(width, height, Color.rgb(255, 255, 0, 0.35))
+                        : new Rectangle(0, 0, Color.TRANSPARENT))
+                .with(new InteractableComponent(
+                        () -> "story.house.talkToMom",
+                        () -> {
+                            DialogueSystem.getInstance().startDialogue(
+                                    "mom_001",
+                                    player,
+                                    sceneBgmPath,
+                                    dialogueBgmPath
+                            );
+                        },
                         interactRange,
                         promptOnEntity,
                         promptOffsetY

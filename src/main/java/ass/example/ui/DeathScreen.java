@@ -71,8 +71,7 @@ public class DeathScreen extends StackPane {
 
     private void loadFonts() {
         try {
-            Font font = Font.loadFont(getClass().getResourceAsStream("/assets/fonts/OptimusPrinceps.ttf"), 16);
-            System.out.println(font.getFamily());
+            Font.loadFont(getClass().getResourceAsStream("/assets/fonts/OptimusPrinceps.ttf"), 16);
         } catch (Exception e) {
             System.out.println("Load font failed.");
         }
