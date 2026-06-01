@@ -20,6 +20,11 @@ public enum QuestType {
     WEAR_SHOES(
             "quest.wear_shoes",
             1
+    ),
+
+    EXIT_HOUSE(
+            "quest.exit_house",
+            1
     );
 
     private final String titleKey;

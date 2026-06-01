@@ -31,6 +31,7 @@ public class QuestSystem {
         storyQuests.add(QuestType.BRUSH_TEETH);
         storyQuests.add(QuestType.TALK_TO_MOM);
         storyQuests.add(QuestType.WEAR_SHOES);
+        storyQuests.add(QuestType.EXIT_HOUSE);
     }
 
     public void resetRuntimeState() {

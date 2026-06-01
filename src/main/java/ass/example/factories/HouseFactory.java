@@ -584,6 +584,42 @@ public class HouseFactory implements EntityFactory {
                 .build();
     }
 
+    @Spawns("exit_door")
+    public Entity newExitDoor(SpawnData data) {
+        double width = data.get("width");
+        double height = data.get("height");
+
+        double interactRange = data.hasKey("interactRange")
+                ? data.get("interactRange")
+                : 180.0;
+
+        boolean promptOnEntity = data.hasKey("promptOnEntity")
+                ? data.get("promptOnEntity")
+                : false;
+
+        double promptOffsetY = data.hasKey("promptOffsetY")
+                ? data.get("promptOffsetY")
+                : 35.0;
+
+        return entityBuilder(data)
+                .type(EntityType.INTERACTABLE)
+                .bbox(new HitBox(BoundingShape.box(width, height)))
+                .view(Main.devMode
+                        ? new Rectangle(width, height, Color.rgb(255, 255, 0, 0.35))
+                        : new Rectangle(0, 0, Color.TRANSPARENT))
+                .with(new InteractableComponent(
+                        () -> "story.house.exit",
+                        () -> {
+
+                        },
+                        interactRange,
+                        promptOnEntity,
+                        promptOffsetY
+                ))
+                .zIndex(1000)
+                .build();
+    }
+
     private FixtureDef createWallFixtureDef() {
         FixtureDef fixtureDef = new FixtureDef()
                 .friction(0.0f)

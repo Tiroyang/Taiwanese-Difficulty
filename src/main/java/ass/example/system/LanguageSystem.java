@@ -359,16 +359,21 @@ public class LanguageSystem {
         zhTw.put("story.house.talkToMom", "跟 媽咪 對話");
         enUs.put("story.house.talkToMom", "Talk to Mom");
 
+        zhTw.put("story.house.exit", "離開 家");
+        enUs.put("story.house.exit", "離開 家");
+
         // Quest
         zhTw.put("quest.fold_quilt", "摺好被子");
         zhTw.put("quest.brush_teeth", "刷牙");
         zhTw.put("quest.talk_to_mom", "跟媽媽講話");
         zhTw.put("quest.wear_shoes", "穿上鞋子");
+        zhTw.put("quest.exit_house", "離開 家");
 
         enUs.put("quest.fold_quilt", "Fold the quilt");
         enUs.put("quest.brush_teeth", "Brush your teeth");
         enUs.put("quest.talk_to_mom", "Talk to mom");
         enUs.put("quest.wear_shoes", "Put on shoes");
+        enUs.put("quest.exit_house", "Exit Home");
 
         // Dialog
         zhTw.put("dialog.character.mom", "媽媽");
@@ -490,19 +495,19 @@ public class LanguageSystem {
         zhTw.put("death.MOM_BATTLE_LOSE_A.title", "被媽媽擊敗");
         zhTw.put("death.MOM_BATTLE_LOSE_A.subtitle", "Yo Battle。");
 
-        enUs.put("death.MOM_BATTLE_LOSE_A.title", "ONE-SHOTTED BY MOM'S LA CHANCLE");
-        enUs.put("death.MOM_BATTLE_LOSE_A.subtitle", "No dinner tonight.");
+        enUs.put("death.MOM_BATTLE_LOSE_A.title", "DEFEATED BY MOM");
+        enUs.put("death.MOM_BATTLE_LOSE_A.subtitle", "One-shotted by la chancla.");
 
         zhTw.put("death.MOM_BATTLE_LOSE_B.title", "被媽媽擊敗");
-        zhTw.put("death.MOM_BATTLE_LOSE_B.subtitle", "別試了，打不贏的。");
+        zhTw.put("death.MOM_BATTLE_LOSE_B.subtitle", "勝敗乃兵家常事，下一次還是會輸的。");
 
-        enUs.put("death.MOM_BATTLE_LOSE_B.title", "ONE-SHOTTED BY MOM'S LA CHANCLE");
-        enUs.put("death.MOM_BATTLE_LOSE_B.subtitle", "Nt, stop trying, there is no end.");
+        enUs.put("death.MOM_BATTLE_LOSE_B.title", "DEFEATED BY MOM");
+        enUs.put("death.MOM_BATTLE_LOSE_B.subtitle", "nt, stop trying.");
 
         zhTw.put("death.MOM_BATTLE_LOSE_C.title", "被媽媽擊敗");
         zhTw.put("death.MOM_BATTLE_LOSE_C.subtitle", "你有甚麼問題，後面真沒了。");
 
-        enUs.put("death.MOM_BATTLE_LOSE_C.title", "ONE-SHOTTED BY MOM'S LA CHANCLE");
+        enUs.put("death.MOM_BATTLE_LOSE_C.title", "DEFEATED BY MOM");
         enUs.put("death.MOM_BATTLE_LOSE_C.subtitle", "What's wrong with you, there's no more.");
 
         zhTw.put("death.MOM_DANCE_OFF.title", "激怒媽媽");
