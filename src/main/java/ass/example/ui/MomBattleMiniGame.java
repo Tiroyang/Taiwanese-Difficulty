@@ -647,10 +647,10 @@ public class MomBattleMiniGame extends StackPane {
             }
 
             Rectangle attackBounds = new Rectangle(
-                    attack.getLayoutX(),
-                    attack.getLayoutY(),
-                    attack.getWidth(),
-                    attack.getHeight()
+                    attack.getLayoutX() + 2,
+                    attack.getLayoutY() + 2,
+                    attack.getWidth() - 4,
+                    attack.getHeight() - 4
             );
 
             if (heartHitbox.getBoundsInParent().intersects(attackBounds.getBoundsInParent())) {

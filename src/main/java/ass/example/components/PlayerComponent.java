@@ -7,6 +7,8 @@ import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.SpawnData;
 import com.almasb.fxgl.entity.component.Component;
 import com.almasb.fxgl.physics.PhysicsComponent;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.image.Image;
@@ -14,6 +16,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import javafx.util.Duration;
 
 import java.awt.*;
 
@@ -69,6 +72,10 @@ public class PlayerComponent extends Component {
     private boolean isWalking = false;
     private int walkFrameIndex = 0;
     private double walkAnimTimer = 0;
+
+    // 外觀動畫
+    private Timeline forcedVisualTimeline;
+    private boolean forcedVisualPlaying = false;
 
     // 走路動畫切換時間
     private final double walkFrameDuration = 0.35;
@@ -480,6 +487,59 @@ public class PlayerComponent extends Component {
         playerView.setImage(image);
     }
 
+    public void playMomDanceOffAnimation(double seconds) {
+        stopForcedVisualAnimation();
+
+        /*
+         * 對話期間本來就會 disable control，
+         * 這裡再保險一次，避免玩家動畫系統覆蓋圖片。
+         */
+        stopAllMovement();
+        setControlEnabled(false);
+
+        forcedVisualPlaying = true;
+
+        /*
+         * 如果你目前的 shoeless 圖片陣列名稱不同，
+         * 這裡改成你實際欄位名稱。
+         */
+        Image leftImage = walkLeftShoelessImages[0];
+        Image rightImage = walkRightShoelessImages[0];
+
+        final int[] frame = {0};
+
+        forcedVisualTimeline = new Timeline(
+                new KeyFrame(Duration.seconds(0.3), e -> {
+                    // 根據 frame 的單雙數切換圖片
+                    if (frame[0] % 2 == 0) {
+                        setPlayerImage(rightImage);
+                    } else {
+                        setPlayerImage(leftImage);
+                    }
+                    frame[0]++;
+                })
+        );
+
+        setPlayerImage(leftImage);
+
+        forcedVisualTimeline.setCycleCount((int) Math.ceil(seconds / 0.25));
+        forcedVisualTimeline.setOnFinished(e -> {
+            forcedVisualPlaying = false;
+            setPlayerImage(deadImage);
+        });
+
+        forcedVisualTimeline.play();
+    }
+
+    public void stopForcedVisualAnimation() {
+        if (forcedVisualTimeline != null) {
+            forcedVisualTimeline.stop();
+            forcedVisualTimeline = null;
+        }
+
+        forcedVisualPlaying = false;
+    }
+
     /**
      * 跳躍鍵按下。
      * 如果在地上：
@@ -670,6 +730,7 @@ public class PlayerComponent extends Component {
      * 玩家死亡， 呼叫切換死亡圖片
      */
     public void playerDead() {
+        stopForcedVisualAnimation();
         showDeadImage();
 
         if (groundSensor != null) {

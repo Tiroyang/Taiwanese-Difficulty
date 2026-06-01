@@ -284,6 +284,15 @@ public class DialogueSystem {
     private void callMomDanceOff() {
         audioSystem.playSFX(SoundId.MOM_DANCE_OFF);
 
+        if (player != null) {
+            try {
+                PlayerComponent pc = player.getComponent(PlayerComponent.class);
+                pc.playMomDanceOffAnimation(1.2);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
         endDialogue(3.0, () -> {
             deathSystem.die(MOM_DANCE_OFF);
         });
