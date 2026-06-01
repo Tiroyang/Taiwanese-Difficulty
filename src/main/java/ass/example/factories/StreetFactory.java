@@ -35,7 +35,7 @@ public class StreetFactory implements EntityFactory {
 
         return entityBuilder(data)
                 .type(EntityType.MAP_BACKGROUND)
-                .view(new Rectangle(width, height, Color.rgb(140, 95, 130)))
+                .view("/Scene2/map/Background.png" /*new Rectangle(width, height, Color.rgb(140, 95, 130))*/)
                 .zIndex(-500)
                 .build();
     }
@@ -292,9 +292,7 @@ public class StreetFactory implements EntityFactory {
                                 return;
                             }
 
-                            InteractionSystem.lockAllInteractions(0.65);
-
-                            sceneManager.loadHouseSceneAt(43.0, 452.0);
+                            sceneManager.playStreetToHouseTransition(null);
                         },
                         interactRange,
                         promptOnEntity,

@@ -41,8 +41,8 @@ public class StreetEndlessScene {
 
     private final Random random = new Random();
 
-    private final double farBackgroundWidth = 1600;
-    private final double farBackgroundHeight = 720;
+    private final double farBackgroundWidth = 1983;
+    private final double farBackgroundHeight = 793;
     private final double farBackgroundParallax = 0.18;
 
     private double leftMostFarBaseX = 0;

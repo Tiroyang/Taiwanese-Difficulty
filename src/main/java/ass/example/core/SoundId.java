@@ -14,8 +14,8 @@ public enum SoundId {
 
     DIALOG_BLIP("characters/dialog_blip.wav", 0.05),
 
-    DOOR_OPEN("props/scene1/door_open.wav", 1),
-    DOOR_CLOSE("props/scene1/door_close.wav", 1),
+    DOOR_OPEN("props/scene1/door_open.wav", 0.8),
+    DOOR_CLOSE("props/scene1/door_close.wav", 0.7),
 
     EATING("props/scene1/eating.wav", 0.6),
     BRUSHING_TEETH("props/scene1/brushing_teeth.wav", 1),

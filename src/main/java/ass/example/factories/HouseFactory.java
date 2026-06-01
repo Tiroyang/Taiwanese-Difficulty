@@ -383,6 +383,10 @@ public class HouseFactory implements EntityFactory {
         DeathSystem deathSystem = data.get("deathSystem");
         DeathReason deathReason = data.get("deathReason");
 
+        double deathSpeedThreshold = data.hasKey("deathSpeedThreshold")
+                ? data.get("deathSpeedThreshold")
+                : 520.0;
+
         return entityBuilder(data)
                 .type(EntityType.TRIGGER)
                 .bbox(new HitBox(BoundingShape.box(width, height)))
@@ -393,7 +397,8 @@ public class HouseFactory implements EntityFactory {
                 .with(new BathtubComponent(
                         player,
                         deathSystem,
-                        deathReason
+                        deathReason,
+                        deathSpeedThreshold
                 ))
                 .zIndex(1000)
                 .build();
@@ -631,10 +636,9 @@ public class HouseFactory implements EntityFactory {
                                 return;
                             }
 
-                            InteractionSystem.lockAllInteractions(0.65);
-
-                            questSystem.completeQuest(QuestType.EXIT_HOUSE);
-                            sceneManager.loadStreetScene(true);
+                            sceneManager.playHouseToStreetTransition(() -> {
+                                questSystem.completeQuest(QuestType.EXIT_HOUSE);
+                            });
                         },
                         interactRange,
                         promptOnEntity,

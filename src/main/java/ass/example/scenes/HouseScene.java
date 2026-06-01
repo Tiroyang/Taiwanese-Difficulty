@@ -4,8 +4,10 @@ import ass.example.components.HouseScene.DoorComponent;
 import ass.example.components.HouseScene.QuiltComponent;
 import ass.example.components.HouseScene.WaterComponent;
 import ass.example.components.LoadSaveComponent;
+import ass.example.components.PlayerComponent;
 import ass.example.core.DeathReason;
 import ass.example.core.HouseScene.RoomType;
+import ass.example.core.SoundId;
 import ass.example.system.*;
 import ass.example.system.HouseScene.BedSystem;
 import ass.example.system.HouseScene.RoomSystem;
@@ -13,6 +15,13 @@ import ass.example.ui.QuestHUD;
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.SpawnData;
 import com.almasb.fxgl.entity.component.Component;
+import javafx.animation.FadeTransition;
+import javafx.animation.PauseTransition;
+import javafx.animation.SequentialTransition;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
+import javafx.util.Duration;
+
 import static com.almasb.fxgl.dsl.FXGL.*;
 import static java.lang.Math.clamp;
 
@@ -51,6 +60,10 @@ public class HouseScene {
     // 任務系統
     private QuestHUD questHUD;
 
+    private boolean wakeUpIntroPlaying = false;
+
+    private Rectangle wakeUpBlackOverlay;
+
     // Constructor
     public HouseScene(
             SceneConfig config,
@@ -65,6 +78,13 @@ public class HouseScene {
     }
 
     public void cleanup() {
+        if (wakeUpBlackOverlay != null) {
+            removeUINode(wakeUpBlackOverlay);
+            wakeUpBlackOverlay = null;
+        }
+
+        wakeUpIntroPlaying = false;
+
         if (interactionSystem != null) {
             interactionSystem.dispose();
             interactionSystem = null;
@@ -89,6 +109,10 @@ public class HouseScene {
      * 5. 設定攝影機
      */
     public Entity load() {
+        return load(false);
+    }
+
+    public Entity load(boolean playWakeUpIntro) {
         spawnTestObjects();
         spawnBackground();
 
@@ -107,6 +131,10 @@ public class HouseScene {
 
         setupCamera();
 
+        if (playWakeUpIntro) {
+            playWakeUpIntroAnimation();
+        }
+
         return player;
     }
 
@@ -115,6 +143,109 @@ public class HouseScene {
         roomSystem = new RoomSystem(player, deathSystem);
         oneWayPlatformSystem = new OneWayPlatformSystem(player);
         bedSystem = new BedSystem(player, deathSystem);
+    }
+
+    private void playWakeUpIntroAnimation() {
+        if (player == null) {
+            return;
+        }
+
+        wakeUpIntroPlaying = true;
+
+        PlayerComponent pc = player.getComponent(PlayerComponent.class);
+        pc.stopAllMovement();
+        pc.setControlEnabled(false);
+
+        /*
+         * 顯示躺在床上的外觀。
+         * 這個方法下一步會加到 PlayerComponent。
+         */
+        pc.showWakeUpBedPose();
+
+        wakeUpBlackOverlay = new Rectangle(1280, 720);
+        wakeUpBlackOverlay.setFill(Color.BLACK);
+        wakeUpBlackOverlay.setOpacity(1);
+        wakeUpBlackOverlay.setMouseTransparent(false);
+
+        addUINode(wakeUpBlackOverlay, 0, 0);
+
+        MusicSystem.getInstance().playBGM(
+                "/assets/music/scene1/morningsound.mp3",
+                true
+        );
+
+        FadeTransition fadeInFromBlack = new FadeTransition(Duration.seconds(1.5), wakeUpBlackOverlay);
+        fadeInFromBlack.setFromValue(1);
+        fadeInFromBlack.setToValue(0);
+
+        PauseTransition liePause = new PauseTransition(Duration.seconds(1.0));
+
+        FadeTransition fadeOutToBlack = new FadeTransition(Duration.seconds(0.65), wakeUpBlackOverlay);
+        fadeOutToBlack.setFromValue(0);
+        fadeOutToBlack.setToValue(1);
+
+        PauseTransition blackPause = new PauseTransition(Duration.seconds(1.0));
+
+        FadeTransition fadeBackIn = new FadeTransition(Duration.seconds(0.75), wakeUpBlackOverlay);
+        fadeBackIn.setFromValue(1);
+        fadeBackIn.setToValue(0);
+
+        fadeOutToBlack.setOnFinished(e -> {
+            /*
+             * 畫面黑掉後才播放下床音效、移動玩家。
+             * SoundId 請換成你實際已有的音效 ID。
+             */
+            audioSystem.playSFX(SoundId.FOLDING_QUILT);
+
+            pc.moveInstantlyTo(config.getPlayerStartX(), config.getPlayerStartY());
+
+            pc.restoreAfterWakeUpIntro();
+
+            setupCamera();
+        });
+
+        SequentialTransition sequence = new SequentialTransition(
+                fadeInFromBlack,
+                liePause,
+                fadeOutToBlack,
+                blackPause,
+                fadeBackIn
+        );
+
+        sequence.setOnFinished(e -> {
+            if (wakeUpBlackOverlay != null) {
+                removeUINode(wakeUpBlackOverlay);
+                wakeUpBlackOverlay = null;
+            }
+
+            wakeUpIntroPlaying = false;
+
+            pc.setControlEnabled(true);
+
+            getGameScene().getViewport().setLazy(true);
+
+            MusicSystem.getInstance().playBGM(
+                    "/assets/music/scene1/Kobo Kanaeru - HELP!! (No Vocal).mp3",
+                    true
+            );
+        });
+
+        sequence.play();
+    }
+
+    private void forceCameraToPlayer() {
+        if (player == null) {
+            return;
+        }
+
+        double cameraX = clamp(
+                player.getX() - 1280 / 2.0,
+                0,
+                config.getMapWidth() - 1280
+        );
+
+        getGameScene().getViewport().setX(cameraX);
+        getGameScene().getViewport().setY(0);
     }
 
     /**
@@ -362,7 +493,8 @@ public class HouseScene {
                 .put("height", sensorHeight)
                 .put("player", player)
                 .put("deathSystem", deathSystem)
-                .put("deathReason", DeathReason.JUMPED_IN_BATHTUB));
+                .put("deathReason", DeathReason.JUMPED_IN_BATHTUB)
+                .put("deathSpeedThreshold", 520.0));
     }
 
     /**
@@ -497,7 +629,7 @@ public class HouseScene {
                 .put("interactRange", 220.0)
                 .put("promptOnEntity", true)
                 .put("promptOffsetY", 55.0)
-                .put("sceneBgmPath", "/assets/music/scene1/Kobo Kanaeru - HELP!! (No Vocal).mp3.wav")
+                .put("sceneBgmPath", "/assets/music/scene1/Kobo Kanaeru - HELP!! (No Vocal).mp3")
                 .put("dialogueBgmPath", "/assets/music/dialogue/MiSide OST.mp3"));
 
         // VISUALS
@@ -601,6 +733,10 @@ public class HouseScene {
      * 時刻更新場景系統，從SceneManager呼叫。
      */
     public void onUpdate(double tpf) {
+        if (wakeUpIntroPlaying) {
+            return;
+        }
+
         if (interactionSystem != null) {
             interactionSystem.update(tpf);
         }
@@ -626,6 +762,10 @@ public class HouseScene {
      * 嘗試與附近物件互動，從SceneManager呼叫。
      */
     public void tryInteract() {
+        if (wakeUpIntroPlaying) {
+            return;
+        }
+
         if (interactionSystem != null) {
             interactionSystem.interact();
         }

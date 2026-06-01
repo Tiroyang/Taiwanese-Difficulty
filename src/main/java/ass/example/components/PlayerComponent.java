@@ -487,6 +487,50 @@ public class PlayerComponent extends Component {
         playerView.setImage(image);
     }
 
+    public void showWakeUpBedPose() {
+        stopAllMovement();
+        setControlEnabled(false);
+
+        /*
+         * 顯示 walkl2Shoeless，也就是左走第二張無鞋圖。
+         * 依你的實際欄位名稱調整。
+         */
+        setPlayerImage(walkLeftShoelessImages[1]);
+
+        /*
+         * 不要用 entity.setRotation(90)。
+         * 只旋轉圖片本身，避免被 PhysicsComponent 覆蓋。
+         */
+        playerView.setRotate(90);
+
+        /*
+         * 躺下後圖片中心可能會偏，可以用 translate 微調。
+         * 數值依畫面調整。
+         */
+        playerView.setTranslateX(50);
+        playerView.setTranslateY(25);
+
+        /*
+         * 讓玩家視覺圖層壓到床下。
+         */
+        entity.getViewComponent().setZIndex(-2);
+    }
+
+    public void restoreAfterWakeUpIntro() {
+        stopAllMovement();
+
+        playerView.setRotate(0);
+        playerView.setTranslateX(0);
+        playerView.setTranslateY(0);
+
+        entity.getViewComponent().setZIndex(0);
+
+        visualState = PlayerVisualState.STAND;
+        setPlayerImage(standImage);
+
+        setControlEnabled(false);
+    }
+
     public void playMomDanceOffAnimation(double seconds) {
         stopForcedVisualAnimation();
 
@@ -779,6 +823,27 @@ public class PlayerComponent extends Component {
 
         walkAnimTimer = 0;
         walkFrameIndex = 0;
+    }
+
+    public void moveInstantlyTo(double x, double y) {
+        stopAllMovement();
+
+        groundContacts = 0;
+        onOneWayPlatform = false;
+
+        if (physics != null) {
+            physics.setVelocityX(0);
+            physics.setVelocityY(0);
+            physics.overwritePosition(new Point2D(x, y));
+        } else {
+            entity.setPosition(x, y);
+        }
+
+        if (groundSensor != null) {
+            updateGroundSensorPosition();
+        }
+
+        refreshGroundContacts();
     }
 
     /**

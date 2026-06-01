@@ -1,10 +1,11 @@
 package ass.example.components.HouseScene;
 
-import ass.example.components.PlayerComponent;
 import ass.example.core.DeathReason;
 import ass.example.system.DeathSystem;
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.component.Component;
+import com.almasb.fxgl.physics.PhysicsComponent;
+import javafx.geometry.Point2D;
 
 import static com.almasb.fxgl.dsl.FXGL.getb;
 
@@ -14,9 +15,16 @@ public class BathtubComponent extends Component {
     private final DeathSystem deathSystem;
     private final DeathReason deathReason;
 
-    private boolean playerInside = false;
-    private boolean hasEnteredOnce = false;
-    private boolean hasLeftAfterEnter = false;
+    /*
+     * 速度門檻。
+     * FXGL velocity 通常是 px/s。
+     * 例如：
+     * - 250：慢走也可能觸發
+     * - 450：跳落或高速移動才觸發
+     * - 600：比較高衝擊才觸發
+     */
+    private final double deathSpeedThreshold;
+
     private boolean triggeredDeath = false;
 
     /*
@@ -29,9 +37,19 @@ public class BathtubComponent extends Component {
             DeathSystem deathSystem,
             DeathReason deathReason
     ) {
+        this(player, deathSystem, deathReason, 520.0);
+    }
+
+    public BathtubComponent(
+            Entity player,
+            DeathSystem deathSystem,
+            DeathReason deathReason,
+            double deathSpeedThreshold
+    ) {
         this.player = player;
         this.deathSystem = deathSystem;
         this.deathReason = deathReason;
+        this.deathSpeedThreshold = deathSpeedThreshold;
     }
 
     @Override
@@ -51,8 +69,7 @@ public class BathtubComponent extends Component {
         }
 
         /*
-         * 如果上一幀還是死亡狀態，現在已經不是死亡，
-         * 代表玩家重生了，重置浴缸偵測器。
+         * 重生後重置。
          */
         if (wasPlayerDead) {
             resetState();
@@ -63,41 +80,25 @@ public class BathtubComponent extends Component {
             return;
         }
 
-        boolean nowInside = entity.isColliding(player);
-
-        if (nowInside && !playerInside) {
-            onPlayerEnterSensor();
-        }
-
-        if (!nowInside && playerInside) {
-            onPlayerExitSensor();
-        }
-
-        playerInside = nowInside;
-    }
-
-    private void onPlayerEnterSensor() {
-        if (!hasEnteredOnce) {
-            hasEnteredOnce = true;
+        /*
+         * 不在浴缸 sensor 裡，不判斷。
+         */
+        if (!entity.isColliding(player)) {
             return;
         }
 
-        if (hasLeftAfterEnter) {
+        PhysicsComponent physics = player.getComponent(PhysicsComponent.class);
+
+        double vx = physics.getVelocityX();
+        double vy = physics.getVelocityY();
+
+        if (Math.max(0, vy) >= deathSpeedThreshold || Math.abs(vx) > 260) {
             triggeredDeath = true;
             deathSystem.die(deathReason);
         }
     }
 
-    private void onPlayerExitSensor() {
-        if (hasEnteredOnce) {
-            hasLeftAfterEnter = true;
-        }
-    }
-
     private void resetState() {
-        playerInside = false;
-        hasEnteredOnce = false;
-        hasLeftAfterEnter = false;
         triggeredDeath = false;
     }
 }

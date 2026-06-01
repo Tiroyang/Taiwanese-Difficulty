@@ -4,10 +4,18 @@ import ass.example.components.PlayerComponent;
 import ass.example.core.DeathReason;
 import ass.example.core.SaveKey;
 import ass.example.core.SceneType;
+import ass.example.core.SoundId;
 import ass.example.system.*;
 import ass.example.system.quest.QuestSystem;
 import com.almasb.fxgl.core.serialization.Bundle;
 import com.almasb.fxgl.entity.Entity;
+import javafx.animation.FadeTransition;
+import javafx.animation.PauseTransition;
+import javafx.animation.SequentialTransition;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
+import javafx.util.Duration;
+
 import java.util.HashMap;
 import java.util.Map;
 import static com.almasb.fxgl.dsl.FXGL.*;
@@ -49,6 +57,8 @@ public class SceneManager {
     private final Map<SceneType, SceneConfig> sceneConfigs = new HashMap<>();
 
     private static SceneType pendingStartSceneType = null;
+
+    private boolean sceneTransitionPlaying = false;
 
     // Constructor
     public SceneManager() {
@@ -153,7 +163,7 @@ public class SceneManager {
             boolean fromSave,
             Double overridePlayerX,
             Double overridePlayerY,
-            boolean resetQuestRuntime
+            boolean playWakeUpIntro
     ) {
         currentSceneType = SceneType.HOUSE;
 
@@ -161,17 +171,12 @@ public class SceneManager {
          * 只有新遊戲才重置任務。
          * 從街道回家、讀檔，都不應該重置任務進度。
          */
-        if (resetQuestRuntime) {
+        if (playWakeUpIntro) {
             QuestSystem.getInstance().resetRuntimeState();
         }
 
         cleanupCurrentScene();
         clearCurrentWorld();
-
-        MusicSystem.getInstance().playBGM(
-                "/assets/music/scene1/Kobo Kanaeru - HELP!! (No Vocal).mp3.wav",
-                true
-        );
 
         set("saveDisabled", false);
         set("achievementDisabled", false);
@@ -190,7 +195,7 @@ public class SceneManager {
         SceneConfig homeConfig = getCurrentSceneConfig();
 
         houseScene = new HouseScene(homeConfig, deathSystem, audioSystem, this);
-        player = houseScene.load();
+        player = houseScene.load(!fromSave);
 
         /*
          * 如果有指定座標，載入完成後立刻移動玩家。
@@ -272,6 +277,164 @@ public class SceneManager {
         player = streetEndlessScene.load();
 
         refreshPlayerGroundContacts();
+    }
+
+    public void playHouseToStreetTransition(Runnable beforeLoadStreetScene) {
+        if (sceneTransitionPlaying) {
+            return;
+        }
+
+        sceneTransitionPlaying = true;
+
+        /*
+         * 避免玩家長按 F，切場景後又立刻觸發 entrance_door。
+         */
+        InteractionSystem.lockAllInteractions(1.2);
+
+        /*
+         * 暫時關閉玩家控制。
+         */
+        if (player != null && player.hasComponent(PlayerComponent.class)) {
+            PlayerComponent pc = player.getComponent(PlayerComponent.class);
+            pc.stopAllMovement();
+            pc.setControlEnabled(false);
+        }
+
+        Rectangle blackOverlay = new Rectangle(1280, 720);
+        blackOverlay.setFill(Color.BLACK);
+        blackOverlay.setOpacity(0);
+        blackOverlay.setMouseTransparent(false);
+
+        addUINode(blackOverlay, 0, 0);
+
+        FadeTransition fadeToBlack = new FadeTransition(Duration.seconds(0.55), blackOverlay);
+        fadeToBlack.setFromValue(0);
+        fadeToBlack.setToValue(1);
+
+        PauseTransition blackPause = new PauseTransition(Duration.seconds(0.18));
+
+        FadeTransition fadeFromBlack = new FadeTransition(Duration.seconds(0.55), blackOverlay);
+        fadeFromBlack.setFromValue(1);
+        fadeFromBlack.setToValue(0);
+
+        fadeToBlack.setOnFinished(e -> {
+            /*
+             * 換成你的實際出門音效 SoundId。
+             * 如果還沒有，可以先用 DOOR_OPEN 或 BUTTON_PRESSED 測試。
+             */
+            audioSystem.playSFX(SoundId.DOOR_OPEN);
+
+            if (beforeLoadStreetScene != null) {
+                beforeLoadStreetScene.run();
+            }
+
+            /*
+             * 這裡建議用 false。
+             * 這不是讀檔，而是故事模式切場景。
+             */
+            loadStreetScene(true);
+        });
+
+        SequentialTransition sequence = new SequentialTransition(
+                fadeToBlack,
+                blackPause,
+                fadeFromBlack
+        );
+
+        sequence.setOnFinished(e -> {
+            removeUINode(blackOverlay);
+
+            sceneTransitionPlaying = false;
+
+            /*
+             * loadStreetScene(false) 後 player 已經變成 StreetScene 的玩家。
+             */
+            if (player != null && player.hasComponent(PlayerComponent.class)) {
+                PlayerComponent pc = player.getComponent(PlayerComponent.class);
+                pc.setControlEnabled(true);
+            }
+        });
+
+        sequence.play();
+    }
+
+    public void playStreetToHouseTransition(Runnable beforeLoadStreetScene) {
+        if (sceneTransitionPlaying) {
+            return;
+        }
+
+        sceneTransitionPlaying = true;
+
+        /*
+         * 避免玩家長按 F，切場景後又立刻觸發 entrance_door。
+         */
+        InteractionSystem.lockAllInteractions(1.2);
+
+        /*
+         * 暫時關閉玩家控制。
+         */
+        if (player != null && player.hasComponent(PlayerComponent.class)) {
+            PlayerComponent pc = player.getComponent(PlayerComponent.class);
+            pc.stopAllMovement();
+            pc.setControlEnabled(false);
+        }
+
+        Rectangle blackOverlay = new Rectangle(1280, 720);
+        blackOverlay.setFill(Color.BLACK);
+        blackOverlay.setOpacity(0);
+        blackOverlay.setMouseTransparent(false);
+
+        addUINode(blackOverlay, 0, 0);
+
+        FadeTransition fadeToBlack = new FadeTransition(Duration.seconds(0.55), blackOverlay);
+        fadeToBlack.setFromValue(0);
+        fadeToBlack.setToValue(1);
+
+        PauseTransition blackPause = new PauseTransition(Duration.seconds(0.18));
+
+        FadeTransition fadeFromBlack = new FadeTransition(Duration.seconds(0.55), blackOverlay);
+        fadeFromBlack.setFromValue(1);
+        fadeFromBlack.setToValue(0);
+
+        fadeToBlack.setOnFinished(e -> {
+            /*
+             * 換成你的實際出門音效 SoundId。
+             * 如果還沒有，可以先用 DOOR_OPEN 或 BUTTON_PRESSED 測試。
+             */
+            audioSystem.playSFX(SoundId.DOOR_OPEN);
+
+            if (beforeLoadStreetScene != null) {
+                beforeLoadStreetScene.run();
+            }
+
+            /*
+             * 這裡建議用 false。
+             * 這不是讀檔，而是故事模式切場景。
+             */
+            loadHouseSceneAt(43.0, 452.0);
+        });
+
+        SequentialTransition sequence = new SequentialTransition(
+                fadeToBlack,
+                blackPause,
+                fadeFromBlack
+        );
+
+        sequence.setOnFinished(e -> {
+            removeUINode(blackOverlay);
+
+            sceneTransitionPlaying = false;
+
+            /*
+             * loadStreetScene(false) 後 player 已經變成 StreetScene 的玩家。
+             */
+            if (player != null && player.hasComponent(PlayerComponent.class)) {
+                PlayerComponent pc = player.getComponent(PlayerComponent.class);
+                pc.setControlEnabled(true);
+            }
+        });
+
+        sequence.play();
     }
 
     private void refreshPlayerGroundContacts() {
