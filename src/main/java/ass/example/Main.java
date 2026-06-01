@@ -105,7 +105,7 @@ public class Main extends GameApplication {
             return;
         }
 
-        sceneManager.loadHouseSceneForNewGame();
+        sceneManager.loadHouseScene(false);
     }
 
     @Override
@@ -432,6 +432,16 @@ public class Main extends GameApplication {
                 }
             }
         }, KeyCode.F);
+
+        getInput().addAction(new UserAction("Debug F5") {
+            @Override
+            protected void onActionBegin() {
+                System.out.println("=== SAVE PLAYER POSITION ===");
+                System.out.println("sceneType = " + sceneManager.getCurrentSceneType());
+                System.out.println("player.getX() = " + sceneManager.getPlayer().getX());
+                System.out.println("player.getY() = " + sceneManager.getPlayer().getY());
+            }
+        }, KeyCode.F5);
     }
 
     @Override

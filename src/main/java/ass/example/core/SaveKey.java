@@ -39,4 +39,10 @@ public final class SaveKey {
 
     public static final String DOOR_1_OPENED = "door_Door1_opened";
     public static final String DOOR_2_OPENED = "door_Door2_opened";
+
+    // StreetScene
+    public static final String STREET_SEGMENTS = "streetSegments";
+    public static final String STREET_LEFT_MOST_GENERATED_X = "streetLeftMostGeneratedX";
+    public static final String STREET_SEGMENT_LIMIT_REACHED = "streetSegmentLimitReached";
+    public static final String STREET_OBSTACLES = "streetObstacles";
 }

@@ -49,6 +49,8 @@ public class InteractionSystem {
     private final double interactCooldown = 0.25;
     private double interactTimer = 0;
 
+    private static long globalInteractLockedUntilNanos = 0L;
+
     public InteractionSystem(Entity player) {
         this.player = player;
 
@@ -160,6 +162,11 @@ public class InteractionSystem {
             return;
         }
 
+        if (isGlobalInteractionLocked()) {
+            hidePrompt();
+            return;
+        }
+
         if (interactTimer > 0) {
             interactTimer -= tpf;
         }
@@ -235,16 +242,38 @@ public class InteractionSystem {
             return;
         }
 
+        if (isGlobalInteractionLocked()) {
+            return;
+        }
+
         if (interactTimer > 0) {
             return;
         }
 
         findNearestInteractable().ifPresent(e -> {
-            e.getComponent(InteractableComponent.class).interact();
+            InteractableComponent component = e.getComponent(InteractableComponent.class);
 
-            // 互動成功後才進入冷卻
+            if (!component.canInteract()) {
+                return;
+            }
+
+            /*
+             * 先進入冷卻，再執行 action。
+             * 因為 action 可能會切場景，避免切場景前後連續觸發。
+             */
             interactTimer = interactCooldown;
+
+            component.interact();
         });
+    }
+
+    public static void lockAllInteractions(double seconds) {
+        globalInteractLockedUntilNanos =
+                System.nanoTime() + (long) (seconds * 1_000_000_000L);
+    }
+
+    public static boolean isGlobalInteractionLocked() {
+        return System.nanoTime() < globalInteractLockedUntilNanos;
     }
 
     private Optional<Entity> findNearestInteractable() {

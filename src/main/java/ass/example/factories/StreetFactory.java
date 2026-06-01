@@ -1,13 +1,15 @@
 package ass.example.factories;
 
 import ass.example.Main;
+import ass.example.components.InteractableComponent;
 import ass.example.components.LethalComponent;
-import ass.example.core.CollisionCategory;
-import ass.example.core.DeathReason;
-import ass.example.core.EntityType;
-import ass.example.core.FixtureFilterUtil;
+import ass.example.core.*;
 import ass.example.core.StreetScene.FallingObjectVariant;
 import ass.example.core.StreetScene.StreetApartmentStyle;
+import ass.example.scenes.SceneManager;
+import ass.example.system.InteractionSystem;
+import ass.example.system.LanguageSystem;
+import ass.example.system.quest.QuestSystem;
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.EntityFactory;
 import com.almasb.fxgl.entity.SpawnData;
@@ -22,6 +24,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 
 import static com.almasb.fxgl.dsl.FXGL.entityBuilder;
+import static com.almasb.fxgl.dsl.FXGL.getb;
 
 public class StreetFactory implements EntityFactory {
 
@@ -251,6 +254,52 @@ public class StreetFactory implements EntityFactory {
                  */
                 .with(new CollidableComponent(true))
                 .with(new LethalComponent(deathReason))
+                .zIndex(1000)
+                .build();
+    }
+
+    @Spawns("entrance_door")
+    public Entity newEntranceDoor(SpawnData data) {
+        double width = data.get("width");
+        double height = data.get("height");
+
+        double interactRange = data.hasKey("interactRange")
+                ? data.get("interactRange")
+                : 180.0;
+
+        boolean promptOnEntity = data.hasKey("promptOnEntity")
+                ? data.get("promptOnEntity")
+                : false;
+
+        double promptOffsetY = data.hasKey("promptOffsetY")
+                ? data.get("promptOffsetY")
+                : 35.0;
+
+        SceneManager sceneManager = data.get("sceneManager");
+
+        QuestSystem questSystem = QuestSystem.getInstance();
+
+        return entityBuilder(data)
+                .type(EntityType.INTERACTABLE)
+                .bbox(new HitBox(BoundingShape.box(width, height)))
+                .view(Main.devMode
+                        ? new Rectangle(width, height, Color.rgb(255, 255, 0, 0.35))
+                        : new Rectangle(0, 0, Color.TRANSPARENT))
+                .with(new InteractableComponent(
+                        () -> "story.street.enter",
+                        () -> {
+                            if (getb("playerDead")) {
+                                return;
+                            }
+
+                            InteractionSystem.lockAllInteractions(0.65);
+
+                            sceneManager.loadHouseSceneAt(43.0, 452.0);
+                        },
+                        interactRange,
+                        promptOnEntity,
+                        promptOffsetY
+                ))
                 .zIndex(1000)
                 .build();
     }

@@ -39,6 +39,8 @@ public class HouseScene {
     // 音效系統
     private final AudioSystem audioSystem;
 
+    private final SceneManager sceneManager;
+
     // 房間判斷系統
     private RoomSystem roomSystem;
 
@@ -53,11 +55,13 @@ public class HouseScene {
     public HouseScene(
             SceneConfig config,
             DeathSystem deathSystem,
-            AudioSystem audioSystem
+            AudioSystem audioSystem,
+            SceneManager sceneManager
     ) {
         this.config = config;
         this.deathSystem = deathSystem;
         this.audioSystem = audioSystem;
+        this.sceneManager = sceneManager;
     }
 
     public void cleanup() {
@@ -157,7 +161,10 @@ public class HouseScene {
         // walls
         spawn("wall", new SpawnData(-25, 0)
                 .put("width", 50.0)
-                .put("height", 720.0));
+                .put("height", 345.0));
+        spawn("wall", new SpawnData(-25, 345)
+                .put("width", 45.0)
+                .put("height", 575.0));
         spawn("wall", new SpawnData(2079, 0)
                 .put("width", 27.0)
                 .put("height", 324.0));
@@ -183,6 +190,10 @@ public class HouseScene {
                 .put("height", 23.0)
                 .put("deathReason", DeathReason.HIT_DOORFRAME));
         spawn("death_wall", new SpawnData(2073, 311)
+                .put("width", 38.0)
+                .put("height", 23.0)
+                .put("deathReason", DeathReason.HIT_DOORFRAME));
+        spawn("death_wall", new SpawnData(-12, 345)
                 .put("width", 38.0)
                 .put("height", 23.0)
                 .put("deathReason", DeathReason.HIT_DOORFRAME));
@@ -359,6 +370,15 @@ public class HouseScene {
      */
     private void spawnProps() {
         // INTERACTABLES
+        // exit
+        spawn("exit_door", new SpawnData(0, 376)
+                .put("width", 20.0)
+                .put("height", 318.0)
+                .put("interactRange", 180.0)
+                .put("promptOnEntity", false)
+                .put("promptOffsetY", 45.0)
+                .put("sceneManager", sceneManager));
+
         // doors
         Entity door1 = spawn("door", new SpawnData(2054, 290)
                 .put("id", "Door1")
@@ -456,7 +476,7 @@ public class HouseScene {
         Entity shoeCabinet = spawn("shoe_cabinet", new SpawnData(0, 0));
 
         spawn("shoe_trigger", new SpawnData(132, 371)
-                .put("width", 342.0)
+                .put("width", 300.0)
                 .put("height", 322.0)
                 .put("visual", shoeCabinet)
                 .put("player", player)

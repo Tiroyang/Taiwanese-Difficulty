@@ -292,6 +292,7 @@ public class SaveSlotManager {
         putBool(props, bundle, SaveKey.QUILT_FOLDED, "bundle.quiltFolded");
         putBool(props, bundle, SaveKey.WATER_DRUNK, "bundle.waterDrunk");
         putBool(props, bundle, SaveKey.TEETH_BRUSHED, "bundle.teethBrushed");
+        putBool(props, bundle, SaveKey.SHOES_WORN, "bundle.shoesWorn");
         putBool(props, bundle, SaveKey.PLAYER_ON_BED_COLLIDER, "bundle.playerOnBedCollider");
 
         putBool(props, bundle, SaveKey.ROOM_LIVING_ROOM_REVEALED, "bundle.roomLivingRoomRevealed");
@@ -299,6 +300,9 @@ public class SaveSlotManager {
 
         putBool(props, bundle, SaveKey.DOOR_1_OPENED, "bundle.door1Opened");
         putBool(props, bundle, SaveKey.DOOR_2_OPENED, "bundle.door2Opened");
+
+        putString(props, bundle, SaveKey.STREET_SEGMENTS, "bundle.streetSegments");
+        putString(props, bundle, SaveKey.STREET_OBSTACLES, "bundle.streetObstacles");
 
         putBool(props, bundle, SaveKey.PLAYER_DEAD, "bundle.playerDead");
         putString(props, bundle, SaveKey.LAST_DEATH_REASON, "bundle.lastDeathReason");
@@ -357,6 +361,7 @@ public class SaveSlotManager {
         bundle.put(SaveKey.QUILT_FOLDED, boolValue(props, "bundle.quiltFolded"));
         bundle.put(SaveKey.WATER_DRUNK, boolValue(props, "bundle.waterDrunk"));
         bundle.put(SaveKey.TEETH_BRUSHED, boolValue(props, "bundle.teethBrushed"));
+        bundle.put(SaveKey.SHOES_WORN, boolValue(props, "bundle.shoesWorn"));
         bundle.put(SaveKey.PLAYER_ON_BED_COLLIDER, boolValue(props, "bundle.playerOnBedCollider"));
 
         bundle.put(SaveKey.ROOM_LIVING_ROOM_REVEALED, boolValue(props, "bundle.roomLivingRoomRevealed"));
@@ -364,6 +369,9 @@ public class SaveSlotManager {
 
         bundle.put(SaveKey.DOOR_1_OPENED, boolValue(props, "bundle.door1Opened"));
         bundle.put(SaveKey.DOOR_2_OPENED, boolValue(props, "bundle.door2Opened"));
+
+        bundle.put(SaveKey.STREET_SEGMENTS, props.getProperty("bundle.streetSegments", ""));
+        bundle.put(SaveKey.STREET_OBSTACLES, props.getProperty("bundle.streetObstacles", ""));
 
         bundle.put(SaveKey.PLAYER_DEAD, boolValue(props, "bundle.playerDead"));
         bundle.put(SaveKey.LAST_DEATH_REASON, props.getProperty("bundle.lastDeathReason", ""));

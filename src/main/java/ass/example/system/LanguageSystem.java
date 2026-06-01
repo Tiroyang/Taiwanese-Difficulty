@@ -360,7 +360,12 @@ public class LanguageSystem {
         enUs.put("story.house.talkToMom", "Talk to Mom");
 
         zhTw.put("story.house.exit", "離開 家");
-        enUs.put("story.house.exit", "離開 家");
+        zhTw.put("story.house.exit.locked", "現在還不能出門。");
+        enUs.put("story.house.exit", "Leave Home");
+        enUs.put("story.house.exit.locked", "You can't go outside yet.");
+
+        zhTw.put("story.street.enter", "返回 家");
+        enUs.put("story.house.exit", "Go Home");
 
         // Quest
         zhTw.put("quest.fold_quilt", "摺好被子");
@@ -451,7 +456,7 @@ public class LanguageSystem {
         enUs.put("death.TRIPPED_BY_SIDEWALK_TILE.subtitle", "DIVE HEAD-FIRST FOR THE BAG! And... Out!");
 
         zhTw.put("death.HIT_BY_SCOOTER.title", "被摩托車創飛");
-        zhTw.put("death.HIT_BY_SCOOTER.subtitle", "麥可！Hee-hee!");
+        zhTw.put("death.HIT_BY_SCOOTER.subtitle", "麥可 are you okay?");
 
         enUs.put("death.HIT_BY_SCOOTER.title", "SENT FLYING BY A SCOOTER");
         enUs.put("death.HIT_BY_SCOOTER.subtitle", "Ah ha! Classic.");
@@ -499,7 +504,7 @@ public class LanguageSystem {
         enUs.put("death.MOM_BATTLE_LOSE_A.subtitle", "One-shotted by la chancla.");
 
         zhTw.put("death.MOM_BATTLE_LOSE_B.title", "被媽媽擊敗");
-        zhTw.put("death.MOM_BATTLE_LOSE_B.subtitle", "勝敗乃兵家常事，下一次還是會輸的。");
+        zhTw.put("death.MOM_BATTLE_LOSE_B.subtitle", "勝敗乃兵家常事，下一次你還是會輸的。");
 
         enUs.put("death.MOM_BATTLE_LOSE_B.title", "DEFEATED BY MOM");
         enUs.put("death.MOM_BATTLE_LOSE_B.subtitle", "nt, stop trying.");

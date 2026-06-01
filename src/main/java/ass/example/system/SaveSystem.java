@@ -65,6 +65,8 @@ public class SaveSystem {
         saveDeathAchievements(bundle);
         saveQuests(bundle);
 
+        sceneManager.saveCurrentSceneExtraState(bundle);
+
         putBoolIfExists(bundle, SaveKey.PLAYER_DEAD);
         putStringIfExists(bundle, SaveKey.LAST_DEATH_REASON);
 
@@ -150,6 +152,8 @@ public class SaveSystem {
         loadDeathAchievements(bundle);
         loadQuests(bundle);
 
+        sceneManager.loadCurrentSceneExtraState(bundle);
+
         double playerX = bundle.get(SaveKey.PLAYER_X);
         double playerY = bundle.get(SaveKey.PLAYER_Y);
 
@@ -157,7 +161,7 @@ public class SaveSystem {
 
         if (player != null) {
             PlayerComponent pc = player.getComponent(PlayerComponent.class);
-            pc.respawnAt(playerX, playerY);
+            pc.respawnAt(playerX + 50, playerY);
         }
 
         sceneManager.applySavedState();

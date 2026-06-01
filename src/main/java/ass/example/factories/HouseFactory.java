@@ -6,8 +6,11 @@ import ass.example.components.InteractableComponent;
 import ass.example.components.LethalComponent;
 import ass.example.components.OneWayPlatformComponent;
 import ass.example.core.*;
+import ass.example.scenes.SceneManager;
 import ass.example.system.AudioSystem;
 import ass.example.system.DeathSystem;
+import ass.example.system.InteractionSystem;
+import ass.example.system.LanguageSystem;
 import ass.example.system.dialogue.DialogueSystem;
 import ass.example.system.quest.QuestSystem;
 import com.almasb.fxgl.entity.Entity;
@@ -601,6 +604,11 @@ public class HouseFactory implements EntityFactory {
                 ? data.get("promptOffsetY")
                 : 35.0;
 
+        SceneManager sceneManager = data.get("sceneManager");
+
+        LanguageSystem languageSystem = LanguageSystem.getInstance();
+        QuestSystem questSystem = QuestSystem.getInstance();
+
         return entityBuilder(data)
                 .type(EntityType.INTERACTABLE)
                 .bbox(new HitBox(BoundingShape.box(width, height)))
@@ -610,7 +618,23 @@ public class HouseFactory implements EntityFactory {
                 .with(new InteractableComponent(
                         () -> "story.house.exit",
                         () -> {
+                            if (getb("playerDead")) {
+                                return;
+                            }
 
+                            boolean wearShoesQuestCompleted = questSystem.isCompleted(QuestType.WEAR_SHOES);
+
+                            boolean shoesWorn = getb("shoesWorn");
+
+                            if (!wearShoesQuestCompleted || !shoesWorn) {
+                                showExitLockedNotice(languageSystem);
+                                return;
+                            }
+
+                            InteractionSystem.lockAllInteractions(0.65);
+
+                            questSystem.completeQuest(QuestType.EXIT_HOUSE);
+                            sceneManager.loadStreetScene(true);
                         },
                         interactRange,
                         promptOnEntity,
@@ -646,5 +670,13 @@ public class HouseFactory implements EntityFactory {
         );
 
         return fixtureDef;
+    }
+
+    private void showExitLockedNotice(
+            LanguageSystem languageSystem
+    ) {
+        getNotificationService().pushNotification(
+                languageSystem.text("story.house.exit.locked")
+        );
     }
 }

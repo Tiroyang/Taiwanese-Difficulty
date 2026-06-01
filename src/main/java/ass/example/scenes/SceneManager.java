@@ -2,9 +2,11 @@ package ass.example.scenes;
 
 import ass.example.components.PlayerComponent;
 import ass.example.core.DeathReason;
+import ass.example.core.SaveKey;
 import ass.example.core.SceneType;
 import ass.example.system.*;
 import ass.example.system.quest.QuestSystem;
+import com.almasb.fxgl.core.serialization.Bundle;
 import com.almasb.fxgl.entity.Entity;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,6 +25,7 @@ public class SceneManager {
      * 匯入場景。
      */
     private HouseScene houseScene;
+    private StreetScene streetScene;
     private StreetEndlessScene streetEndlessScene;
     // 在此新增匯入場景
 
@@ -65,6 +68,15 @@ public class SceneManager {
                 )
         );
 
+        sceneConfigs.put(SceneType.STREET,
+                new SceneConfig(
+                        1280,
+                        720,
+                        1120,
+                        452.0
+                )
+        );
+
         // MiniGame
         sceneConfigs.put(SceneType.STREET_ENDLESS,
                 new SceneConfig(
@@ -102,34 +114,54 @@ public class SceneManager {
 
     public void loadSceneByTypeFromSave(SceneType sceneType) {
         switch (sceneType) {
-            case HOUSE -> loadHouseSceneFromSave();
-            default -> loadHouseSceneFromSave();
+            case HOUSE -> loadHouseScene(true);
+            case STREET -> loadStreetScene(true);
+            default -> loadHouseScene(true);
         }
     }
 
     public void loadSceneByTypeForNewGame(SceneType sceneType) {
         switch (sceneType) {
-            case HOUSE -> loadHouseSceneForNewGame();
+            case HOUSE -> loadHouseScene(false);
             case STREET_ENDLESS -> loadStreetEndlessScene();
-            default -> loadHouseSceneForNewGame();
+            default -> loadHouseScene(false);
         }
     }
 
-    public void loadHouseSceneForNewGame() {
-        loadHouseScene(false);
+    public void loadHouseScene(boolean fromSave) {
+        loadHouseSceneInternal(
+                fromSave,
+                null,
+                null,
+                !fromSave
+        );
     }
 
-    public void loadHouseSceneFromSave() {
-        loadHouseScene(true);
+    public void loadHouseSceneAt(double playerX, double playerY) {
+        loadHouseSceneInternal(
+                true,
+                playerX,
+                playerY,
+                false
+        );
     }
 
     /**
      * 載入家中場景。
      */
-    public void loadHouseScene(boolean fromSave) {
+    private void loadHouseSceneInternal(
+            boolean fromSave,
+            Double overridePlayerX,
+            Double overridePlayerY,
+            boolean resetQuestRuntime
+    ) {
         currentSceneType = SceneType.HOUSE;
 
-        if (!SaveRequestSystem.hasPendingLoadSlot()) {
+        /*
+         * 只有新遊戲才重置任務。
+         * 從街道回家、讀檔，都不應該重置任務進度。
+         */
+        if (resetQuestRuntime) {
             QuestSystem.getInstance().resetRuntimeState();
         }
 
@@ -146,14 +178,66 @@ public class SceneManager {
         set("playerDead", false);
         set("lastDeathReason", "");
         set("playerOnBedCollider", false);
-        if (!fromSave) {
+
+        /*
+         * 只有新遊戲才重置鞋子。
+         * 從街道回家不一定要重置。
+         */
+        if (!fromSave && overridePlayerX == null && overridePlayerY == null) {
             set("shoesWorn", false);
         }
 
         SceneConfig homeConfig = getCurrentSceneConfig();
 
-        houseScene = new HouseScene(homeConfig, deathSystem, audioSystem);
+        houseScene = new HouseScene(homeConfig, deathSystem, audioSystem, this);
         player = houseScene.load();
+
+        /*
+         * 如果有指定座標，載入完成後立刻移動玩家。
+         */
+        if (overridePlayerX != null && overridePlayerY != null && player != null) {
+            PlayerComponent pc = player.getComponent(PlayerComponent.class);
+            pc.respawnAt(overridePlayerX, overridePlayerY);
+        }
+
+        applySavedState();
+        refreshPlayerGroundContacts();
+    }
+
+    /**
+     * 載入 Story Mode 街道場景。
+     */
+    public void loadStreetScene(boolean fromSave) {
+        currentSceneType = SceneType.STREET;
+
+        cleanupCurrentScene();
+        clearCurrentWorld();
+
+        MusicSystem.getInstance().playBGM(
+                "/assets/music/scene2/轟はじめ OP.mp3",
+                true
+        );
+
+        /*
+         * Story Mode Street：
+         * 允許存檔、允許成就。
+         * 不使用 Street Endless 距離紀錄。
+         */
+        set("saveDisabled", false);
+        set("achievementDisabled", false);
+        set("playerDead", false);
+        set("lastDeathReason", "");
+        set("playerOnBedCollider", false);
+
+        set("streetEndlessMode", false);
+        set("shoesWorn", true);
+
+        SceneConfig config = getCurrentSceneConfig();
+
+        streetScene = new StreetScene(config, deathSystem, audioSystem, this);
+        player = streetScene.load();
+
+        refreshPlayerGroundContacts();
     }
 
     // MiniGame
@@ -209,6 +293,11 @@ public class SceneManager {
             houseScene = null;
         }
 
+        if (streetScene != null) {
+            streetScene.cleanup();
+            streetScene = null;
+        }
+
         if (streetEndlessScene != null) {
             streetEndlessScene.cleanup();
             streetEndlessScene = null;
@@ -225,6 +314,10 @@ public class SceneManager {
         if (currentSceneType == SceneType.HOUSE && houseScene != null) {
             houseScene.applySavedState();
         }
+
+        if (currentSceneType == SceneType.STREET && streetScene != null) {
+            streetScene.applySavedState();
+        }
     }
 
     /**
@@ -233,6 +326,10 @@ public class SceneManager {
     public void onUpdate(double tpf) {
         if (houseScene != null) {
             houseScene.onUpdate(tpf);
+        }
+
+        if (streetScene != null) {
+            streetScene.onUpdate(tpf);
         }
 
         if (streetEndlessScene != null) {
@@ -246,6 +343,10 @@ public class SceneManager {
     public void tryInteract() {
         if (houseScene != null) {
             houseScene.tryInteract();
+        }
+
+        if (streetScene != null) {
+            streetScene.tryInteract();
         }
     }
 
@@ -273,6 +374,10 @@ public class SceneManager {
     public void onPlayerDied() {
         if (currentSceneType == SceneType.HOUSE && houseScene != null) {
             houseScene.resetRuntimeSystems();
+        }
+
+        if (currentSceneType == SceneType.STREET && streetScene != null) {
+            streetScene.resetRuntimeSystems();
         }
     }
 
@@ -332,6 +437,10 @@ public class SceneManager {
             houseScene.resetRuntimeSystems();
         }
 
+        if (currentSceneType == SceneType.STREET && streetScene != null) {
+            streetScene.resetRuntimeSystems();
+        }
+
         if (currentSceneType == SceneType.STREET_ENDLESS && streetEndlessScene != null) {
             streetEndlessScene.resetRuntimeSystems();
         }
@@ -346,6 +455,11 @@ public class SceneManager {
     public void resetCurrentSceneStateForRespawn() {
         if (currentSceneType == SceneType.HOUSE) {
             resetHouseSceneStateForRespawn();
+            return;
+        }
+
+        if (currentSceneType == SceneType.STREET) {
+            resetStreetSceneStateForRespawn();
             return;
         }
     }
@@ -368,6 +482,22 @@ public class SceneManager {
         refreshPlayerGroundContacts();
     }
 
+    private void resetStreetSceneStateForRespawn() {
+        /*
+         * Story Mode Street 死亡重生時的暫時狀態。
+         * 不清除任務、不清除已存的 story vars。
+         */
+        set("playerOnBedCollider", false);
+
+        /*
+         * 街道預設穿鞋。
+         * 如果你希望保留玩家進入街道前的鞋子狀態，可以刪掉這行。
+         */
+        set("shoesWorn", true);
+
+        refreshPlayerGroundContacts();
+    }
+
     /**
      * 取得目前場景設定。
      */
@@ -381,5 +511,32 @@ public class SceneManager {
 
     public Entity getPlayer() {
         return player;
+    }
+
+    public void saveCurrentSceneExtraState(Bundle bundle) {
+        if (currentSceneType == SceneType.STREET && streetScene != null) {
+
+            bundle.put(SaveKey.STREET_SEGMENTS, streetScene.createSegmentSaveString());
+            bundle.put(SaveKey.STREET_OBSTACLES, streetScene.createObstacleSaveString());
+        }
+    }
+
+    public void loadCurrentSceneExtraState(Bundle bundle) {
+        if (currentSceneType == SceneType.STREET && streetScene != null) {
+            try {
+                String segmentData = bundle.get(SaveKey.STREET_SEGMENTS);
+                streetScene.restoreSegmentsFromSaveString(segmentData);
+            } catch (Exception ignored) {
+            }
+
+            try {
+                streetScene.restoreObstaclesFromSaveString(bundle.get(SaveKey.STREET_OBSTACLES));
+
+            } catch (Exception e) {
+                e.printStackTrace();
+
+                streetScene.restoreObstaclesFromSaveString("");
+            }
+        }
     }
 }
