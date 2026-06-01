@@ -22,8 +22,8 @@ public enum SoundId {
     FOLDING_QUILT("props/scene1/folding_quilt.wav", 1),
     EQUIP("props/scene1/equip.wav", 1),
 
-    MOM_BATTLE_DEATH("characters/mom/mombattledeath.wav", 0.5),
-    MOM_DANCE_OFF("characters/mom/momdanceoff.wav", 1);
+    MOM_BATTLE_DEATH("characters/mom/mombattledeath.wav", 0.3),
+    MOM_DANCE_OFF("characters/mom/momdanceoff.wav", 0.5);
 
     private final String fileName;
     private final double builtInVolume;

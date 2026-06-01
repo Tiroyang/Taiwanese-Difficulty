@@ -5,6 +5,7 @@ import ass.example.core.Language;
 import ass.example.core.SoundId;
 import ass.example.core.WindowMode;
 import ass.example.system.*;
+import ass.example.ui.CursorManager;
 import ass.example.system.save.SaveSlotManager;
 import ass.example.ui.save.SaveMenuMode;
 import ass.example.ui.save.SaveSlotPanel;
@@ -76,6 +77,9 @@ public class PauseMenu extends FXGLMenu {
         );
 
         getContentRoot().getChildren().add(root);
+
+        CursorManager.applyCustomCursorRecursively(getContentRoot());
+        CursorManager.applyCustomCursorRecursively(root);
     }
 
     private String text(String key) {

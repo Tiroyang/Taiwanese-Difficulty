@@ -4,12 +4,14 @@ import ass.example.Main;
 import ass.example.core.*;
 import ass.example.scenes.SceneManager;
 import ass.example.system.*;
+import ass.example.ui.CursorManager;
 import ass.example.ui.save.SaveMenuMode;
 import ass.example.ui.save.SaveSlotPanel;
 import com.almasb.fxgl.dsl.FXGL;
 import javafx.animation.*;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.ImageCursor;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
@@ -33,6 +35,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 
+import static com.almasb.fxgl.dsl.FXGL.getGameScene;
 import static com.almasb.fxgl.dsl.FXGLForKtKt.getGameController;
 
 public class MainMenu extends FXGLMenu {
@@ -112,6 +115,8 @@ public class MainMenu extends FXGLMenu {
         createDeveloperLabel();
 
         getContentRoot().getChildren().add(root);
+
+        CursorManager.applyCustomCursorRecursively(getContentRoot());
 
         resetToMainMenuFirst();
     }
@@ -1975,11 +1980,11 @@ public class MainMenu extends FXGLMenu {
 
                 createCreditRow(
                         text("menu.settings.about.credits.art_2d"),
-                        text("menu.settings.about.credits.tiro_online_assets")
+                        "Tiro" + text("menu.settings.about.credits.comma") + text("menu.settings.about.credits.online_assets")
                 ),
                 createCreditRow(
                         text("menu.settings.about.credits.character_design"),
-                        text("menu.settings.about.credits.tiro_online_assets")
+                        "Tiro" + text("menu.settings.about.credits.comma") + text("menu.settings.about.credits.online_assets")
                 ),
                 createCreditRow(
                         text("menu.settings.about.credits.animation"),
@@ -1996,6 +2001,16 @@ public class MainMenu extends FXGLMenu {
                         text("menu.settings.about.credits.music"),
                         text("menu.settings.about.credits.online_assets")
                 ),
+
+                createCreditDivider(),
+
+                createCreditRow(
+                        text("menu.settings.about.credits.translation.en"),
+                        "Tiro"
+                ),
+
+                createCreditDivider(),
+
                 createCreditRow(
                         text("menu.settings.about.credits.testing"),
                         "Tiro"

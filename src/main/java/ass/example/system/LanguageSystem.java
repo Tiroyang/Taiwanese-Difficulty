@@ -196,7 +196,7 @@ public class LanguageSystem {
         enUs.put("menu.settings.about.info.version", "Version: ");
 
         enUs.put("menu.settings.about.description", "Project Description");
-        enUs.put("menu.settings.about.description.construct", "This project is mainly developed with JavaFX and built using the FXGL game framework.\n");
+        enUs.put("menu.settings.about.description.construct", "This is a project mainly developed with JavaFX and built using the FXGL game framework.\n");
         enUs.put("menu.settings.about.description.content", "A game about a perfectly normal day in Taiwan.(?)");
 
         zhTw.put("menu.settings.about.credits", "製作名單");
@@ -211,9 +211,10 @@ public class LanguageSystem {
         zhTw.put("menu.settings.about.credits.animation", "動畫繪製");
         zhTw.put("menu.settings.about.credits.sound_design", "音效設計");
         zhTw.put("menu.settings.about.credits.music", "音樂");
+        zhTw.put("menu.settings.about.credits.translation.en", "英文本地化");
         zhTw.put("menu.settings.about.credits.testing", "測試");
         zhTw.put("menu.settings.about.credits.online_assets", "網路素材");
-        zhTw.put("menu.settings.about.credits.tiro_online_assets", "Tiro、網路素材");
+        zhTw.put("menu.settings.about.credits.comma", "、");
 
         enUs.put("menu.settings.about.credits", "Credits");
         enUs.put("menu.settings.about.credits.game_design", "Game Design");
@@ -225,11 +226,12 @@ public class LanguageSystem {
         enUs.put("menu.settings.about.credits.art_2d", "2D Art");
         enUs.put("menu.settings.about.credits.character_design", "Character Design");
         enUs.put("menu.settings.about.credits.animation", "Animation");
-        enUs.put("menu.settings.about.credits.sound_design", "Sound Design");
+        enUs.put("menu.settings.about.credits.sound_design", "Sound Effect");
+        enUs.put("menu.settings.about.credits.translation.en", "English Localization");
         enUs.put("menu.settings.about.credits.music", "Music");
         enUs.put("menu.settings.about.credits.testing", "Testing");
         enUs.put("menu.settings.about.credits.online_assets", "Online Assets");
-        enUs.put("menu.settings.about.credits.tiro_online_assets", "Tiro, Online Assets");
+        enUs.put("menu.settings.about.credits.comma", ", ");
 
         // Exit
         zhTw.put("menu.exit.confirm", "確定要退出遊戲嗎？");
@@ -365,7 +367,7 @@ public class LanguageSystem {
         enUs.put("story.house.exit.locked", "You can't go outside yet.");
 
         zhTw.put("story.street.enter", "返回 家");
-        enUs.put("story.house.exit", "Go Home");
+        enUs.put("story.street.enter", "Go Home");
 
         // Quest
         zhTw.put("quest.fold_quilt", "摺好被子");
@@ -462,7 +464,7 @@ public class LanguageSystem {
         enUs.put("death.HIT_BY_SCOOTER.subtitle", "Ah ha! Classic.");
 
         zhTw.put("death.FALLING_FRIDGE.title", "被墜落的冰箱擊中");
-        zhTw.put("death.FALLING_FRIDGE.subtitle", "F＝ma-mma-mia");
+        zhTw.put("death.FALLING_FRIDGE.subtitle", "F＝ma-ma-mia");
 
         enUs.put("death.FALLING_FRIDGE.title", "CRASHED BY A FALLEN FRIDGE");
         enUs.put("death.FALLING_FRIDGE.subtitle", "F＝ma-mma-mia");

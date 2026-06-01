@@ -67,6 +67,8 @@ public class DeathScreen extends StackPane {
                 respawnButton,
                 achievementToast
         );
+
+        CursorManager.applyCustomCursorRecursively(this);
     }
 
     private void loadFonts() {

@@ -78,6 +78,8 @@ public class DialogueUI extends StackPane {
                 buttonBox
         );
 
+        CursorManager.applyCustomCursorRecursively(this);
+
         setOnMouseClicked(e -> {
             /*
              * 避免按到按鈕時，同時觸發對話框下一句。

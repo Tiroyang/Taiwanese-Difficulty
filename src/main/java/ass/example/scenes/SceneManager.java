@@ -377,7 +377,6 @@ public class SceneManager {
         }
 
         if (currentSceneType == SceneType.STREET && streetScene != null) {
-            streetScene.resetRuntimeSystems();
         }
     }
 

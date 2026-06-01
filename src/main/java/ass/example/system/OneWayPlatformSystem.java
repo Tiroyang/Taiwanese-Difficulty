@@ -247,6 +247,16 @@ public class OneWayPlatformSystem {
     }
 
     private PlayerComponent getPlayerComponent() {
+        if (player == null) {
+            System.out.println("[OneWayPlatformSystem] player is null");
+            return null;
+        }
+
+        if (!player.hasComponent(PlayerComponent.class)) {
+            System.out.println("[OneWayPlatformSystem] player has no PlayerComponent: " + player);
+            return null;
+        }
+
         return player.getComponent(PlayerComponent.class);
     }
 

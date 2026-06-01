@@ -11,6 +11,7 @@ import ass.example.factories.PlayerFactory;
 import ass.example.factories.StreetFactory;
 import ass.example.system.*;
 import ass.example.system.save.SaveSlotManager;
+import ass.example.ui.CursorManager;
 import ass.example.ui.MainMenu;
 import ass.example.ui.PauseMenu;
 import com.almasb.fxgl.app.GameApplication;
@@ -25,6 +26,8 @@ import com.almasb.fxgl.input.UserAction;
 import com.almasb.fxgl.physics.CollisionHandler;
 import com.almasb.fxgl.profile.DataFile;
 import com.almasb.fxgl.profile.SaveLoadHandler;
+import javafx.scene.ImageCursor;
+import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import ass.example.components.PlayerComponent;
 import javafx.scene.input.KeyEvent;
@@ -47,7 +50,7 @@ public class Main extends GameApplication {
         settings.setWidth(1280);
         settings.setHeight(720);
         settings.setTitle("Taiwanese Difficulty");
-        settings.setVersion("0.5");
+        settings.setVersion("2.1");
 
         settings.setMainMenuEnabled(true);
         settings.setGameMenuEnabled(true);
@@ -106,6 +109,8 @@ public class Main extends GameApplication {
         }
 
         sceneManager.loadHouseScene(false);
+
+        CursorManager.hideCursor(getGameScene().getRoot());
     }
 
     @Override

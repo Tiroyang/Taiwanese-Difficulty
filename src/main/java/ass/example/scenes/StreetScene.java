@@ -298,6 +298,12 @@ public class StreetScene {
 
     public void resetRuntimeSystems() {
         set("playerOnBedCollider", false);
+
+        cleanupScootersForRespawn();
+        cleanupFallingObjectsForRespawn();
+
+        resetScooterTimers();
+        resetFallingObjectSystem();
     }
 
     private void spawnFarBackground() {
@@ -823,8 +829,6 @@ public class StreetScene {
                 fallingObjectMinInterval,
                 fallingObjectMaxInterval
         );
-
-        fallingObjects.clear();
     }
 
     private void spawnFallingObject() {
@@ -1622,17 +1626,7 @@ public class StreetScene {
             interactionSystem = null;
         }
 
-        for (ScooterInstance scooter : scooters) {
-            if (scooter.visual() != null) {
-                scooter.visual().removeFromWorld();
-            }
-
-            if (scooter.hitbox() != null) {
-                scooter.hitbox().removeFromWorld();
-            }
-        }
-
-        scooters.clear();
+        cleanupScootersForRespawn();
 
         if (endlessFloorCollider != null) {
             endlessFloorCollider.removeFromWorld();
@@ -1656,6 +1650,44 @@ public class StreetScene {
 
         clearObstacles();
 
+        cleanupFallingObjectsForRespawn();
+    }
+
+    private void cleanupScootersForRespawn() {
+        for (ScooterInstance scooter : scooters) {
+            if (scooter.visual() != null && scooter.visual().isActive()) {
+                scooter.visual().removeFromWorld();
+            }
+
+            if (scooter.hitbox() != null && scooter.hitbox().isActive()) {
+                scooter.hitbox().removeFromWorld();
+            }
+        }
+
+        scooters.clear();
+
+        leftWarningActive = false;
+        rightWarningActive = false;
+
+        leftWarningTimer = 0;
+        rightWarningTimer = 0;
+
+        if (leftWarningIcon != null) {
+            leftWarningIcon.setVisible(false);
+            leftWarningIcon.setOpacity(1);
+            leftWarningIcon.setScaleX(1);
+            leftWarningIcon.setScaleY(1);
+        }
+
+        if (rightWarningIcon != null) {
+            rightWarningIcon.setVisible(false);
+            rightWarningIcon.setOpacity(1);
+            rightWarningIcon.setScaleX(1);
+            rightWarningIcon.setScaleY(1);
+        }
+    }
+
+    private void cleanupFallingObjectsForRespawn() {
         for (FallingObjectInstance instance : fallingObjects) {
             removeFallingWarning(instance);
             removeFallingTrigger(instance);
