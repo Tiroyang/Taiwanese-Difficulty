@@ -1,17 +1,25 @@
 package ass.example.ui;
 
-import ass.example.Main;
 import ass.example.core.Language;
 import ass.example.core.SoundId;
 import ass.example.core.WindowMode;
-import ass.example.system.*;
-import ass.example.ui.CursorManager;
+import ass.example.system.AudioSystem;
+import ass.example.system.LanguageSystem;
+import ass.example.system.MusicSystem;
+import ass.example.system.WindowSystem;
+import ass.example.system.save.SaveSystem;
 import ass.example.system.save.SaveSlotManager;
 import ass.example.ui.save.SaveMenuMode;
 import ass.example.ui.save.SaveSlotPanel;
 import com.almasb.fxgl.app.scene.FXGLMenu;
 import com.almasb.fxgl.app.scene.MenuType;
-import javafx.animation.*;
+import javafx.animation.FadeTransition;
+import javafx.animation.Interpolator;
+import javafx.animation.ParallelTransition;
+import javafx.animation.PauseTransition;
+import javafx.animation.ScaleTransition;
+import javafx.animation.SequentialTransition;
+import javafx.animation.TranslateTransition;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -21,7 +29,14 @@ import javafx.scene.control.Slider;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.*;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.CornerRadii;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Polygon;
 import javafx.scene.shape.Rectangle;
@@ -29,43 +44,120 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
+
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.almasb.fxgl.dsl.FXGLForKtKt.getGameController;
 import static com.almasb.fxgl.dsl.FXGLForKtKt.getb;
 
+/**
+ * PauseMenu
+ *
+ * 遊戲暫停選單。
+ *
+ * 功能：
+ * 1. 覆蓋 FXGL 的 GAME_MENU。
+ * 2. 顯示暫停遮罩、主暫停按鈕。
+ * 3. 支援繼續遊戲、存檔、設定、退出到主畫面。
+ * 4. 子頁包含：
+ *    - Save Page
+ *    - Settings Page
+ * 5. 子頁按鈕可維持 pressed / selected 狀態。
+ *
+ * 單例判斷：
+ * PauseMenu 不建議做成 Singleton。
+ *
+ * 原因：
+ * - PauseMenu 是 FXGLMenu。
+ * - 生命週期由 FXGL 選單系統管理。
+ * - 若自行做單例，容易和 FXGL 的 menu scene 生命週期衝突。
+ *
+ * 適合單例的是依賴系統：
+ * - MusicSystem
+ * - AudioSystem
+ * - LanguageSystem
+ * - WindowSystem
+ * - SaveSystem
+ * - SaveSlotManager
+ *
+ * 注意：
+ * 本整理版沒有更改 PauseMenu 的外觀、Node 位置、padding、主要動畫位移與按鈕形狀。
+ */
 public class PauseMenu extends FXGLMenu {
+
+    // =========================================================
+    // Screen Constants
+    // =========================================================
 
     private static final double SCREEN_WIDTH = 1280;
     private static final double SCREEN_HEIGHT = 720;
 
+
+    // =========================================================
+    // Root Nodes
+    // =========================================================
+
     private final StackPane root = new StackPane();
-
-    private final StackPane buttonStack = new StackPane();
-    private final List<StackPane> pauseButtons = new java.util.ArrayList<>();
-
-    private boolean menuExpanded = false;
 
     private final Rectangle overlay = new Rectangle(SCREEN_WIDTH, SCREEN_HEIGHT);
 
     private final VBox menuBox = new VBox(16);
+
     private final StackPane pageLayer = new StackPane();
 
-    private final MusicSystem  musicSystem = MusicSystem.getInstance();
-    private final AudioSystem audioSystem = AudioSystem.getInstance();
-    private final LanguageSystem languageSystem = LanguageSystem.getInstance();
-    private final WindowSystem windowSystem = WindowSystem.getInstance();
+    private final StackPane buttonStack = new StackPane();
+
+
+    // =========================================================
+    // Main Pause Buttons
+    // =========================================================
+
+    private final List<StackPane> pauseButtons = new ArrayList<>();
+
+    private boolean menuExpanded = false;
 
     private boolean animating = false;
+
+
+    // =========================================================
+    // Sub Page Selection State
+    // =========================================================
+
+    /**
+     * 子頁左側按鈕目前被選中的按鈕。
+     *
+     * 用途：
+     * - Save / Settings 子頁按鈕點下後維持 pressed 外觀。
+     */
     private StackPane selectedSubPageButton;
+
+
+    // =========================================================
+    // Systems
+    // =========================================================
+
+    private final MusicSystem musicSystem =
+            MusicSystem.getInstance();
+
+    private final AudioSystem audioSystem =
+            AudioSystem.getInstance();
+
+    private final LanguageSystem languageSystem =
+            LanguageSystem.getInstance();
+
+    private final WindowSystem windowSystem =
+            WindowSystem.getInstance();
+
+
+    // =========================================================
+    // Constructor / FXGL Lifecycle
+    // =========================================================
 
     public PauseMenu() {
         super(MenuType.GAME_MENU);
 
-        root.setPrefSize(SCREEN_WIDTH, SCREEN_HEIGHT);
-        root.setMinSize(0, 0);
-        root.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
-
+        setupRoot();
         setupOverlay();
         setupMenuButtons();
         setupPageLayer();
@@ -78,92 +170,52 @@ public class PauseMenu extends FXGLMenu {
 
         getContentRoot().getChildren().add(root);
 
-        CursorManager.applyCustomCursorRecursively(getContentRoot());
-        CursorManager.applyCustomCursorRecursively(root);
+        CursorManager.install(getContentRoot());
     }
 
-    private String text(String key) {
-        return languageSystem.text(key);
-    }
-
+    /**
+     * 每次暫停選單被開啟時呼叫。
+     */
     @Override
     public void onCreate() {
         resetState();
         playOpenAnimation();
     }
 
-    private StackPane createSelectablePauseButton(String text, Runnable action, PauseButtonType type) {
-        final StackPane[] ref = new StackPane[1];
 
-        ref[0] = createPauseButton(text, () -> {
-            selectSubPageButton(ref[0]);
+    // =========================================================
+    // Basic Helpers
+    // =========================================================
 
-            if (action != null) {
-                action.run();
-            }
-        }, type);
-
-        return ref[0];
+    private String text(String key) {
+        return languageSystem.text(key);
     }
 
-    private void selectSubPageButton(StackPane button) {
-        if (selectedSubPageButton != null) {
-            selectedSubPageButton.getProperties().put("selected", false);
-            applyPauseButtonNormalStyle(selectedSubPageButton);
+    private boolean isSaveDisabled() {
+        try {
+            return getb("saveDisabled");
+        } catch (Exception ignored) {
+            return false;
         }
-
-        selectedSubPageButton = button;
-        selectedSubPageButton.getProperties().put("selected", true);
-        applyPauseButtonPressedStyle(selectedSubPageButton);
     }
 
-    private boolean isPauseButtonSelected(StackPane button) {
-        Object value = button.getProperties().get("selected");
-        return value instanceof Boolean && (Boolean) value;
+
+    // =========================================================
+    // Root Setup
+    // =========================================================
+
+    private void setupRoot() {
+        root.setPrefSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+        root.setMinSize(0, 0);
+        root.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
     }
 
-    private void applyPauseButtonNormalStyle(StackPane button) {
-        Polygon bg = (Polygon) button.getProperties().get("bg");
-        Text label = (Text) button.getProperties().get("label");
-        PauseButtonStyle style = (PauseButtonStyle) button.getProperties().get("style");
-
-        if (bg == null || label == null || style == null) {
-            return;
-        }
-
-        bg.setFill(style.normalFill());
-        bg.setStroke(style.normalStroke());
-        label.setFill(style.normalText());
-
-        button.setScaleX(1.0);
-        button.setScaleY(1.0);
-
-        TranslateTransition move = new TranslateTransition(Duration.seconds(0.08), button);
-        move.setToX(0);
-        move.play();
-    }
-
-    private void applyPauseButtonPressedStyle(StackPane button) {
-        Polygon bg = (Polygon) button.getProperties().get("bg");
-        Text label = (Text) button.getProperties().get("label");
-        PauseButtonStyle style = (PauseButtonStyle) button.getProperties().get("style");
-
-        if (bg == null || label == null || style == null) {
-            return;
-        }
-
-        bg.setFill(style.pressedFill());
-        bg.setStroke(style.hoverStroke());
-        label.setFill(style.pressedText());
-
-        button.setScaleX(0.98);
-        button.setScaleY(0.96);
-
-        TranslateTransition move = new TranslateTransition(Duration.seconds(0.08), button);
-        move.setToX(12);
-        move.play();
-    }
-
+    /**
+     * 暫停時覆蓋整個畫面的黑色遮罩。
+     *
+     * 注意：
+     * 透明度、顏色、mouseTransparent 保持原本設定。
+     */
     private void setupOverlay() {
         overlay.setFill(Color.rgb(0, 0, 0, 0.66));
         overlay.setOpacity(0);
@@ -173,6 +225,16 @@ public class PauseMenu extends FXGLMenu {
         overlay.heightProperty().bind(root.heightProperty());
     }
 
+    /**
+     * 主暫停選單。
+     *
+     * 包含：
+     * - PAUSED 標題
+     * - 4 顆主按鈕
+     *
+     * 注意：
+     * 這裡保留原本 menuBox padding、translateX、buttonStack 尺寸。
+     */
     private void setupMenuButtons() {
         menuBox.setAlignment(Pos.CENTER_LEFT);
         menuBox.setPadding(new Insets(0, 0, 0, 64));
@@ -197,17 +259,7 @@ public class PauseMenu extends FXGLMenu {
         buttonStack.setPickOnBounds(false);
         buttonStack.setAlignment(Pos.CENTER_LEFT);
 
-        pauseButtons.clear();
-
-        pauseButtons.add(createPauseButton(text("pause.resume"), this::resumeGame, PauseButtonType.PRIMARY));
-        pauseButtons.add(createPauseButton(text("pause.save"), this::showSaveMenuPage, PauseButtonType.NORMAL));
-        pauseButtons.add(createPauseButton(text("pause.settings"), this::showSettingsPage, PauseButtonType.NORMAL));
-        pauseButtons.add(createPauseButton(text("pause.exitToMain"), this::exitToMainMenu, PauseButtonType.EXIT));
-
-        for (StackPane button : pauseButtons) {
-            StackPane.setAlignment(button, Pos.CENTER_LEFT);
-            buttonStack.getChildren().add(button);
-        }
+        rebuildMainPauseButtons(false);
 
         menuBox.getChildren().addAll(
                 titleBox,
@@ -217,6 +269,11 @@ public class PauseMenu extends FXGLMenu {
         StackPane.setAlignment(menuBox, Pos.CENTER_LEFT);
     }
 
+    /**
+     * 子頁 Layer。
+     *
+     * Save / Settings 頁都會放在這裡。
+     */
     private void setupPageLayer() {
         pageLayer.setVisible(false);
         pageLayer.setOpacity(0);
@@ -225,9 +282,18 @@ public class PauseMenu extends FXGLMenu {
         StackPane.setAlignment(pageLayer, Pos.CENTER);
     }
 
+
+    // =========================================================
+    // Open / Close Animation
+    // =========================================================
+
+    /**
+     * 每次打開 PauseMenu 前重設狀態。
+     */
     private void resetState() {
         animating = false;
         menuExpanded = false;
+        selectedSubPageButton = null;
 
         overlay.setOpacity(0);
 
@@ -242,6 +308,7 @@ public class PauseMenu extends FXGLMenu {
             button.setScaleX(0.96);
             button.setScaleY(0.96);
             button.setDisable(true);
+            button.getProperties().put("selected", false);
         }
 
         pageLayer.getChildren().clear();
@@ -250,6 +317,9 @@ public class PauseMenu extends FXGLMenu {
         pageLayer.setPickOnBounds(false);
     }
 
+    /**
+     * 暫停選單進場動畫。
+     */
     private void playOpenAnimation() {
         FadeTransition overlayFade = new FadeTransition(Duration.seconds(0.22), overlay);
         overlayFade.setFromValue(0);
@@ -271,24 +341,19 @@ public class PauseMenu extends FXGLMenu {
         );
 
         slideIn.setOnFinished(e -> playButtonExpandAnimation());
-
         slideIn.play();
     }
 
+    /**
+     * 主按鈕由疊在一起，往上下對稱展開。
+     *
+     * 注意：
+     * gap = 74 保持原值。
+     */
     private void playButtonExpandAnimation() {
         ParallelTransition allButtonsAnim = new ParallelTransition();
 
         double gap = 74;
-
-        /*
-         * 4 顆按鈕時：
-         * i = 0 -> -1.5 gap
-         * i = 1 -> -0.5 gap
-         * i = 2 -> +0.5 gap
-         * i = 3 -> +1.5 gap
-         *
-         * 這樣會剛好以 Y 軸中心對稱攤開。
-         */
         double center = (pauseButtons.size() - 1) / 2.0;
 
         for (int i = 0; i < pauseButtons.size(); i++) {
@@ -312,13 +377,13 @@ public class PauseMenu extends FXGLMenu {
             scale.setToY(1.0);
             scale.setInterpolator(Interpolator.EASE_OUT);
 
-            ParallelTransition buttonAnim = new ParallelTransition(
-                    moveY,
-                    fade,
-                    scale
+            allButtonsAnim.getChildren().add(
+                    new ParallelTransition(
+                            moveY,
+                            fade,
+                            scale
+                    )
             );
-
-            allButtonsAnim.getChildren().add(buttonAnim);
         }
 
         allButtonsAnim.setOnFinished(e -> {
@@ -332,6 +397,9 @@ public class PauseMenu extends FXGLMenu {
         allButtonsAnim.play();
     }
 
+    /**
+     * 關閉 PauseMenu，回到遊戲。
+     */
     private void resumeGame() {
         if (animating) {
             return;
@@ -366,21 +434,162 @@ public class PauseMenu extends FXGLMenu {
         close.play();
     }
 
+
+    // =========================================================
+    // Main Pause Button Rebuild / Language Refresh
+    // =========================================================
+
+    /**
+     * 重新建立主暫停按鈕。
+     *
+     * @param forceExpandedPosition 是否直接放到展開後的位置。
+     */
+    private void rebuildMainPauseButtons(boolean forceExpandedPosition) {
+        buttonStack.getChildren().clear();
+        pauseButtons.clear();
+
+        pauseButtons.add(createPauseButton(text("pause.resume"), this::resumeGame, PauseButtonType.PRIMARY));
+        pauseButtons.add(createPauseButton(text("pause.save"), this::showSaveMenuPage, PauseButtonType.NORMAL));
+        pauseButtons.add(createPauseButton(text("pause.settings"), this::showSettingsPage, PauseButtonType.NORMAL));
+        pauseButtons.add(createPauseButton(text("pause.exitToMain"), this::exitToMainMenu, PauseButtonType.EXIT));
+
+        for (StackPane button : pauseButtons) {
+            StackPane.setAlignment(button, Pos.CENTER_LEFT);
+            buttonStack.getChildren().add(button);
+        }
+
+        if (forceExpandedPosition) {
+            applyExpandedButtonPositions();
+        }
+    }
+
+    /**
+     * 語言變更後刷新主暫停按鈕文字。
+     */
+    private void refreshPauseMenuTexts() {
+        rebuildMainPauseButtons(true);
+        menuExpanded = true;
+    }
+
+    /**
+     * 把主按鈕直接放回展開後的位置。
+     *
+     * 用途：
+     * - 語言切換後重建按鈕。
+     */
+    private void applyExpandedButtonPositions() {
+        double gap = 74;
+        double center = (pauseButtons.size() - 1) / 2.0;
+
+        for (int i = 0; i < pauseButtons.size(); i++) {
+            StackPane button = pauseButtons.get(i);
+
+            double targetY = (i - center) * gap;
+
+            button.setTranslateY(targetY);
+            button.setTranslateX(0);
+            button.setOpacity(1.0);
+            button.setScaleX(1.0);
+            button.setScaleY(1.0);
+            button.setDisable(false);
+            button.getProperties().put("selected", false);
+        }
+    }
+
+
+    // =========================================================
+    // Sub Page Open / Close
+    // =========================================================
+
+    /**
+     * 開啟子頁。
+     *
+     * Save Page 和 Settings Page 使用同一段動畫。
+     *
+     * 注意：
+     * 動畫秒數、menuSlide 目標位置 -260 保持原本設定。
+     */
+    private void openSubPage(BorderPane page) {
+        pageLayer.getChildren().clear();
+        pageLayer.getChildren().add(page);
+        pageLayer.setVisible(true);
+        pageLayer.setPickOnBounds(true);
+
+        FadeTransition pageFade = new FadeTransition(Duration.seconds(0.18), pageLayer);
+        pageFade.setFromValue(0);
+        pageFade.setToValue(1);
+
+        FadeTransition menuFade = new FadeTransition(Duration.seconds(0.12), menuBox);
+        menuFade.setFromValue(menuBox.getOpacity());
+        menuFade.setToValue(0);
+
+        TranslateTransition menuSlide = new TranslateTransition(Duration.seconds(0.18), menuBox);
+        menuSlide.setFromX(0);
+        menuSlide.setToX(-260);
+        menuSlide.setInterpolator(Interpolator.EASE_IN);
+
+        ParallelTransition transition = new ParallelTransition(
+                pageFade,
+                menuFade,
+                menuSlide
+        );
+
+        transition.setOnFinished(e -> menuBox.setVisible(false));
+        transition.play();
+    }
+
+    /**
+     * 關閉目前子頁，回到主暫停選單。
+     */
+    private void closeSubPage() {
+        menuBox.setVisible(true);
+
+        selectedSubPageButton = null;
+
+        FadeTransition pageFade = new FadeTransition(Duration.seconds(0.14), pageLayer);
+        pageFade.setFromValue(pageLayer.getOpacity());
+        pageFade.setToValue(0);
+
+        FadeTransition menuFade = new FadeTransition(Duration.seconds(0.18), menuBox);
+        menuFade.setFromValue(0);
+        menuFade.setToValue(1);
+
+        TranslateTransition menuSlide = new TranslateTransition(Duration.seconds(0.22), menuBox);
+        menuSlide.setFromX(-260);
+        menuSlide.setToX(0);
+        menuSlide.setInterpolator(Interpolator.EASE_OUT);
+
+        ParallelTransition transition = new ParallelTransition(
+                pageFade,
+                menuFade,
+                menuSlide
+        );
+
+        transition.setOnFinished(e -> {
+            pageLayer.getChildren().clear();
+            pageLayer.setVisible(false);
+            pageLayer.setPickOnBounds(false);
+        });
+
+        transition.play();
+    }
+
+
+    // =========================================================
+    // Save Page
+    // =========================================================
+
     private void showSaveMenuPage() {
-        if (getb("saveDisabled")) {
+        if (isSaveDisabled()) {
             showTextNotice(text("pause.save.disabled"));
             return;
         }
 
         selectedSubPageButton = null;
 
-        BorderPane page = new BorderPane();
-        page.setPrefSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+        BorderPane page = createSubPageBase();
 
-        VBox left = new VBox(14);
-        left.setAlignment(Pos.TOP_LEFT);
-        left.setPadding(new Insets(120, 0, 60, 56));
-        left.setPrefWidth(340);
+        VBox left = createSubPageLeftMenu();
 
         SaveSystem saveSystem = SaveSystem.getInstance();
 
@@ -429,32 +638,7 @@ public class PauseMenu extends FXGLMenu {
         page.setLeft(left);
         page.setCenter(createSaveInfoPanel());
 
-        pageLayer.getChildren().clear();
-        pageLayer.getChildren().add(page);
-        pageLayer.setVisible(true);
-        pageLayer.setPickOnBounds(true);
-
-        FadeTransition pageFade = new FadeTransition(Duration.seconds(0.18), pageLayer);
-        pageFade.setFromValue(0);
-        pageFade.setToValue(1);
-
-        FadeTransition menuFade = new FadeTransition(Duration.seconds(0.12), menuBox);
-        menuFade.setFromValue(menuBox.getOpacity());
-        menuFade.setToValue(0);
-
-        TranslateTransition menuSlide = new TranslateTransition(Duration.seconds(0.18), menuBox);
-        menuSlide.setFromX(0);
-        menuSlide.setToX(-260);
-        menuSlide.setInterpolator(Interpolator.EASE_IN);
-
-        ParallelTransition transition = new ParallelTransition(
-                pageFade,
-                menuFade,
-                menuSlide
-        );
-
-        transition.setOnFinished(e -> menuBox.setVisible(false));
-        transition.play();
+        openSubPage(page);
     }
 
     private VBox createSaveInfoPanel() {
@@ -468,148 +652,71 @@ public class PauseMenu extends FXGLMenu {
         return box;
     }
 
-    // =========================
+
+    // =========================================================
     // Settings Page
-    // =========================
+    // =========================================================
 
     private void showSettingsPage() {
         selectedSubPageButton = null;
 
-        BorderPane page = new BorderPane();
-        page.setPrefSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+        BorderPane page = createSubPageBase();
 
-        VBox left = new VBox(14);
-        left.setAlignment(Pos.TOP_LEFT);
-        left.setPadding(new Insets(120, 0, 60, 56));
-        left.setPrefWidth(340);
+        VBox left = createSubPageLeftMenu();
 
         left.getChildren().addAll(
-                createSelectablePauseButton(text("menu.settings.KeyConfig"), () -> page.setCenter(createKeyConfigPanel()), PauseButtonType.NORMAL),
-                createSelectablePauseButton(text("menu.settings.volume"), () -> page.setCenter(createVolumePanel()), PauseButtonType.NORMAL),
-                createSelectablePauseButton(text("menu.settings.window"), () -> page.setCenter(createWindowPanel()), PauseButtonType.NORMAL),
-                createSelectablePauseButton(text("menu.settings.language"), () -> page.setCenter(createLanguagePanel()), PauseButtonType.NORMAL),
-                createPauseButton(text("menu.common.back"), this::closeSubPage, PauseButtonType.PRIMARY)
+                createSelectablePauseButton(
+                        text("menu.settings.KeyConfig"),
+                        () -> page.setCenter(createKeyConfigPanel()),
+                        PauseButtonType.NORMAL
+                ),
+
+                createSelectablePauseButton(
+                        text("menu.settings.volume"),
+                        () -> page.setCenter(createVolumePanel()),
+                        PauseButtonType.NORMAL
+                ),
+
+                createSelectablePauseButton(
+                        text("menu.settings.window"),
+                        () -> page.setCenter(createWindowPanel()),
+                        PauseButtonType.NORMAL
+                ),
+
+                createSelectablePauseButton(
+                        text("menu.settings.language"),
+                        () -> page.setCenter(createLanguagePanel()),
+                        PauseButtonType.NORMAL
+                ),
+
+                createPauseButton(
+                        text("menu.common.back"),
+                        this::closeSubPage,
+                        PauseButtonType.PRIMARY
+                )
         );
 
         page.setLeft(left);
         page.setCenter(createSettingsInfoPanel());
 
-        pageLayer.getChildren().clear();
-        pageLayer.getChildren().add(page);
-        pageLayer.setVisible(true);
-        pageLayer.setPickOnBounds(true);
-
-        FadeTransition pageFade = new FadeTransition(Duration.seconds(0.18), pageLayer);
-        pageFade.setFromValue(0);
-        pageFade.setToValue(1);
-
-        FadeTransition menuFade = new FadeTransition(Duration.seconds(0.12), menuBox);
-        menuFade.setFromValue(menuBox.getOpacity());
-        menuFade.setToValue(0);
-
-        TranslateTransition menuSlide = new TranslateTransition(Duration.seconds(0.18), menuBox);
-        menuSlide.setFromX(0);
-        menuSlide.setToX(-260);
-        menuSlide.setInterpolator(Interpolator.EASE_IN);
-
-        ParallelTransition transition = new ParallelTransition(
-                pageFade,
-                menuFade,
-                menuSlide
-        );
-
-        transition.setOnFinished(e -> menuBox.setVisible(false));
-        transition.play();
-    }
-
-    private void showSubPage(BorderPane page) {
-        pageLayer.getChildren().clear();
-        pageLayer.getChildren().add(page);
-        pageLayer.setVisible(true);
-        pageLayer.setPickOnBounds(true);
-
-        FadeTransition pageFade = new FadeTransition(Duration.seconds(0.18), pageLayer);
-        pageFade.setFromValue(0);
-        pageFade.setToValue(1);
-
-        FadeTransition menuFade = new FadeTransition(Duration.seconds(0.12), menuBox);
-        menuFade.setFromValue(menuBox.getOpacity());
-        menuFade.setToValue(0);
-
-        TranslateTransition menuSlide = new TranslateTransition(Duration.seconds(0.18), menuBox);
-        menuSlide.setFromX(0);
-        menuSlide.setToX(-260);
-        menuSlide.setInterpolator(Interpolator.EASE_IN);
-
-        ParallelTransition transition = new ParallelTransition(
-                pageFade,
-                menuFade,
-                menuSlide
-        );
-
-        transition.setOnFinished(e -> menuBox.setVisible(false));
-        transition.play();
-    }
-
-    private void closeSubPage() {
-        menuBox.setVisible(true);
-
-        FadeTransition pageFade = new FadeTransition(Duration.seconds(0.14), pageLayer);
-        pageFade.setFromValue(pageLayer.getOpacity());
-        pageFade.setToValue(0);
-
-        FadeTransition menuFade = new FadeTransition(Duration.seconds(0.18), menuBox);
-        menuFade.setFromValue(0);
-        menuFade.setToValue(1);
-
-        TranslateTransition menuSlide = new TranslateTransition(Duration.seconds(0.22), menuBox);
-        menuSlide.setFromX(-260);
-        menuSlide.setToX(0);
-        menuSlide.setInterpolator(Interpolator.EASE_OUT);
-
-        ParallelTransition transition = new ParallelTransition(
-                pageFade,
-                menuFade,
-                menuSlide
-        );
-
-        transition.setOnFinished(e -> {
-            pageLayer.getChildren().clear();
-            pageLayer.setVisible(false);
-            pageLayer.setPickOnBounds(false);
-        });
-
-        transition.play();
+        openSubPage(page);
     }
 
     private VBox createSettingsInfoPanel() {
         VBox box = createPanelBox();
+
         box.getChildren().addAll(
                 createPageTitle(text("menu.settings")),
                 createTextBlock(text("menu.settings.description"))
         );
+
         return box;
     }
 
-    private ImageView createKeyImage(String path) {
-        Image image = new Image(getClass().getResource(path).toExternalForm());
 
-        ImageView imageView = new ImageView(image);
-        imageView.setFitHeight(50);
-        imageView.setPreserveRatio(true);
-        imageView.setSmooth(true);
-
-        return imageView;
-    }
-
-    private Text createInlineText(String text) {
-        Text t = new Text(text);
-        t.setStyle("""
-            -fx-font-size: 22px;
-            -fx-fill: rgba(255,255,255,0.86);
-            """);
-        return t;
-    }
+    // =========================================================
+    // Settings - Key Config
+    // =========================================================
 
     private VBox createKeyConfigPanel() {
         VBox box = createPanelBox();
@@ -673,7 +780,6 @@ public class PauseMenu extends FXGLMenu {
                 createInlineText(text("menu.settings.keyConfig.pause"))
         );
 
-
         box.getChildren().addAll(
                 left,
                 right,
@@ -683,8 +789,36 @@ public class PauseMenu extends FXGLMenu {
                 dash,
                 pause
         );
+
         return box;
     }
+
+    private ImageView createKeyImage(String path) {
+        Image image = new Image(getClass().getResource(path).toExternalForm());
+
+        ImageView imageView = new ImageView(image);
+        imageView.setFitHeight(50);
+        imageView.setPreserveRatio(true);
+        imageView.setSmooth(true);
+
+        return imageView;
+    }
+
+    private Text createInlineText(String value) {
+        Text text = new Text(value);
+
+        text.setStyle("""
+            -fx-font-size: 22px;
+            -fx-fill: rgba(255,255,255,0.86);
+            """);
+
+        return text;
+    }
+
+
+    // =========================================================
+    // Settings - Volume
+    // =========================================================
 
     private VBox createVolumePanel() {
         VBox box = createPanelBox();
@@ -697,7 +831,7 @@ public class PauseMenu extends FXGLMenu {
                         audioSystem.getMasterVolume(),
                         value -> {
                             audioSystem.setMasterVolume(value);
-                            MusicSystem.getInstance().applyVolume();
+                            musicSystem.applyVolume();
                         }
                 ),
 
@@ -706,7 +840,7 @@ public class PauseMenu extends FXGLMenu {
                         audioSystem.getMusicVolume(),
                         value -> {
                             audioSystem.setMusicVolume(value);
-                            MusicSystem.getInstance().applyVolume();
+                            musicSystem.applyVolume();
                         }
                 ),
 
@@ -720,7 +854,11 @@ public class PauseMenu extends FXGLMenu {
         return box;
     }
 
-    private HBox createVolumeRow(String name, double initialValue, VolumeSetter setter) {
+    private HBox createVolumeRow(
+            String name,
+            double initialValue,
+            VolumeSetter setter
+    ) {
         Label label = new Label(name);
         label.setMinWidth(120);
         label.setStyle("""
@@ -734,6 +872,7 @@ public class PauseMenu extends FXGLMenu {
         slider.getStyleClass().add("settings-slider");
 
         var css = getClass().getResource("/style.css");
+
         if (css != null) {
             slider.getStylesheets().add(css.toExternalForm());
         }
@@ -745,10 +884,12 @@ public class PauseMenu extends FXGLMenu {
                 -fx-text-fill: white;
                 """);
 
-        slider.valueProperty().addListener((obs, oldV, newV) -> {
-            double v = newV.doubleValue();
-            setter.set(v);
-            value.setText(Math.round(v * 100) + "%");
+        slider.valueProperty().addListener((obs, oldValue, newValue) -> {
+            double volume = newValue.doubleValue();
+
+            setter.set(volume);
+
+            value.setText(Math.round(volume * 100) + "%");
         });
 
         HBox row = new HBox(16, label, slider, value);
@@ -757,10 +898,18 @@ public class PauseMenu extends FXGLMenu {
         return row;
     }
 
+
+    // =========================================================
+    // Settings - Window
+    // =========================================================
+
     private VBox createWindowPanel() {
         VBox box = createPanelBox();
 
-        Text current = createTextBlock(text("menu.settings.window.current") + windowSystem.getCurrentLabel());
+        Text current = createTextBlock(
+                text("menu.settings.window.current") +
+                        windowSystem.getCurrentLabel()
+        );
 
         ComboBox<WindowMode> modeBox = new ComboBox<>();
         modeBox.getItems().addAll(
@@ -774,6 +923,7 @@ public class PauseMenu extends FXGLMenu {
         modeBox.getStyleClass().add("settings-combo-box");
 
         var css = getClass().getResource("/style.css");
+
         if (css != null) {
             modeBox.getStylesheets().add(css.toExternalForm());
         }
@@ -784,6 +934,7 @@ public class PauseMenu extends FXGLMenu {
                 if (mode == null) {
                     return "";
                 }
+
                 return text(mode.getTextKey());
             }
 
@@ -795,7 +946,11 @@ public class PauseMenu extends FXGLMenu {
 
         StackPane apply = createSubButton(text("menu.common.apply"), () -> {
             windowSystem.applyMode(modeBox.getValue());
-            current.setText(text("menu.settings.window.current") + windowSystem.getCurrentLabel());
+
+            current.setText(
+                    text("menu.settings.window.current") +
+                            windowSystem.getCurrentLabel()
+            );
         });
 
         box.getChildren().addAll(
@@ -808,48 +963,17 @@ public class PauseMenu extends FXGLMenu {
         return box;
     }
 
-    private void refreshPauseMenuTexts() {
-        buttonStack.getChildren().clear();
-        pauseButtons.clear();
 
-        pauseButtons.add(createPauseButton(text("pause.resume"), this::resumeGame, PauseButtonType.PRIMARY));
-        pauseButtons.add(createPauseButton(text("pause.save"), this::showSaveMenuPage, PauseButtonType.NORMAL));
-        pauseButtons.add(createPauseButton(text("pause.settings"), this::showSettingsPage, PauseButtonType.NORMAL));
-        pauseButtons.add(createPauseButton(text("pause.exitToMain"), this::exitToMainMenu, PauseButtonType.EXIT));
-
-        for (StackPane button : pauseButtons) {
-            StackPane.setAlignment(button, Pos.CENTER_LEFT);
-            buttonStack.getChildren().add(button);
-        }
-
-        /*
-         * 如果是在暫停選單已經展開後切換語言，
-         * 要重新把按鈕放回展開位置。
-         */
-        double gap = 74;
-        double center = (pauseButtons.size() - 1) / 2.0;
-
-        for (int i = 0; i < pauseButtons.size(); i++) {
-            StackPane button = pauseButtons.get(i);
-
-            double targetY = (i - center) * gap;
-
-            button.setTranslateY(targetY);
-            button.setTranslateX(0);
-            button.setOpacity(1.0);
-            button.setScaleX(1.0);
-            button.setScaleY(1.0);
-            button.setDisable(false);
-        }
-
-        menuExpanded = true;
-    }
+    // =========================================================
+    // Settings - Language
+    // =========================================================
 
     private VBox createLanguagePanel() {
         VBox box = createPanelBox();
 
         Text current = createTextBlock(
-                text("menu.settings.language.current") + languageSystem.getCurrentLanguage()
+                text("menu.settings.language.current") +
+                        languageSystem.getCurrentLanguage()
         );
 
         ComboBox<Language> languageBox = new ComboBox<>();
@@ -859,14 +983,18 @@ public class PauseMenu extends FXGLMenu {
         languageBox.getStyleClass().add("settings-combo-box");
 
         var css = getClass().getResource("/style.css");
+
         if (css != null) {
             languageBox.getStylesheets().add(css.toExternalForm());
         }
 
         StackPane apply = createSubButton(text("menu.common.apply"), () -> {
             languageSystem.setLanguage(languageBox.getValue());
+
             showTextNotice(text("menu.settings.language.changed"));
+
             refreshPauseMenuTexts();
+
             closeSubPage();
         });
 
@@ -880,94 +1008,21 @@ public class PauseMenu extends FXGLMenu {
         return box;
     }
 
-    private StackPane createPopupButton(String text, Runnable action, boolean danger) {
-        double width = 130;
-        double height = 42;
 
-        StackPane button = new StackPane();
-        button.setPrefSize(width, height);
-        button.setMinSize(width, height);
-        button.setMaxSize(width, height);
-        button.setPickOnBounds(true);
+    // =========================================================
+    // Exit To Main Menu
+    // =========================================================
 
-        Rectangle bg = new Rectangle(width, height);
-        bg.setArcWidth(10);
-        bg.setArcHeight(10);
-
-        if (danger) {
-            bg.setFill(Color.rgb(100, 0, 0, 0.78));
-            bg.setStroke(Color.rgb(255, 140, 140, 0.82));
-        } else {
-            bg.setFill(Color.rgb(0, 0, 0, 0.58));
-            bg.setStroke(Color.rgb(255, 255, 255, 0.72));
-        }
-
-        bg.setStrokeWidth(1.4);
-
-        Text label = new Text(text);
-        label.setStyle("""
-            -fx-font-size: 20px;
-            -fx-fill: white;
-            -fx-font-weight: bold;
-            """);
-
-        button.getChildren().addAll(bg, label);
-
-        button.setOnMouseEntered(e -> {
-            audioSystem.playButtonSFX(SoundId.BUTTON_HOVER);
-
-            if (danger) {
-                bg.setFill(Color.rgb(185, 25, 25, 0.95));
-                bg.setStroke(Color.WHITE);
-                label.setFill(Color.WHITE);
-            } else {
-                bg.setFill(Color.rgb(255, 255, 255, 0.58));
-                bg.setStroke(Color.WHITE);
-                label.setFill(Color.BLACK);
-            }
-
-            ScaleTransition st = new ScaleTransition(Duration.seconds(0.08), button);
-            st.setToX(1.05);
-            st.setToY(1.05);
-            st.play();
-        });
-
-        button.setOnMouseExited(e -> {
-            if (danger) {
-                bg.setFill(Color.rgb(100, 0, 0, 0.78));
-                bg.setStroke(Color.rgb(255, 140, 140, 0.82));
-                label.setFill(Color.WHITE);
-            } else {
-                bg.setFill(Color.rgb(0, 0, 0, 0.58));
-                bg.setStroke(Color.rgb(255, 255, 255, 0.72));
-                label.setFill(Color.WHITE);
-            }
-
-            ScaleTransition st = new ScaleTransition(Duration.seconds(0.08), button);
-            st.setToX(1.0);
-            st.setToY(1.0);
-            st.play();
-        });
-
-        button.setOnMousePressed(e -> {
-            button.setScaleX(0.97);
-            button.setScaleY(0.96);
-        });
-
-        button.setOnMouseReleased(e -> {
-            button.setScaleX(1.05);
-            button.setScaleY(1.05);
-        });
-
-        button.setOnMouseClicked(e -> {
-            if (action != null) {
-                action.run();
-            }
-        });
-
-        return button;
+    private void exitToMainMenu() {
+        showExitToMainConfirm();
     }
 
+    /**
+     * 顯示回主畫面確認視窗。
+     *
+     * 注意：
+     * 這裡保留原本 popupLayer、dim、card 的尺寸與位置。
+     */
     private void showExitToMainConfirm() {
         StackPane popupLayer = new StackPane();
         popupLayer.setPrefSize(SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -1014,14 +1069,14 @@ public class PauseMenu extends FXGLMenu {
                 text("menu.common.confirm"),
                 () -> {
                     audioSystem.playButtonSFX(SoundId.BUTTON_PRESSED);
+
                     root.getChildren().remove(popupLayer);
 
                     musicSystem.stopBGM();
 
                     /*
-                     * 重點：
-                     * 不要用 fireExitToMainMenu()，
-                     * 否則可能觸發 FXGL 內建確認視窗。
+                     * 不使用 fireExitToMainMenu()。
+                     * 避免觸發 FXGL 內建確認視窗。
                      */
                     getGameController().gotoMainMenu();
                 },
@@ -1032,6 +1087,7 @@ public class PauseMenu extends FXGLMenu {
                 text("menu.common.cancel"),
                 () -> {
                     audioSystem.playButtonSFX(SoundId.BUTTON_PRESSED);
+
                     root.getChildren().remove(popupLayer);
                 },
                 false
@@ -1066,20 +1122,250 @@ public class PauseMenu extends FXGLMenu {
         new ParallelTransition(fade, scale).play();
     }
 
-    private void exitToMainMenu() {
-        showExitToMainConfirm();
+
+    // =========================================================
+    // Selectable Sub Page Pause Buttons
+    // =========================================================
+
+    /**
+     * 建立可維持 selected / pressed 外觀的 PauseButton。
+     *
+     * 用於 Save / Settings 子頁左側。
+     */
+    private StackPane createSelectablePauseButton(
+            String text,
+            Runnable action,
+            PauseButtonType type
+    ) {
+        final StackPane[] buttonRef = new StackPane[1];
+
+        buttonRef[0] = createPauseButton(text, () -> {
+            selectSubPageButton(buttonRef[0]);
+
+            if (action != null) {
+                action.run();
+            }
+        }, type);
+
+        return buttonRef[0];
     }
 
-    // =========================
-    // UI
-    // =========================
+    private void selectSubPageButton(StackPane button) {
+        if (selectedSubPageButton != null) {
+            selectedSubPageButton.getProperties().put("selected", false);
+            applyPauseButtonNormalStyle(selectedSubPageButton);
+        }
 
-    private StackPane createPauseButton(String text, Runnable action, PauseButtonType type) {
+        selectedSubPageButton = button;
+        selectedSubPageButton.getProperties().put("selected", true);
+
+        applyPauseButtonPressedStyle(selectedSubPageButton);
+    }
+
+    private boolean isPauseButtonSelected(StackPane button) {
+        Object value = button.getProperties().get("selected");
+
+        return value instanceof Boolean selected && selected;
+    }
+
+    private void applyPauseButtonNormalStyle(StackPane button) {
+        Polygon bg = getPauseButtonBackground(button);
+        Text label = getPauseButtonLabel(button);
+        PauseButtonStyle style = getStoredPauseButtonStyle(button);
+
+        if (bg == null || label == null || style == null) {
+            return;
+        }
+
+        bg.setFill(style.normalFill());
+        bg.setStroke(style.normalStroke());
+        label.setFill(style.normalText());
+
+        button.setScaleX(1.0);
+        button.setScaleY(1.0);
+
+        TranslateTransition move = new TranslateTransition(Duration.seconds(0.08), button);
+        move.setToX(0);
+        move.play();
+    }
+
+    private void applyPauseButtonPressedStyle(StackPane button) {
+        Polygon bg = getPauseButtonBackground(button);
+        Text label = getPauseButtonLabel(button);
+        PauseButtonStyle style = getStoredPauseButtonStyle(button);
+
+        if (bg == null || label == null || style == null) {
+            return;
+        }
+
+        bg.setFill(style.pressedFill());
+        bg.setStroke(style.hoverStroke());
+        label.setFill(style.pressedText());
+
+        button.setScaleX(0.98);
+        button.setScaleY(0.96);
+
+        TranslateTransition move = new TranslateTransition(Duration.seconds(0.08), button);
+        move.setToX(12);
+        move.play();
+    }
+
+    private Polygon getPauseButtonBackground(StackPane button) {
+        Object value = button.getProperties().get("bg");
+
+        return value instanceof Polygon bg
+                ? bg
+                : null;
+    }
+
+    private Text getPauseButtonLabel(StackPane button) {
+        Object value = button.getProperties().get("label");
+
+        return value instanceof Text label
+                ? label
+                : null;
+    }
+
+    private PauseButtonStyle getStoredPauseButtonStyle(StackPane button) {
+        Object value = button.getProperties().get("style");
+
+        return value instanceof PauseButtonStyle style
+                ? style
+                : null;
+    }
+
+
+    // =========================================================
+    // Main / Sub Page Shared UI
+    // =========================================================
+
+    private BorderPane createSubPageBase() {
+        BorderPane page = new BorderPane();
+        page.setPrefSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+
+        return page;
+    }
+
+    /**
+     * 建立子頁左側 VBox。
+     *
+     * 注意：
+     * 保留原本 showSaveMenuPage / showSettingsPage 使用的：
+     * - spacing = 14
+     * - padding = new Insets(120, 0, 60, 56)
+     * - prefWidth = 340
+     */
+    private VBox createSubPageLeftMenu() {
+        VBox left = new VBox(14);
+
+        left.setAlignment(Pos.TOP_LEFT);
+        left.setPadding(new Insets(120, 0, 60, 56));
+        left.setPrefWidth(340);
+
+        return left;
+    }
+
+    private VBox createPanelBox() {
+        VBox box = new VBox(18);
+
+        box.setAlignment(Pos.TOP_LEFT);
+        box.setPadding(new Insets(120, 90, 70, 40));
+
+        return box;
+    }
+
+    private Text createPageTitle(String value) {
+        Text title = new Text(value);
+
+        title.setStyle("""
+                -fx-font-size: 36px;
+                -fx-fill: white;
+                -fx-font-weight: bold;
+                """);
+        title.setEffect(new DropShadow(8, Color.BLACK));
+
+        return title;
+    }
+
+    private Text createTextBlock(String value) {
+        Text text = new Text(value);
+
+        text.setWrappingWidth(620);
+        text.setStyle("""
+                -fx-font-size: 22px;
+                -fx-fill: rgba(255,255,255,0.86);
+                """);
+
+        return text;
+    }
+
+    /**
+     * 底部提示訊息。
+     */
+    private void showTextNotice(String message) {
+        Label notice = new Label(message);
+
+        notice.setStyle("""
+                -fx-font-size: 21px;
+                -fx-text-fill: white;
+                -fx-background-color: rgba(0,0,0,0.84);
+                -fx-background-radius: 12;
+                -fx-padding: 16 24 16 24;
+                """);
+
+        StackPane popup = new StackPane(notice);
+        popup.setAlignment(Pos.BOTTOM_CENTER);
+        popup.setMouseTransparent(true);
+
+        StackPane.setMargin(popup, new Insets(0, 0, 56, 0));
+
+        root.getChildren().add(popup);
+
+        FadeTransition fadeIn = new FadeTransition(Duration.seconds(0.12), popup);
+        fadeIn.setFromValue(0);
+        fadeIn.setToValue(1);
+
+        PauseTransition stay = new PauseTransition(Duration.seconds(1.2));
+
+        FadeTransition fadeOut = new FadeTransition(Duration.seconds(0.16), popup);
+        fadeOut.setFromValue(1);
+        fadeOut.setToValue(0);
+
+        SequentialTransition sequence = new SequentialTransition(
+                fadeIn,
+                stay,
+                fadeOut
+        );
+
+        sequence.setOnFinished(e ->
+                root.getChildren().remove(popup)
+        );
+
+        sequence.play();
+    }
+
+
+    // =========================================================
+    // Pause Button Factory
+    // =========================================================
+
+    /**
+     * 建立 PauseMenu 梯形按鈕。
+     *
+     * 注意：
+     * 按鈕尺寸、cut、文字 margin、hover / pressed 外觀都保留原本設定。
+     */
+    private StackPane createPauseButton(
+            String text,
+            Runnable action,
+            PauseButtonType type
+    ) {
         double width = 340;
         double height = 58;
         double cut = 30;
 
         StackPane button = new StackPane();
+
         button.setPrefSize(width, height);
         button.setMinSize(width, height);
         button.setMaxSize(width, height);
@@ -1110,61 +1396,27 @@ public class PauseMenu extends FXGLMenu {
         StackPane.setMargin(label, new Insets(0, 0, 0, 42));
 
         button.getChildren().addAll(bg, label);
+
         button.getProperties().put("bg", bg);
         button.getProperties().put("label", label);
         button.getProperties().put("style", style);
         button.getProperties().put("selected", false);
 
-        button.setOnMouseEntered(e -> {
-            audioSystem.playButtonSFX(SoundId.BUTTON_HOVER);
+        button.setOnMouseEntered(e ->
+                handlePauseButtonMouseEntered(button, bg, label, style)
+        );
 
-            if (!isPauseButtonSelected(button)) {
-                bg.setFill(style.hoverFill());
-                bg.setStroke(style.hoverStroke());
-                label.setFill(style.hoverText());
+        button.setOnMouseExited(e ->
+                handlePauseButtonMouseExited(button, bg, label, style)
+        );
 
-                TranslateTransition move = new TranslateTransition(Duration.seconds(0.08), button);
-                move.setToX(12);
-                move.play();
-            }
-        });
+        button.setOnMousePressed(e ->
+                handlePauseButtonMousePressed(button, bg, label, style)
+        );
 
-        button.setOnMouseExited(e -> {
-            if (isPauseButtonSelected(button)) {
-                applyPauseButtonPressedStyle(button);
-            } else {
-                bg.setFill(style.normalFill());
-                bg.setStroke(style.normalStroke());
-                label.setFill(style.normalText());
-
-                button.setScaleX(1.0);
-                button.setScaleY(1.0);
-
-                TranslateTransition move = new TranslateTransition(Duration.seconds(0.08), button);
-                move.setToX(0);
-                move.play();
-            }
-
-
-        });
-
-        button.setOnMousePressed(e -> {
-            bg.setFill(style.pressedFill());
-            label.setFill(style.pressedText());
-            button.setScaleX(0.98);
-            button.setScaleY(0.96);
-        });
-
-        button.setOnMouseReleased(e -> {
-            if (isPauseButtonSelected(button)) {
-                applyPauseButtonPressedStyle(button);
-            } else {
-                bg.setFill(style.hoverFill());
-                label.setFill(style.hoverText());
-                button.setScaleX(1.0);
-                button.setScaleY(1.0);
-            }
-        });
+        button.setOnMouseReleased(e ->
+                handlePauseButtonMouseReleased(button, bg, label, style)
+        );
 
         button.setOnMouseClicked(e -> {
             if (!menuExpanded) {
@@ -1181,112 +1433,106 @@ public class PauseMenu extends FXGLMenu {
         return button;
     }
 
-    private VBox createPanelBox() {
-        VBox box = new VBox(18);
-        box.setAlignment(Pos.TOP_LEFT);
-        box.setPadding(new Insets(120, 90, 70, 40));
-        return box;
-    }
+    private void handlePauseButtonMouseEntered(
+            StackPane button,
+            Polygon bg,
+            Text label,
+            PauseButtonStyle style
+    ) {
+        audioSystem.playButtonSFX(SoundId.BUTTON_HOVER);
 
-    private Text createPageTitle(String value) {
-        Text title = new Text(value);
-        title.setStyle("""
-                -fx-font-size: 36px;
-                -fx-fill: white;
-                -fx-font-weight: bold;
-                """);
-        title.setEffect(new DropShadow(8, Color.BLACK));
-        return title;
-    }
-
-    private Text createTextBlock(String value) {
-        Text t = new Text(value);
-        t.setWrappingWidth(620);
-        t.setStyle("""
-                -fx-font-size: 22px;
-                -fx-fill: rgba(255,255,255,0.86);
-                """);
-        return t;
-    }
-
-    private void showTextNotice(String message) {
-        Label notice = new Label(message);
-        notice.setStyle("""
-                -fx-font-size: 21px;
-                -fx-text-fill: white;
-                -fx-background-color: rgba(0,0,0,0.84);
-                -fx-background-radius: 12;
-                -fx-padding: 16 24 16 24;
-                """);
-
-        StackPane popup = new StackPane(notice);
-        popup.setAlignment(Pos.BOTTOM_CENTER);
-        StackPane.setMargin(popup, new Insets(0, 0, 56, 0));
-
-        root.getChildren().add(popup);
-
-        FadeTransition fadeIn = new FadeTransition(Duration.seconds(0.12), popup);
-        fadeIn.setFromValue(0);
-        fadeIn.setToValue(1);
-
-        PauseTransition stay = new PauseTransition(Duration.seconds(1.2));
-
-        FadeTransition fadeOut = new FadeTransition(Duration.seconds(0.16), popup);
-        fadeOut.setFromValue(1);
-        fadeOut.setToValue(0);
-
-        SequentialTransition seq = new SequentialTransition(fadeIn, stay, fadeOut);
-        seq.setOnFinished(e -> root.getChildren().remove(popup));
-        seq.play();
-    }
-
-    private VBox createSubPageLeftMenu(Node... buttons) {
-        VBox left = new VBox(14);
-        left.setAlignment(Pos.TOP_LEFT);
-        left.setPadding(new Insets(90, 0, 48, 56));
-        left.setPrefWidth(340);
-        left.setMinWidth(340);
-        left.setMaxWidth(340);
-
-        left.setBackground(new Background(new BackgroundFill(
-                Color.rgb(213, 105, 16, 0.72),
-                CornerRadii.EMPTY,
-                Insets.EMPTY
-        )));
-
-        left.setBorder(new Border(new BorderStroke(
-                Color.rgb(255, 255, 255, 0.18),
-                BorderStrokeStyle.SOLID,
-                CornerRadii.EMPTY,
-                new BorderWidths(0, 1.5, 0, 0)
-        )));
-
-        VBox topButtons = new VBox(14);
-        topButtons.setAlignment(Pos.TOP_LEFT);
-
-        Region spacer = new Region();
-        VBox.setVgrow(spacer, Priority.ALWAYS);
-
-        for (int i = 0; i < buttons.length; i++) {
-            if (i == buttons.length - 1) {
-                left.getChildren().addAll(topButtons, spacer, buttons[i]);
-            } else {
-                topButtons.getChildren().add(buttons[i]);
-            }
+        if (isPauseButtonSelected(button)) {
+            return;
         }
 
-        return left;
+        bg.setFill(style.hoverFill());
+        bg.setStroke(style.hoverStroke());
+        label.setFill(style.hoverText());
+
+        TranslateTransition move = new TranslateTransition(Duration.seconds(0.08), button);
+        move.setToX(12);
+        move.play();
     }
 
+    private void handlePauseButtonMouseExited(
+            StackPane button,
+            Polygon bg,
+            Text label,
+            PauseButtonStyle style
+    ) {
+        if (isPauseButtonSelected(button)) {
+            applyPauseButtonPressedStyle(button);
+            return;
+        }
+
+        bg.setFill(style.normalFill());
+        bg.setStroke(style.normalStroke());
+        label.setFill(style.normalText());
+
+        button.setScaleX(1.0);
+        button.setScaleY(1.0);
+
+        TranslateTransition move = new TranslateTransition(Duration.seconds(0.08), button);
+        move.setToX(0);
+        move.play();
+    }
+
+    private void handlePauseButtonMousePressed(
+            StackPane button,
+            Polygon bg,
+            Text label,
+            PauseButtonStyle style
+    ) {
+        bg.setFill(style.pressedFill());
+        label.setFill(style.pressedText());
+
+        button.setScaleX(0.98);
+        button.setScaleY(0.96);
+    }
+
+    private void handlePauseButtonMouseReleased(
+            StackPane button,
+            Polygon bg,
+            Text label,
+            PauseButtonStyle style
+    ) {
+        if (isPauseButtonSelected(button)) {
+            applyPauseButtonPressedStyle(button);
+            return;
+        }
+
+        bg.setFill(style.hoverFill());
+        label.setFill(style.hoverText());
+
+        button.setScaleX(1.0);
+        button.setScaleY(1.0);
+    }
+
+
+    // =========================================================
+    // Rectangle Sub Button Factory
+    // =========================================================
+
+    /**
+     * 建立一般子頁按鈕。
+     *
+     * 注意：
+     * 這是矩形按鈕，不是 PauseMenu 主梯形按鈕。
+     */
     private StackPane createSubButton(String text, Runnable action) {
         return createSubButton(text, action, false);
     }
 
-    private StackPane createSubButton(String text, Runnable action, boolean exit) {
+    private StackPane createSubButton(
+            String text,
+            Runnable action,
+            boolean exit
+    ) {
         double width = 240;
         double height = 46;
 
         StackPane button = new StackPane();
+
         button.setPrefSize(width, height);
         button.setMinSize(width, height);
         button.setMaxSize(width, height);
@@ -1326,10 +1572,10 @@ public class PauseMenu extends FXGLMenu {
                 label.setFill(Color.BLACK);
             }
 
-            ScaleTransition st = new ScaleTransition(Duration.seconds(0.08), button);
-            st.setToX(1.04);
-            st.setToY(1.04);
-            st.play();
+            ScaleTransition scale = new ScaleTransition(Duration.seconds(0.08), button);
+            scale.setToX(1.04);
+            scale.setToY(1.04);
+            scale.play();
         });
 
         button.setOnMouseExited(e -> {
@@ -1343,10 +1589,10 @@ public class PauseMenu extends FXGLMenu {
 
             label.setFill(Color.WHITE);
 
-            ScaleTransition st = new ScaleTransition(Duration.seconds(0.08), button);
-            st.setToX(1.0);
-            st.setToY(1.0);
-            st.play();
+            ScaleTransition scale = new ScaleTransition(Duration.seconds(0.08), button);
+            scale.setToX(1.0);
+            scale.setToY(1.0);
+            scale.play();
         });
 
         button.setOnMousePressed(e -> {
@@ -1370,6 +1616,109 @@ public class PauseMenu extends FXGLMenu {
         return button;
     }
 
+
+    // =========================================================
+    // Popup Button Factory
+    // =========================================================
+
+    private StackPane createPopupButton(
+            String text,
+            Runnable action,
+            boolean danger
+    ) {
+        double width = 130;
+        double height = 42;
+
+        StackPane button = new StackPane();
+
+        button.setPrefSize(width, height);
+        button.setMinSize(width, height);
+        button.setMaxSize(width, height);
+        button.setPickOnBounds(true);
+
+        Rectangle bg = new Rectangle(width, height);
+        bg.setArcWidth(10);
+        bg.setArcHeight(10);
+
+        if (danger) {
+            bg.setFill(Color.rgb(100, 0, 0, 0.78));
+            bg.setStroke(Color.rgb(255, 140, 140, 0.82));
+        } else {
+            bg.setFill(Color.rgb(0, 0, 0, 0.58));
+            bg.setStroke(Color.rgb(255, 255, 255, 0.72));
+        }
+
+        bg.setStrokeWidth(1.4);
+
+        Text label = new Text(text);
+        label.setStyle("""
+            -fx-font-size: 20px;
+            -fx-fill: white;
+            -fx-font-weight: bold;
+            """);
+
+        button.getChildren().addAll(bg, label);
+
+        button.setOnMouseEntered(e -> {
+            audioSystem.playButtonSFX(SoundId.BUTTON_HOVER);
+
+            if (danger) {
+                bg.setFill(Color.rgb(185, 25, 25, 0.95));
+                bg.setStroke(Color.WHITE);
+                label.setFill(Color.WHITE);
+            } else {
+                bg.setFill(Color.rgb(255, 255, 255, 0.58));
+                bg.setStroke(Color.WHITE);
+                label.setFill(Color.BLACK);
+            }
+
+            ScaleTransition scale = new ScaleTransition(Duration.seconds(0.08), button);
+            scale.setToX(1.05);
+            scale.setToY(1.05);
+            scale.play();
+        });
+
+        button.setOnMouseExited(e -> {
+            if (danger) {
+                bg.setFill(Color.rgb(100, 0, 0, 0.78));
+                bg.setStroke(Color.rgb(255, 140, 140, 0.82));
+                label.setFill(Color.WHITE);
+            } else {
+                bg.setFill(Color.rgb(0, 0, 0, 0.58));
+                bg.setStroke(Color.rgb(255, 255, 255, 0.72));
+                label.setFill(Color.WHITE);
+            }
+
+            ScaleTransition scale = new ScaleTransition(Duration.seconds(0.08), button);
+            scale.setToX(1.0);
+            scale.setToY(1.0);
+            scale.play();
+        });
+
+        button.setOnMousePressed(e -> {
+            button.setScaleX(0.97);
+            button.setScaleY(0.96);
+        });
+
+        button.setOnMouseReleased(e -> {
+            button.setScaleX(1.05);
+            button.setScaleY(1.05);
+        });
+
+        button.setOnMouseClicked(e -> {
+            if (action != null) {
+                action.run();
+            }
+        });
+
+        return button;
+    }
+
+
+    // =========================================================
+    // Button Style
+    // =========================================================
+
     private enum PauseButtonType {
         NORMAL,
         PRIMARY,
@@ -1380,9 +1729,11 @@ public class PauseMenu extends FXGLMenu {
             Color normalFill,
             Color normalStroke,
             Color normalText,
+
             Color hoverFill,
             Color hoverStroke,
             Color hoverText,
+
             Color pressedFill,
             Color pressedText
     ) {
@@ -1430,6 +1781,11 @@ public class PauseMenu extends FXGLMenu {
             );
         };
     }
+
+
+    // =========================================================
+    // Functional Interfaces
+    // =========================================================
 
     @FunctionalInterface
     private interface VolumeSetter {

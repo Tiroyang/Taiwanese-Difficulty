@@ -1,17 +1,16 @@
-package ass.example.scenes;
+package ass.example.scenes.system;
 
 import ass.example.components.PlayerComponent;
-import ass.example.core.DeathReason;
-import ass.example.core.SaveKey;
-import ass.example.core.SceneType;
-import ass.example.core.SoundId;
+import ass.example.core.*;
+import ass.example.scenes.HouseScene;
+import ass.example.scenes.StreetEndlessScene;
+import ass.example.scenes.StreetScene;
 import ass.example.system.AudioSystem;
 import ass.example.system.DeathSystem;
 import ass.example.system.InteractionSystem;
 import ass.example.system.MusicSystem;
-import ass.example.system.SaveSystem;
 import ass.example.system.StreetEndlessRecordSystem;
-import ass.example.system.quest.QuestSystem;
+import ass.example.system.QuestSystem;
 import com.almasb.fxgl.core.serialization.Bundle;
 import com.almasb.fxgl.entity.Entity;
 import javafx.animation.FadeTransition;
@@ -20,10 +19,6 @@ import javafx.animation.SequentialTransition;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
-
-import java.util.HashMap;
-import java.util.Map;
-
 import static com.almasb.fxgl.dsl.FXGL.*;
 
 /**
@@ -161,43 +156,6 @@ public class SceneManager {
      */
     private SceneType currentSceneType;
 
-
-    // =========================================================
-    // External Systems
-    // =========================================================
-
-    /**
-     * 死亡系統。
-     */
-    private DeathSystem deathSystem;
-
-    /**
-     * 音效系統。
-     */
-    private AudioSystem audioSystem;
-
-    /**
-     * 存檔系統。
-     */
-    private SaveSystem saveSystem;
-
-
-    // =========================================================
-    // Scene Configs
-    // =========================================================
-
-    /**
-     * 每個 SceneType 對應的場景設定。
-     *
-     * SceneConfig 包含：
-     * 1. 地圖寬度。
-     * 2. 地圖高度。
-     * 3. 玩家起始 X。
-     * 4. 玩家起始 Y。
-     */
-    private final Map<SceneType, SceneConfig> sceneConfigs = new HashMap<>();
-
-
     // =========================================================
     // Runtime Flags
     // =========================================================
@@ -220,81 +178,7 @@ public class SceneManager {
      * 建立時會註冊所有場景設定。
      */
     private SceneManager() {
-        registerSceneConfigs();
     }
-
-
-    // =========================================================
-    // Dependency Injection
-    // =========================================================
-
-    /**
-     * 設定 DeathSystem。
-     *
-     * @param deathSystem 死亡系統
-     */
-    public void setDeathSystem(DeathSystem deathSystem) {
-        this.deathSystem = deathSystem;
-    }
-
-    /**
-     * 設定 AudioSystem。
-     *
-     * @param audioSystem 音效系統
-     */
-    public void setAudioSystem(AudioSystem audioSystem) {
-        this.audioSystem = audioSystem;
-    }
-
-    /**
-     * 設定 SaveSystem。
-     *
-     * @param saveSystem 存檔系統
-     */
-    public void setSaveSystem(SaveSystem saveSystem) {
-        this.saveSystem = saveSystem;
-    }
-
-
-    // =========================================================
-    // Scene Config Registration
-    // =========================================================
-
-    /**
-     * 註冊所有場景設定。
-     */
-    private void registerSceneConfigs() {
-        sceneConfigs.put(
-                SceneType.HOUSE,
-                new SceneConfig(
-                        3200,
-                        720,
-                        2500,
-                        422.0
-                )
-        );
-
-        sceneConfigs.put(
-                SceneType.STREET,
-                new SceneConfig(
-                        1280,
-                        720,
-                        1120,
-                        452.0
-                )
-        );
-
-        sceneConfigs.put(
-                SceneType.STREET_ENDLESS,
-                new SceneConfig(
-                        1280,
-                        720,
-                        1120,
-                        452.0
-                )
-        );
-    }
-
 
     // =========================================================
     // Pending Start Scene API
@@ -551,7 +435,7 @@ public class SceneManager {
 
         SceneConfig config = getCurrentSceneConfig();
 
-        streetEndlessScene = new StreetEndlessScene(config, deathSystem, audioSystem);
+        streetEndlessScene = new StreetEndlessScene(config);
         player = streetEndlessScene.load();
 
         refreshPlayerGroundContacts();
@@ -761,9 +645,7 @@ public class SceneManager {
      * 播放轉場門音效。
      */
     private void playTransitionDoorSound() {
-        if (audioSystem != null) {
-            audioSystem.playSFX(SoundId.DOOR_OPEN);
-        }
+        AudioSystem.getInstance().playSFX(SoundId.DOOR_OPEN);
     }
 
     /**
@@ -1083,9 +965,7 @@ public class SceneManager {
         set(SaveKey.PLAYER_DEAD, false);
         set(SaveKey.LAST_DEATH_REASON, "");
 
-        if (deathSystem != null) {
-            deathSystem.clearDeathScreenForLoad();
-        }
+        DeathSystem.getInstance().clearDeathScreenForLoad();
     }
 
     /**
@@ -1094,9 +974,7 @@ public class SceneManager {
      * @param reason 存檔中的死亡原因
      */
     public void restoreDeathFromSave(DeathReason reason) {
-        if (deathSystem != null) {
-            deathSystem.restoreDeathFromSave(reason);
-        }
+        DeathSystem.getInstance().restoreDeathFromSave(reason);
     }
 
     /**
@@ -1172,7 +1050,7 @@ public class SceneManager {
      * @return SceneConfig
      */
     public SceneConfig getCurrentSceneConfig() {
-        return sceneConfigs.get(currentSceneType);
+        return SceneConfigs.get(currentSceneType);
     }
 
     /**

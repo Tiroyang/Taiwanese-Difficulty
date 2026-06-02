@@ -4,7 +4,7 @@ import ass.example.components.PlayerComponent;
 import ass.example.core.DeathReason;
 import ass.example.core.SaveKey;
 import ass.example.core.SoundId;
-import ass.example.scenes.SceneManager;
+import ass.example.scenes.system.SceneManager;
 import ass.example.ui.DeathScreen;
 import com.almasb.fxgl.entity.Entity;
 

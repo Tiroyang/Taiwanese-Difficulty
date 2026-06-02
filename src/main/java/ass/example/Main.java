@@ -1,6 +1,7 @@
 package ass.example;
 
 import ass.example.components.LethalComponent;
+import ass.example.components.PlayerComponent;
 import ass.example.core.DeathReason;
 import ass.example.core.EntityType;
 import ass.example.core.SaveKey;
@@ -9,16 +10,19 @@ import ass.example.factories.CommonFactory;
 import ass.example.factories.HouseFactory;
 import ass.example.factories.PlayerFactory;
 import ass.example.factories.StreetFactory;
-import ass.example.system.*;
+import ass.example.scenes.system.SceneManager;
+import ass.example.system.AchievementSystem;
+import ass.example.system.AudioSystem;
+import ass.example.system.DeathSystem;
 import ass.example.system.save.SaveSlotManager;
+import ass.example.system.save.SaveSystem;
 import ass.example.ui.CursorManager;
 import ass.example.ui.MainMenu;
 import ass.example.ui.PauseMenu;
 import com.almasb.fxgl.app.GameApplication;
 import com.almasb.fxgl.app.GameSettings;
-import ass.example.scenes.SceneManager;
-import static com.almasb.fxgl.dsl.FXGL.*;
 import com.almasb.fxgl.app.scene.FXGLMenu;
+import com.almasb.fxgl.app.scene.SceneFactory;
 import com.almasb.fxgl.app.scene.SceneFactory;
 import com.almasb.fxgl.core.serialization.Bundle;
 import com.almasb.fxgl.entity.Entity;
@@ -26,14 +30,74 @@ import com.almasb.fxgl.input.UserAction;
 import com.almasb.fxgl.physics.CollisionHandler;
 import com.almasb.fxgl.profile.DataFile;
 import com.almasb.fxgl.profile.SaveLoadHandler;
-import javafx.scene.ImageCursor;
-import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
-import ass.example.components.PlayerComponent;
 import javafx.scene.input.KeyEvent;
-import java.util.Map;
 
+import java.util.Map;
+import java.util.function.Consumer;
+
+import static com.almasb.fxgl.dsl.FXGL.*;
+
+/**
+ * Main
+ *
+ * 遊戲主入口。
+ *
+ * 負責：
+ * 1. 設定 FXGL 遊戲視窗與選單。
+ * 2. 初始化 EntityFactory。
+ * 3. 初始化全域系統。
+ * 4. 載入起始場景 / 存檔場景 / 指定模式場景。
+ * 5. 註冊物理碰撞事件。
+ * 6. 註冊玩家輸入事件。
+ * 7. 每幀轉交 update 給 SceneManager。
+ *
+ * 單例判斷：
+ * Main 不建議做 Singleton。
+ *
+ * 原因：
+ * - Main 繼承 GameApplication。
+ * - GameApplication 的生命週期由 FXGL 管理。
+ * - 若自行做 Singleton，容易和 FXGL 的初始化順序衝突。
+ *
+ * 適合 Singleton 的系統：
+ * - AudioSystem
+ * - AchievementSystem
+ * - SceneManager
+ * - DeathSystem
+ * - SaveSystem
+ * - SaveSlotManager
+ */
 public class Main extends GameApplication {
+
+    // =========================================================
+    // Constants
+    // =========================================================
+
+    private static final int WINDOW_WIDTH = 1280;
+    private static final int WINDOW_HEIGHT = 720;
+
+    private static final String GAME_TITLE = "Taiwanese Difficulty";
+    private static final String GAME_VERSION = "2.1";
+
+
+    // =========================================================
+    // Global Runtime Flags
+    // =========================================================
+
+    /**
+     * 開發模式。
+     *
+     * true 時：
+     * - Factory 會顯示碰撞箱色塊。
+     * - UI 可顯示 DEV MODE 標籤。
+     */
+    public static boolean devMode = false;
+
+
+    // =========================================================
+    // Core Systems
+    // =========================================================
 
     private SceneManager sceneManager;
     private DeathSystem deathSystem;
@@ -41,16 +105,34 @@ public class Main extends GameApplication {
     private SaveSystem saveSystem;
     private AchievementSystem achievementSystem;
 
+
+    // =========================================================
+    // Input State
+    // =========================================================
+
+    /**
+     * 跳躍鍵同時綁定 Space / W / Up。
+     *
+     * 使用計數器避免：
+     * - 同時按住多個跳躍鍵時重複觸發 jumpPressed()
+     * - 放開其中一顆鍵就提前觸發 jumpReleased()
+     */
     private int jumpKeyHoldCount = 0;
 
-    public static boolean devMode = false;
 
+    // =========================================================
+    // FXGL Settings
+    // =========================================================
+
+    /**
+     * 設定遊戲視窗、標題、版本與選單。
+     */
     @Override
     protected void initSettings(GameSettings settings) {
-        settings.setWidth(1280);
-        settings.setHeight(720);
-        settings.setTitle("Taiwanese Difficulty");
-        settings.setVersion("2.1");
+        settings.setWidth(WINDOW_WIDTH);
+        settings.setHeight(WINDOW_HEIGHT);
+        settings.setTitle(GAME_TITLE);
+        settings.setVersion(GAME_VERSION);
 
         settings.setMainMenuEnabled(true);
         settings.setGameMenuEnabled(true);
@@ -71,15 +153,103 @@ public class Main extends GameApplication {
         });
     }
 
+
+    // =========================================================
+    // FXGL Save / Load Hook
+    // =========================================================
+
+    /**
+     * 註冊 FXGL 內建 SaveLoadService 的處理器。
+     *
+     * 注意：
+     * onPreInit 會早於 initGame。
+     * 這裡只註冊 handler，不立刻使用 saveSystem。
+     * 真正 onSave / onLoad 被呼叫時，saveSystem 應已在 initGame() 初始化。
+     */
+    @Override
+    protected void onPreInit() {
+        getSaveLoadService().addHandler(new SaveLoadHandler() {
+            @Override
+            public void onSave(DataFile dataFile) {
+                if (saveSystem == null) {
+                    return;
+                }
+
+                Bundle bundle = saveSystem.createSaveBundle();
+                dataFile.putBundle(bundle);
+            }
+
+            @Override
+            public void onLoad(DataFile dataFile) {
+                if (saveSystem == null) {
+                    return;
+                }
+
+                Bundle bundle = dataFile.getBundle(SaveKey.BUNDLE_NAME);
+                saveSystem.loadFromBundle(bundle);
+            }
+        });
+    }
+
+
+    // =========================================================
+    // Game Initialization
+    // =========================================================
+
+    /**
+     * 初始化遊戲內容。
+     *
+     * 執行順序：
+     * 1. 註冊 EntityFactory。
+     * 2. 初始化系統。
+     * 3. 處理主選單要求的讀檔。
+     * 4. 處理主選單要求的指定起始場景。
+     * 5. 預設載入 HouseScene。
+     * 6. 安裝自訂游標。
+     */
     @Override
     protected void initGame() {
+        registerEntityFactories();
+        initializeSystems();
+
+        if (tryLoadPendingSaveSlot()) {
+            installCustomCursor();
+            return;
+        }
+
+        if (tryLoadPendingStartScene()) {
+            installCustomCursor();
+            return;
+        }
+
+        sceneManager.loadHouseScene(false);
+
+        installCustomCursor();
+    }
+
+    /**
+     * 註冊所有 EntityFactory。
+     */
+    private void registerEntityFactories() {
         getGameWorld().addEntityFactory(new PlayerFactory());
         getGameWorld().addEntityFactory(new CommonFactory());
         getGameWorld().addEntityFactory(new HouseFactory());
         getGameWorld().addEntityFactory(new StreetFactory());
+    }
 
+    /**
+     * 初始化所有核心系統。
+     *
+     * 注意：
+     * 不要宣告區域變數遮蔽欄位。
+     * 例如不要寫：
+     * AchievementSystem achievementSystem = ...
+     *
+     * 否則 this.achievementSystem 不會被正確設定。
+     */
+    private void initializeSystems() {
         audioSystem = AudioSystem.getInstance();
-        achievementSystem = new AchievementSystem();
+        achievementSystem = AchievementSystem.getInstance();
 
         sceneManager = SceneManager.getInstance();
 
@@ -90,318 +260,290 @@ public class Main extends GameApplication {
         );
         DeathSystem.init(deathSystem);
 
-        sceneManager.setDeathSystem(deathSystem);
-        sceneManager.setAudioSystem(audioSystem);
-
         saveSystem = new SaveSystem(sceneManager);
-        sceneManager.setSaveSystem(saveSystem);
+        SaveSystem.init(saveSystem);
+    }
 
-        if (SaveRequestSystem.hasPendingLoadSlot()) {
-            int slotIndex = SaveRequestSystem.consumePendingLoadSlot();
-            SaveSlotManager.getInstance().loadSlot(slotIndex, saveSystem);
-            return;
+    /**
+     * 如果主選單有要求讀取某個存檔槽，就讀取該存檔。
+     *
+     * @return true 表示已處理讀檔，initGame 不應再載入預設場景。
+     */
+    private boolean tryLoadPendingSaveSlot() {
+        SaveSlotManager saveSlotManager = SaveSlotManager.getInstance();
+
+        if (!saveSlotManager.hasPendingLoadSlot()) {
+            return false;
         }
 
-        if (SceneManager.hasPendingStartScene()) {
-            SceneType sceneType = SceneManager.consumePendingStartScene();
-            sceneManager.loadSceneByTypeForNewGame(sceneType);
-            return;
+        int slotIndex = saveSlotManager.consumePendingLoadSlot();
+        saveSlotManager.loadSlot(slotIndex, saveSystem);
+
+        return true;
+    }
+
+    /**
+     * 如果主選單要求啟動特定場景或模式，就載入該場景。
+     *
+     * 例如：
+     * - Story Mode
+     * - Street Endless MiniGame
+     *
+     * @return true 表示已載入指定場景。
+     */
+    private boolean tryLoadPendingStartScene() {
+        if (!SceneManager.hasPendingStartScene()) {
+            return false;
         }
 
-        sceneManager.loadHouseScene(false);
+        SceneType sceneType = SceneManager.consumePendingStartScene();
+        sceneManager.loadSceneByTypeForNewGame(sceneType);
 
-        CursorManager.hideCursor(getGameScene().getRoot());
+        return true;
     }
 
-    @Override
-    protected void onPreInit() {
-        getSaveLoadService().addHandler(new SaveLoadHandler() {
-            @Override
-            public void onSave(DataFile dataFile) {
-                Bundle bundle = saveSystem.createSaveBundle();
-                dataFile.putBundle(bundle);
-            }
-
-            @Override
-            public void onLoad(DataFile dataFile) {
-                Bundle bundle = dataFile.getBundle(SaveKey.BUNDLE_NAME);
-                saveSystem.loadFromBundle(bundle);
-            }
-        });
+    /**
+     * 安裝自訂游標。
+     *
+     * 平常顯示自訂游標；
+     * 滑鼠閒置一段時間後隱藏；
+     * 滑鼠再次移動時重新顯示。
+     */
+    private void installCustomCursor() {
+        CursorManager.install(getGameScene().getRoot());
     }
 
-    @Override
-    protected void initPhysics() {
 
-        getPhysicsWorld().setGravity(0, 1600);
+    // =========================================================
+    // Game Variables
+    // =========================================================
 
-        getPhysicsWorld().addCollisionHandler(new CollisionHandler(
-                EntityType.PLAYER_GROUND_SENSOR,
-                EntityType.WALL
-        ) {
-            @Override
-            protected void onCollisionBegin(Entity sensor, Entity wall) {
-                Entity player = sceneManager.getPlayer();
-
-                if (player == null) {
-                    return;
-                }
-
-                player.getComponent(PlayerComponent.class).addGroundContact();
-            }
-
-            @Override
-            protected void onCollisionEnd(Entity sensor, Entity wall) {
-                Entity player = sceneManager.getPlayer();
-
-                if (player == null) {
-                    return;
-                }
-
-                player.getComponent(PlayerComponent.class).removeGroundContact();
-            }
-        });
-
-        getPhysicsWorld().addCollisionHandler(new CollisionHandler(
-                EntityType.PLAYER,
-                EntityType.DEATH_ZONE
-        ) {
-            @Override
-            protected void onCollisionBegin(Entity player, Entity deathSolid) {
-                if (getb("playerDead")) {
-                    return;
-                }
-
-                LethalComponent lethal =
-                        deathSolid.getComponent(LethalComponent.class);
-
-                deathSystem.die(lethal.getDeathReason());
-            }
-        });
-
-        getPhysicsWorld().addCollisionHandler(new CollisionHandler(
-                EntityType.PLAYER_GROUND_SENSOR,
-                EntityType.BED_ONE_WAY_PLATFORM_COLLIDER
-        ) {
-            @Override
-            protected void onCollisionBegin(Entity sensor, Entity bedCollider) {
-                Entity player = sceneManager.getPlayer();
-
-                if (player == null || getb("playerDead")) {
-                    return;
-                }
-
-                player.getComponent(PlayerComponent.class).addGroundContact();
-            }
-
-            @Override
-            protected void onCollisionEnd(Entity sensor, Entity bedCollider) {
-                Entity player = sceneManager.getPlayer();
-
-                if (player == null || getb("playerDead")) {
-                    return;
-                }
-
-                player.getComponent(PlayerComponent.class).removeGroundContact();
-            }
-        });
-    }
-
+    /**
+     * 初始化 FXGL 全域 vars。
+     *
+     * 這些 vars 會被：
+     * - SaveSystem 存取
+     * - SceneManager 判斷場景狀態
+     * - Component / System 判斷任務、死亡、互動狀態
+     */
     @Override
     protected void initGameVars(Map<String, Object> vars) {
-        vars.put("playerDead", false);
-        vars.put("deathCount", 0);
-        vars.put("lastDeathReason", "");
+        initDeathVars(vars);
+        initHouseVars(vars);
+        initStreetEndlessVars(vars);
+        initSystemControlVars(vars);
+    }
+
+    /**
+     * 死亡與成就相關 vars。
+     */
+    private void initDeathVars(Map<String, Object> vars) {
+        vars.put(SaveKey.PLAYER_DEAD, false);
+        vars.put(SaveKey.DEATH_COUNT, 0);
+        vars.put(SaveKey.LAST_DEATH_REASON, "");
 
         for (DeathReason reason : DeathReason.values()) {
             vars.put("death_" + reason.name(), false);
         }
+    }
 
-        // HouseScene
-        vars.put("quiltFolded", false);
-        vars.put("waterDrunk", false);
-        vars.put("teethBrushed", false);
-        vars.put("shoesWorn", false);
-        vars.put("playerOnBedCollider", false);
+    /**
+     * HouseScene 劇情與互動狀態。
+     */
+    private void initHouseVars(Map<String, Object> vars) {
+        vars.put(SaveKey.QUILT_FOLDED, false);
+        vars.put(SaveKey.WATER_DRUNK, false);
+        vars.put(SaveKey.TEETH_BRUSHED, false);
+        vars.put(SaveKey.SHOES_WORN, false);
+        vars.put(SaveKey.PLAYER_ON_BED_COLLIDER, false);
 
-        vars.put("room_LIVING_ROOM_revealed", false);
-        vars.put("room_TOILET_revealed", false);
+        vars.put(SaveKey.ROOM_LIVING_ROOM_REVEALED, false);
+        vars.put(SaveKey.ROOM_TOILET_REVEALED, false);
 
-        vars.put("door_Door1_opened", false);
-        vars.put("door_Door2_opened", false);
+        vars.put(SaveKey.DOOR_1_OPENED, false);
+        vars.put(SaveKey.DOOR_2_OPENED, false);
+    }
 
-        // StreetEndlessScene
+    /**
+     * Street Endless MiniGame 狀態。
+     *
+     * 這些變數目前不一定都放在 SaveKey，
+     * 因為 Street Endless 通常不存檔。
+     */
+    private void initStreetEndlessVars(Map<String, Object> vars) {
         vars.put("streetEndlessMode", false);
         vars.put("streetRunDistance", 0.0);
         vars.put("streetBestDistanceBeforeRun", 0.0);
         vars.put("streetBestDistance", 0.0);
         vars.put("streetNewRecord", false);
+    }
+
+    /**
+     * 系統控制用 vars。
+     */
+    private void initSystemControlVars(Map<String, Object> vars) {
         vars.put("saveDisabled", false);
         vars.put("achievementDisabled", false);
     }
 
-    public DeathSystem getDeathSystem() {
-        return deathSystem;
+
+    // =========================================================
+    // Physics
+    // =========================================================
+
+    /**
+     * 初始化物理世界與碰撞事件。
+     */
+    @Override
+    protected void initPhysics() {
+        getPhysicsWorld().setGravity(0, 1600);
+
+        registerGroundSensorCollision(EntityType.WALL);
+        registerGroundSensorCollision(EntityType.FLOOR);
+        registerGroundSensorCollision(EntityType.BED_ONE_WAY_PLATFORM_COLLIDER);
+
+        registerDeathZoneCollision();
     }
 
-    private PlayerComponent getPlayerComponent() {
-        if (sceneManager == null) {
-            return null;
-        }
+    /**
+     * 註冊 player_ground_sensor 與指定地面類型的碰撞。
+     *
+     * 支援：
+     * - WALL
+     * - FLOOR
+     * - BED_ONE_WAY_PLATFORM_COLLIDER
+     *
+     * 功能：
+     * - sensor 進入地面時，groundContacts + 1。
+     * - sensor 離開地面時，groundContacts - 1。
+     */
+    private void registerGroundSensorCollision(EntityType groundType) {
+        getPhysicsWorld().addCollisionHandler(new CollisionHandler(
+                EntityType.PLAYER_GROUND_SENSOR,
+                groundType
+        ) {
+            @Override
+            protected void onCollisionBegin(Entity sensor, Entity ground) {
+                if (getb(SaveKey.PLAYER_DEAD)) {
+                    return;
+                }
 
-        Entity player = sceneManager.getPlayer();
+                withPlayerComponent(PlayerComponent::addGroundContact);
+            }
 
-        if (player == null) {
-            return null;
-        }
+            @Override
+            protected void onCollisionEnd(Entity sensor, Entity ground) {
+                if (getb(SaveKey.PLAYER_DEAD)) {
+                    return;
+                }
 
-        try {
-            return player.getComponent(PlayerComponent.class);
-        } catch (Exception e) {
-            return null;
-        }
+                withPlayerComponent(PlayerComponent::removeGroundContact);
+            }
+        });
     }
 
-    private void pressJumpKey() {
-        jumpKeyHoldCount++;
+    /**
+     * 註冊玩家碰到死亡區域時死亡。
+     */
+    private void registerDeathZoneCollision() {
+        getPhysicsWorld().addCollisionHandler(new CollisionHandler(
+                EntityType.PLAYER,
+                EntityType.DEATH_ZONE
+        ) {
+            @Override
+            protected void onCollisionBegin(Entity player, Entity deathZone) {
+                if (getb(SaveKey.PLAYER_DEAD)) {
+                    return;
+                }
 
-        if (jumpKeyHoldCount == 1) {
-            getPlayerComponent().jumpPressed();
-        }
+                if (!deathZone.hasComponent(LethalComponent.class)) {
+                    return;
+                }
+
+                LethalComponent lethal =
+                        deathZone.getComponent(LethalComponent.class);
+
+                deathSystem.die(lethal.getDeathReason());
+            }
+        });
     }
 
-    private void releaseJumpKey() {
-        jumpKeyHoldCount--;
 
-        if (jumpKeyHoldCount < 0) {
-            jumpKeyHoldCount = 0;
-        }
+    // =========================================================
+    // Input
+    // =========================================================
 
-        if (jumpKeyHoldCount == 0) {
-            getPlayerComponent().jumpReleased();
-        }
-    }
-
-    private void withPlayerComponent(java.util.function.Consumer<PlayerComponent> action) {
-        PlayerComponent pc = getPlayerComponent();
-
-        if (pc == null) {
-            return;
-        }
-
-        action.accept(pc);
-    }
-
+    /**
+     * 註冊玩家輸入。
+     */
     @Override
     protected void initInput() {
+        registerMovementInput();
+        registerJumpInput();
+        registerDropInput();
+        registerDashInput();
+        registerInteractInput();
+        registerDebugInput();
+    }
 
-        getInput().addAction(new UserAction("Move Left A") {
-            @Override
-            protected void onActionBegin() {
-                withPlayerComponent(PlayerComponent::moveLeft);
-            }
+    /**
+     * 左右移動。
+     */
+    private void registerMovementInput() {
+        addHoldAction(
+                "Move Left A",
+                KeyCode.A,
+                PlayerComponent::moveLeft,
+                PlayerComponent::stopLeft
+        );
 
-            @Override
-            protected void onActionEnd() {
-                withPlayerComponent(PlayerComponent::stopLeft);
-            }
-        }, KeyCode.A);
+        addHoldAction(
+                "Move Left Arrow",
+                KeyCode.LEFT,
+                PlayerComponent::moveLeft,
+                PlayerComponent::stopLeft
+        );
 
-        getInput().addAction(new UserAction("Move Left Arrow") {
-            @Override
-            protected void onActionBegin() {
-                withPlayerComponent(PlayerComponent::moveLeft);
-            }
+        addHoldAction(
+                "Move Right D",
+                KeyCode.D,
+                PlayerComponent::moveRight,
+                PlayerComponent::stopRight
+        );
 
-            @Override
-            protected void onActionEnd() {
-                withPlayerComponent(PlayerComponent::stopLeft);
-            }
-        }, KeyCode.LEFT);
+        addHoldAction(
+                "Move Right Arrow",
+                KeyCode.RIGHT,
+                PlayerComponent::moveRight,
+                PlayerComponent::stopRight
+        );
+    }
 
-        getInput().addAction(new UserAction("Move Right D") {
-            @Override
-            protected void onActionBegin() {
-                withPlayerComponent(PlayerComponent::moveRight);
-            }
+    /**
+     * 跳躍。
+     *
+     * Space / W / Up 都視為同一組跳躍輸入。
+     */
+    private void registerJumpInput() {
+        addJumpAction("Jump Space", KeyCode.SPACE);
+        addJumpAction("Jump W", KeyCode.W);
+        addJumpAction("Jump Arrow", KeyCode.UP);
+    }
 
-            @Override
-            protected void onActionEnd() {
-                withPlayerComponent(PlayerComponent::stopRight);
-            }
-        }, KeyCode.D);
-
-        getInput().addAction(new UserAction("Move Right Arrow") {
-            @Override
-            protected void onActionBegin() {
-                withPlayerComponent(PlayerComponent::moveRight);
-            }
-
-            @Override
-            protected void onActionEnd() {
-                withPlayerComponent(PlayerComponent::stopRight);
-            }
-        }, KeyCode.RIGHT);
-
-        getInput().addAction(new UserAction("Jump Space") {
-            @Override
-            protected void onActionBegin() {
-                pressJumpKey();
-
-                if (sceneManager != null) {
-                    sceneManager.onPlayerJumpPressed();
-                }
-            }
-
-            @Override
-            protected void onActionEnd() {
-                releaseJumpKey();
-            }
-        }, KeyCode.SPACE);
-
-        getInput().addAction(new UserAction("Jump W") {
-            @Override
-            protected void onActionBegin() {
-                pressJumpKey();
-
-                if (sceneManager != null) {
-                    sceneManager.onPlayerJumpPressed();
-                }
-            }
-
-            @Override
-            protected void onActionEnd() {
-                releaseJumpKey();
-            }
-        }, KeyCode.W);
-
-        getInput().addAction(new UserAction("Jump Arrow") {
-            @Override
-            protected void onActionBegin() {
-                pressJumpKey();
-
-                if (sceneManager != null) {
-                    sceneManager.onPlayerJumpPressed();
-                }
-            }
-
-            @Override
-            protected void onActionEnd() {
-                releaseJumpKey();
-            }
-        }, KeyCode.UP);
-
+    /**
+     * 從單向平台下落。
+     *
+     * 注意：
+     * Drop 鍵不是 Jump 鍵，
+     * 所以 onActionEnd 不應該呼叫 releaseJumpKey()。
+     */
+    private void registerDropInput() {
         getInput().addAction(new UserAction("Drop S") {
             @Override
             protected void onActionBegin() {
                 if (sceneManager != null) {
                     sceneManager.dropThroughOneWayPlatform();
                 }
-            }
-
-            @Override
-            protected void onActionEnd() {
-                releaseJumpKey();
             }
         }, KeyCode.S);
 
@@ -412,23 +554,34 @@ public class Main extends GameApplication {
                     sceneManager.dropThroughOneWayPlatform();
                 }
             }
-
-            @Override
-            protected void onActionEnd() {
-                releaseJumpKey();
-            }
         }, KeyCode.DOWN);
+    }
 
+    /**
+     * 衝刺。
+     *
+     * 使用 EventFilter 是為了攔截 Shift，
+     * 避免部分情況下被其他 UI 或 FXGL Menu 消耗。
+     */
+    private void registerDashInput() {
         getPrimaryStage().getScene().addEventFilter(
                 KeyEvent.KEY_PRESSED,
-                e -> {
-                    if (e.getCode() == KeyCode.SHIFT) {
-                        withPlayerComponent(PlayerComponent::dashPressed);
-                        e.consume();
+                event -> {
+                    if (event.getCode() != KeyCode.SHIFT) {
+                        return;
                     }
+
+                    withPlayerComponent(PlayerComponent::dashPressed);
+
+                    event.consume();
                 }
         );
+    }
 
+    /**
+     * 互動。
+     */
+    private void registerInteractInput() {
         getInput().addAction(new UserAction("Interact F") {
             @Override
             protected void onActionBegin() {
@@ -437,22 +590,178 @@ public class Main extends GameApplication {
                 }
             }
         }, KeyCode.F);
+    }
 
+    /**
+     * Debug 快捷鍵。
+     */
+    private void registerDebugInput() {
         getInput().addAction(new UserAction("Debug F5") {
             @Override
             protected void onActionBegin() {
-                System.out.println("=== SAVE PLAYER POSITION ===");
-                System.out.println("sceneType = " + sceneManager.getCurrentSceneType());
-                System.out.println("player.getX() = " + sceneManager.getPlayer().getX());
-                System.out.println("player.getY() = " + sceneManager.getPlayer().getY());
+                printPlayerPositionDebugInfo();
             }
         }, KeyCode.F5);
     }
 
+    /**
+     * 建立一組按下 / 放開型輸入。
+     */
+    private void addHoldAction(
+            String name,
+            KeyCode keyCode,
+            Consumer<PlayerComponent> onBegin,
+            Consumer<PlayerComponent> onEnd
+    ) {
+        getInput().addAction(new UserAction(name) {
+            @Override
+            protected void onActionBegin() {
+                withPlayerComponent(onBegin);
+            }
+
+            @Override
+            protected void onActionEnd() {
+                withPlayerComponent(onEnd);
+            }
+        }, keyCode);
+    }
+
+    /**
+     * 建立跳躍輸入。
+     */
+    private void addJumpAction(String name, KeyCode keyCode) {
+        getInput().addAction(new UserAction(name) {
+            @Override
+            protected void onActionBegin() {
+                pressJumpKey();
+
+                if (sceneManager != null) {
+                    sceneManager.onPlayerJumpPressed();
+                }
+            }
+
+            @Override
+            protected void onActionEnd() {
+                releaseJumpKey();
+            }
+        }, keyCode);
+    }
+
+    /**
+     * 跳躍鍵按下。
+     *
+     * 多個跳躍鍵同時按住時，只在第一顆按下時觸發 jumpPressed()。
+     */
+    private void pressJumpKey() {
+        jumpKeyHoldCount++;
+
+        if (jumpKeyHoldCount != 1) {
+            return;
+        }
+
+        withPlayerComponent(PlayerComponent::jumpPressed);
+    }
+
+    /**
+     * 跳躍鍵放開。
+     *
+     * 只有全部跳躍鍵都放開時才觸發 jumpReleased()。
+     */
+    private void releaseJumpKey() {
+        jumpKeyHoldCount--;
+
+        if (jumpKeyHoldCount < 0) {
+            jumpKeyHoldCount = 0;
+        }
+
+        if (jumpKeyHoldCount != 0) {
+            return;
+        }
+
+        withPlayerComponent(PlayerComponent::jumpReleased);
+    }
+
+
+    // =========================================================
+    // Player Helpers
+    // =========================================================
+
+    /**
+     * 安全取得目前玩家的 PlayerComponent。
+     */
+    private PlayerComponent getPlayerComponent() {
+        if (sceneManager == null) {
+            return null;
+        }
+
+        Entity player = sceneManager.getPlayer();
+
+        if (player == null || !player.hasComponent(PlayerComponent.class)) {
+            return null;
+        }
+
+        return player.getComponent(PlayerComponent.class);
+    }
+
+    /**
+     * 若玩家存在，就對 PlayerComponent 執行指定 action。
+     */
+    private void withPlayerComponent(Consumer<PlayerComponent> action) {
+        PlayerComponent playerComponent = getPlayerComponent();
+
+        if (playerComponent == null || action == null) {
+            return;
+        }
+
+        action.accept(playerComponent);
+    }
+
+    /**
+     * Debug：印出目前場景與玩家座標。
+     */
+    private void printPlayerPositionDebugInfo() {
+        if (sceneManager == null || sceneManager.getPlayer() == null) {
+            System.out.println("=== SAVE PLAYER POSITION ===");
+            System.out.println("sceneManager or player is null.");
+            return;
+        }
+
+        Entity player = sceneManager.getPlayer();
+
+        System.out.println("=== SAVE PLAYER POSITION ===");
+        System.out.println("sceneType = " + sceneManager.getCurrentSceneType());
+        System.out.println("player.getX() = " + player.getX());
+        System.out.println("player.getY() = " + player.getY());
+    }
+
+
+    // =========================================================
+    // Update
+    // =========================================================
+
+    /**
+     * 每幀更新。
+     */
     @Override
     protected void onUpdate(double tpf) {
-        sceneManager.onUpdate(tpf);
+        if (sceneManager != null) {
+            sceneManager.onUpdate(tpf);
+        }
     }
+
+
+    // =========================================================
+    // Public Accessors
+    // =========================================================
+
+    public DeathSystem getDeathSystem() {
+        return deathSystem;
+    }
+
+
+    // =========================================================
+    // Main Entry
+    // =========================================================
 
     public static void main(String[] args) {
         launch(args);

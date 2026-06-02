@@ -3,14 +3,13 @@ package ass.example.scenes;
 import ass.example.core.DeathReason;
 import ass.example.core.StreetScene.FallingObjectVariant;
 import ass.example.core.StreetScene.StreetApartmentStyle;
-import ass.example.system.AudioSystem;
-import ass.example.system.DeathSystem;
-import ass.example.system.MusicSystem;
+import ass.example.scenes.system.SceneConfig;
 import ass.example.system.StreetEndlessRecordSystem;
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.SpawnData;
 import com.almasb.fxgl.physics.PhysicsComponent;
 import javafx.animation.FadeTransition;
+import javafx.geometry.Point2D;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -27,228 +26,297 @@ import static com.almasb.fxgl.dsl.FXGL.*;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 
+/**
+ * StreetEndlessScene
+ *
+ * 街道無盡模式場景。
+ *
+ * 功能：
+ * 1. 生成無盡街道地圖。
+ * 2. 生成遠景視差背景。
+ * 3. 生成地板視覺與長地板碰撞箱。
+ * 4. 生成隨機公寓背景。
+ * 5. 生成街道障礙物。
+ * 6. 生成左右來車與警告 UI。
+ * 7. 生成掉落物與掉落警告 UI。
+ * 8. 鎖定攝影機只能往左推進。
+ * 9. 計算本局跑步距離與最佳距離。
+ * 10. 清理本場景所有 runtime Entity 與 UI。
+ *
+ * 單例判斷：
+ * 此類別不適合做成單例。
+ *
+ * 原因：
+ * - 它保存大量本次遊玩才存在的狀態。
+ * - 例如 player、segments、scooters、fallingObjects、warning UI。
+ * - 每次重新開始 Street Endless 都應該建立新的場景實例。
+ *
+ * 適合單例的是：
+ * - StreetEndlessRecordSystem：保存全遊戲最佳距離。
+ */
 public class StreetEndlessScene {
 
+    // =========================================================
+    // Scene / View Constants
+    // =========================================================
+
+    private static final double SCREEN_WIDTH = 1280;
+    private static final double SCREEN_HEIGHT = 720;
+
+    private static final double SEGMENT_WIDTH = 640;
+
+    private static final double FLOOR_Y = 694.0;
+    private static final double FLOOR_VISUAL_HEIGHT = 70;
+
+    private static final double MAX_CAMERA_X = 0.0;
+
+
+    // =========================================================
+    // Far Background Constants
+    // =========================================================
+
+    private static final double FAR_BACKGROUND_WIDTH = 1983;
+    private static final double FAR_BACKGROUND_HEIGHT = 793;
+    private static final double FAR_BACKGROUND_PARALLAX = 0.18;
+
+
+    // =========================================================
+    // Endless Floor Collider Constants
+    // =========================================================
+
+    private static final double ENDLESS_FLOOR_COLLIDER_WIDTH = 6000;
+    private static final double ENDLESS_FLOOR_COLLIDER_HEIGHT = 70;
+
+
+    // =========================================================
+    // Obstacle Constants
+    // =========================================================
+
+    private static final double OBSTACLE_GENERATE_AHEAD_DISTANCE = 2600.0;
+    private static final double OBSTACLE_CLEANUP_RIGHT_PADDING = 900.0;
+
+    private static final double TRANSFORMER_CHECK_MIN_DISTANCE = 700.0;
+    private static final double TRANSFORMER_CHECK_MAX_DISTANCE = 1200.0;
+    private static final double TRANSFORMER_SPAWN_CHANCE = 0.45;
+
+    private static final double TRANSFORMER_WIDTH = 90.0;
+    private static final double TRANSFORMER_HEIGHT = 145.0;
+    private static final double TRANSFORMER_COLLIDER_WIDTH = 78.0;
+    private static final double TRANSFORMER_COLLIDER_HEIGHT = 132.0;
+
+    private static final double RAISED_TILE_CHECK_MIN_DISTANCE = 420.0;
+    private static final double RAISED_TILE_CHECK_MAX_DISTANCE = 760.0;
+    private static final double RAISED_TILE_SPAWN_CHANCE = 0.65;
+
+    private static final double RAISED_TILE_WIDTH = 75.0;
+    private static final double RAISED_TILE_HEIGHT = 28.0;
+
+
+    // =========================================================
+    // Scooter Constants
+    // =========================================================
+
+    private static final double SCOOTER_WARNING_DURATION = 1.6;
+
+    private static final double SCOOTER_MIN_INTERVAL = 1.0;
+    private static final double SCOOTER_MAX_INTERVAL = 15.0;
+
+    private static final double SCOOTER_WIDTH = 150;
+    private static final double SCOOTER_HEIGHT = 72;
+
+    private static final double SCOOTER_HITBOX_WIDTH = 140;
+    private static final double SCOOTER_HITBOX_HEIGHT = 58;
+
+    private static final double SCOOTER_HITBOX_OFFSET_X = 5.0;
+    private static final double SCOOTER_HITBOX_OFFSET_Y = 8.0;
+
+    private static final double SCOOTER_SPEED = 720.0;
+
+    private static final double WARNING_ICON_SIZE = 72.0;
+
+
+    // =========================================================
+    // Falling Object Constants
+    // =========================================================
+
+    private static final double FALLING_OBJECT_MIN_INTERVAL = 3.8;
+    private static final double FALLING_OBJECT_MAX_INTERVAL = 7.2;
+
+    private static final double FALLING_SPAWN_AHEAD_LEFT_DISTANCE = 1500.0;
+    private static final double FALLING_SPAWN_RIGHT_PADDING = 240.0;
+
+    private static final double FALLING_SPAWN_MIN_HEIGHT_ABOVE_SCREEN = 260.0;
+    private static final double FALLING_SPAWN_MAX_HEIGHT_ABOVE_SCREEN = 620.0;
+
+    private static final double FALLING_WARNING_DISTANCE = 620.0;
+    private static final double FALLING_WARNING_ICON_SIZE = 72.0;
+
+    private static final double FALLING_TRIGGER_SCALE = 0.86;
+
+    private static final double FALLING_STOP_SPEED_THRESHOLD = 4.0;
+    private static final double FALLING_STOP_REMOVE_SECONDS = 0.35;
+
+    private static final double FALLING_REMOVE_PADDING = 260.0;
+
+    private static final double FALLING_FADE_OUT_SECONDS = 0.35;
+
+
+    // =========================================================
+    // UI Paths
+    // =========================================================
+
+    private static final String DANGER_ICON_PATH =
+            "/assets/textures/Scene2/UI/danger.png";
+
+
+    // =========================================================
+    // Dependencies
+    // =========================================================
+
+    /**
+     * 場景設定。
+     *
+     * 由 SceneManager 傳入。
+     * 不適合單例，因為不同場景會有不同設定。
+     */
     private final SceneConfig config;
-    private final DeathSystem deathSystem;
-    private final AudioSystem audioSystem;
+
+
+    // =========================================================
+    // Runtime References
+    // =========================================================
 
     private Entity player;
 
     private Entity cameraRightWall;
+    private Entity endlessFloorCollider;
 
-    private Entity farBackground;
+    private Text distanceText;
+
+    private StackPane leftWarningIcon;
+    private StackPane rightWarningIcon;
+
+
+    // =========================================================
+    // Runtime State - Random / Camera / Distance
+    // =========================================================
 
     private final Random random = new Random();
 
-    private final double farBackgroundWidth = 1983;
-    private final double farBackgroundHeight = 793;
-    private final double farBackgroundParallax = 0.18;
+    private double lockedCameraX = 0.0;
 
-    private double leftMostFarBaseX = 0;
-    private double rightMostFarBaseX = 0;
+    private double startPlayerX;
+    private double currentRunDistance = 0.0;
+    private double bestDistanceBeforeRun = 0.0;
+
+
+    // =========================================================
+    // Runtime State - Far Background
+    // =========================================================
+
+    private double leftMostFarBaseX = 0.0;
+    private double rightMostFarBaseX = 0.0;
 
     private final List<FarBackgroundSegment> farBackgrounds = new ArrayList<>();
 
-    /*
-     * 每一段地圖的寬度。
-     * 地板、公寓背景、公寓前景都用同一個寬度。
+
+    // =========================================================
+    // Runtime State - Segments
+    // =========================================================
+
+    /**
+     * 已生成到最左邊的位置。
+     *
+     * 玩家往左跑，所以地圖往負 X 方向延伸。
      */
-    private final double segmentWidth = 640;
-    private final double screenWidth = 1280;
-    private final double screenHeight = 720;
+    private double leftMostGeneratedX = 0.0;
 
-    /*
-     * 地板碰撞箱 Y。
-     */
-    private final double floorY = 694;
+    private final List<StreetSegment> segments = new ArrayList<>();
 
-    /*
-     * 地板視覺一段一段生成，
-     * 但地板碰撞箱用一條長 wall，避免每段接縫卡住。
-     */
-    private Entity endlessFloorCollider;
 
-    private final double endlessFloorColliderWidth = 6000;
-    private final double endlessFloorColliderHeight = 70;
-
-    // =========================
-    // Street Obstacles
-    // =========================
+    // =========================================================
+    // Runtime State - Obstacles
+    // =========================================================
 
     private final List<StreetObstacleGroup> obstacleGroups = new ArrayList<>();
 
-    /*
-     * 目前已經往左預先計算到哪裡。
-     * 因為玩家往左跑，所以 X 會越來越小。
-     */
-    private double nextTransformerCheckX = -900;
-    private double nextRaisedTileCheckX = -700;
-
-    /*
-     * 變電箱：比較大、比較少。
-     */
-    private final double transformerCheckMinDistance = 700;
-    private final double transformerCheckMaxDistance = 1200;
-    private final double transformerSpawnChance = 0.45;
-
-    private final double transformerWidth = 90;
-    private final double transformerHeight = 145;
-    private final double transformerColliderWidth = 78;
-    private final double transformerColliderHeight = 132;
-
-    /*
-     * 凸起磁磚：比較小、可以比較常見。
-     */
-    private final double raisedTileCheckMinDistance = 420;
-    private final double raisedTileCheckMaxDistance = 760;
-    private final double raisedTileSpawnChance = 0.65;
-
-    private final double raisedTileWidth = 75;
-    private final double raisedTileHeight = 28;
-
-    /*
-     * 物件預生成距離。
-     * 玩家還沒到之前，先在左側遠處生成。
-     */
-    private final double obstacleGenerateAheadDistance = 2600;
-
-    /*
-     * 清除右側舊物件距離。
-     */
-    private final double obstacleCleanupRightPadding = 900;
+    private double nextTransformerCheckX = -900.0;
+    private double nextRaisedTileCheckX = -700.0;
 
 
-    // =========================
-    // Scooter
-    // =========================
+    // =========================================================
+    // Runtime State - Scooters
+    // =========================================================
 
     private final List<ScooterInstance> scooters = new ArrayList<>();
 
-    /*
-     * 左右兩側獨立計時器。
-     */
     private double leftScooterTimer = 4.0;
     private double rightScooterTimer = 6.0;
 
-    /*
-     * warning 狀態。
-     */
     private boolean leftWarningActive = false;
     private boolean rightWarningActive = false;
 
-    private double leftWarningTimer = 0;
-    private double rightWarningTimer = 0;
+    private double leftWarningTimer = 0.0;
+    private double rightWarningTimer = 0.0;
 
-    private final double scooterWarningDuration = 1.6;
 
-    /*
-     * timer 隨機範圍。
-     * 你可以之後調整難度。
-     */
-    private final double scooterMinInterval = 1.0;
-    private final double scooterMaxInterval = 15.0;
-
-    /*
-     * 摩托車大小與速度。
-     */
-    private final double scooterWidth = 150;
-    private final double scooterHeight = 72;
-
-    private final double scooterHitboxWidth = 140;
-    private final double scooterHitboxHeight = 58;
-
-    private final double scooterY = floorY - scooterHeight + 2;
-    private final double scooterHitboxOffsetX = 5;
-    private final double scooterHitboxOffsetY = 8;
-
-    private final double scooterSpeed = 720;
-
-    // =========================
-    // Falling Objects
-    // =========================
+    // =========================================================
+    // Runtime State - Falling Objects
+    // =========================================================
 
     private final List<FallingObjectInstance> fallingObjects = new ArrayList<>();
 
     private double fallingObjectTimer = 3.5;
 
-    private final double fallingObjectMinInterval = 3.8;
-    private final double fallingObjectMaxInterval = 7.2;
 
-    /*
-     * 生成範圍：
-     * cameraX - 左側預生成距離 到 cameraX + 畫面寬度。
-     * 因為玩家往左跑，所以 cameraX 左側是即將前進區域。
+    // =========================================================
+    // Constructor
+    // =========================================================
+
+    /**
+     * 建立 Street Endless 場景。
+     *
+     * @param config 場景設定
      */
-    private final double fallingSpawnAheadLeftDistance = 1500;
-    private final double fallingSpawnRightPadding = 240;
-
-    /*
-     * 生成高度：在視窗上方一段距離。
-     */
-    private final double fallingSpawnMinHeightAboveScreen = 260;
-    private final double fallingSpawnMaxHeightAboveScreen = 620;
-
-    /*
-     * warning 計算用。
-     * 物件距離畫面頂部還有這麼遠時，警告開始從小變大。
-     */
-    private final double fallingWarningDistance = 620;
-    private final double fallingWarningIconSize = 72;
-
-    /*
-     * 警告 UI。
-     */
-    private StackPane leftWarningIcon;
-    private StackPane rightWarningIcon;
-
-    private final double warningIconSize = 72;
-
-    /*
-     * 已生成到最左邊的位置。
-     * 因為玩家往左跑，所以地圖往負 X 方向延伸。
-     */
-    private double leftMostGeneratedX = 0;
-
-    /*
-     * 起始攝影機位置。
-     * 不允許攝影機往右超過 0。
-     */
-    private final double maxCameraX = 0;
-    private double lockedCameraX = 0;
-
-    private final List<StreetSegment> segments = new ArrayList<>();
-
-    private Text distanceText;
-
-    private double startPlayerX;
-    private double currentRunDistance = 0;
-    private double bestDistanceBeforeRun = 0;
-
-    public StreetEndlessScene(
-            SceneConfig config,
-            DeathSystem deathSystem,
-            AudioSystem audioSystem
-    ) {
+    public StreetEndlessScene(SceneConfig config) {
         this.config = config;
-        this.deathSystem = deathSystem;
-        this.audioSystem = audioSystem;
     }
 
+
+    // =========================================================
+    // Load
+    // =========================================================
+
+    /**
+     * 載入 Street Endless 場景。
+     *
+     * 流程：
+     * 1. 初始化 game vars。
+     * 2. 生成遠景。
+     * 3. 生成初始地圖區段。
+     * 4. 生成長地板碰撞箱。
+     * 5. 生成右側邊界。
+     * 6. 生成玩家。
+     * 7. 重置障礙物 / 機車 / 掉落物系統。
+     * 8. 初始化距離紀錄。
+     * 9. 建立距離 UI。
+     * 10. 設定攝影機。
+     *
+     * @return 玩家 Entity
+     */
     public Entity load() {
-        set("saveDisabled", true);
-        set("achievementDisabled", true);
-        set("playerDead", false);
+        setupGameVarsForLoad();
 
         spawnFarBackground();
-
         generateInitialSegments();
-
         spawnEndlessFloorCollider();
-
         spawnRightBoundary();
 
-        player = spawn("player", config.getPlayerStartX(), config.getPlayerStartY());
+        player = spawn(
+                "player",
+                config.getPlayerStartX(),
+                config.getPlayerStartY()
+        );
 
         resetObstacleSpawner();
 
@@ -257,14 +325,7 @@ public class StreetEndlessScene {
 
         resetFallingObjectSystem();
 
-        startPlayerX = player.getX();
-        bestDistanceBeforeRun = StreetEndlessRecordSystem.getInstance().getBestDistance();
-
-        set("streetRunDistance", 0.0);
-        set("streetBestDistanceBeforeRun", bestDistanceBeforeRun);
-        set("streetBestDistance", bestDistanceBeforeRun);
-        set("streetNewRecord", false);
-
+        setupDistanceState();
         createDistanceUI();
 
         setupCamera();
@@ -272,10 +333,48 @@ public class StreetEndlessScene {
         return player;
     }
 
+    /**
+     * 初始化 Street Endless 需要的 game vars。
+     */
+    private void setupGameVarsForLoad() {
+        set("saveDisabled", true);
+        set("achievementDisabled", true);
+        set("playerDead", false);
+        set("playerOnBedCollider", false);
+    }
+
+    /**
+     * 初始化距離相關狀態。
+     */
+    private void setupDistanceState() {
+        startPlayerX = player.getX();
+        currentRunDistance = 0.0;
+
+        bestDistanceBeforeRun = StreetEndlessRecordSystem
+                .getInstance()
+                .getBestDistance();
+
+        set("streetRunDistance", 0.0);
+        set("streetBestDistanceBeforeRun", bestDistanceBeforeRun);
+        set("streetBestDistance", bestDistanceBeforeRun);
+        set("streetNewRecord", false);
+    }
+
+
+    // =========================================================
+    // Update
+    // =========================================================
+
+    /**
+     * 每幀更新 Street Endless。
+     *
+     * @param tpf time per frame
+     */
     public void onUpdate(double tpf) {
         if (player == null) {
             return;
         }
+
         if (getb("playerDead")) {
             updateCamera();
             return;
@@ -283,127 +382,225 @@ public class StreetEndlessScene {
 
         updateRunDistance();
         updateCamera();
+
         updateEndlessFloorCollider();
         updateCameraRightWall();
         updateParallaxBackground();
+
         generateMoreSegmentsIfNeeded();
-        generateObstaclesIfNeeded();
         cleanupFarRightSegments();
+
+        generateObstaclesIfNeeded();
         cleanupObstacles();
+
         updateScooterSystem(tpf);
         updateScooterWarningPosition();
+
         updateFallingObjectSystem(tpf);
     }
 
+    /**
+     * 死亡或重生時重設本場景 runtime 系統。
+     *
+     * Street Endless 目前沒有床平台，
+     * 只需要清除 playerOnBedCollider。
+     */
     public void resetRuntimeSystems() {
         set("playerOnBedCollider", false);
     }
 
+
+    // =========================================================
+    // Far Background
+    // =========================================================
+
+    /**
+     * 生成初始遠景。
+     *
+     * 初始生成三段：
+     * - 左側
+     * - 中央
+     * - 右側
+     *
+     * 避免一開始鏡頭左右露出空白。
+     */
     private void spawnFarBackground() {
         farBackgrounds.clear();
 
-        /*
-         * 先生成三段遠景：
-         * -1600 ~ 0
-         * 0 ~ 1600
-         * 1600 ~ 3200
-         *
-         * 這樣一開始畫面左右都有緩衝。
-         */
-        leftMostFarBaseX = -farBackgroundWidth;
-        rightMostFarBaseX = farBackgroundWidth;
+        leftMostFarBaseX = -FAR_BACKGROUND_WIDTH;
+        rightMostFarBaseX = FAR_BACKGROUND_WIDTH;
 
         spawnFarBackgroundAt(leftMostFarBaseX);
         spawnFarBackgroundAt(0);
         spawnFarBackgroundAt(rightMostFarBaseX);
     }
 
+    /**
+     * 在指定 baseX 生成遠景。
+     */
     private void spawnFarBackgroundAt(double baseX) {
-        Entity bg = spawn("street_far_background", new SpawnData(baseX, 0)
-                .put("width", farBackgroundWidth)
-                .put("height", farBackgroundHeight));
+        Entity background = spawn(
+                "street_far_background",
+                new SpawnData(baseX, 0)
+                        .put("width", FAR_BACKGROUND_WIDTH)
+                        .put("height", FAR_BACKGROUND_HEIGHT)
+        );
 
-        farBackgrounds.add(new FarBackgroundSegment(baseX, bg));
+        farBackgrounds.add(
+                new FarBackgroundSegment(baseX, background)
+        );
     }
 
-    private void spawnEndlessFloorCollider() {
-        /*
-         * 初始放在畫面附近，之後會跟著 lockedCameraX 往左移動。
-         * 它很長，所以玩家永遠踩在同一個 floor 上，不會遇到分段接縫。
-         */
-        double x = lockedCameraX - endlessFloorColliderWidth / 2.0;
+    /**
+     * 更新遠景視差。
+     */
+    private void updateParallaxBackground() {
+        double cameraX = getGameScene().getViewport().getX();
 
-            endlessFloorCollider = spawn("floor", new SpawnData(x, floorY)
-                .put("width", endlessFloorColliderWidth)
-                .put("height", endlessFloorColliderHeight));
+        for (FarBackgroundSegment segment : farBackgrounds) {
+            double x = segment.baseX() +
+                    cameraX * (1.0 - FAR_BACKGROUND_PARALLAX);
+
+            segment.entity().setX(x);
+            segment.entity().setY(0);
+        }
+
+        generateMoreFarBackgroundIfNeeded();
+        cleanupFarBackground();
     }
 
-    private void updateEndlessFloorCollider() {
-        if (endlessFloorCollider == null) {
+    /**
+     * 若鏡頭左側或右側快露出空白，補上新的遠景。
+     */
+    private void generateMoreFarBackgroundIfNeeded() {
+        double cameraX = getGameScene().getViewport().getX();
+
+        double leftMostScreenX =
+                leftMostFarBaseX - cameraX * FAR_BACKGROUND_PARALLAX;
+
+        while (leftMostScreenX > -FAR_BACKGROUND_WIDTH) {
+            leftMostFarBaseX -= FAR_BACKGROUND_WIDTH;
+            spawnFarBackgroundAt(leftMostFarBaseX);
+
+            leftMostScreenX =
+                    leftMostFarBaseX - cameraX * FAR_BACKGROUND_PARALLAX;
+        }
+
+        double rightMostScreenX =
+                rightMostFarBaseX - cameraX * FAR_BACKGROUND_PARALLAX;
+
+        while (rightMostScreenX + FAR_BACKGROUND_WIDTH <
+                SCREEN_WIDTH + FAR_BACKGROUND_WIDTH) {
+            rightMostFarBaseX += FAR_BACKGROUND_WIDTH;
+            spawnFarBackgroundAt(rightMostFarBaseX);
+
+            rightMostScreenX =
+                    rightMostFarBaseX - cameraX * FAR_BACKGROUND_PARALLAX;
+        }
+    }
+
+    /**
+     * 清除離鏡頭太遠的遠景。
+     */
+    private void cleanupFarBackground() {
+        double cameraX = getGameScene().getViewport().getX();
+
+        farBackgrounds.removeIf(segment -> {
+            double screenX =
+                    segment.baseX() - cameraX * FAR_BACKGROUND_PARALLAX;
+
+            boolean tooFarRight =
+                    screenX > SCREEN_WIDTH + FAR_BACKGROUND_WIDTH * 2;
+
+            boolean tooFarLeft =
+                    screenX + FAR_BACKGROUND_WIDTH < -FAR_BACKGROUND_WIDTH * 2;
+
+            if (!tooFarRight && !tooFarLeft) {
+                return false;
+            }
+
+            segment.entity().removeFromWorld();
+            return true;
+        });
+
+        refreshFarBackgroundBounds();
+    }
+
+    /**
+     * 重新計算目前最左 / 最右遠景 baseX。
+     */
+    private void refreshFarBackgroundBounds() {
+        if (farBackgrounds.isEmpty()) {
             return;
         }
 
-        /*
-         * 讓長地板碰撞箱永遠覆蓋目前鏡頭左右很大範圍。
-         * 因為它是單一 wall，所以沒有接縫。
-         */
-        double x = lockedCameraX - endlessFloorColliderWidth / 2.0;
+        leftMostFarBaseX = farBackgrounds.stream()
+                .mapToDouble(FarBackgroundSegment::baseX)
+                .min()
+                .orElse(0);
 
-        PhysicsComponent physics = endlessFloorCollider.getComponent(PhysicsComponent.class);
-        physics.overwritePosition(new javafx.geometry.Point2D(x, floorY));
+        rightMostFarBaseX = farBackgrounds.stream()
+                .mapToDouble(FarBackgroundSegment::baseX)
+                .max()
+                .orElse(0);
     }
 
+
+    // =========================================================
+    // Street Segments
+    // =========================================================
+
+    /**
+     * 生成初始街道區段。
+     */
     private void generateInitialSegments() {
         leftMostGeneratedX = 0;
 
-        /*
-         * 從右往左建立，這樣 adjacency 可以逐段判斷。
-         */
-        generateSegmentAt(640, StreetApartmentStyle.RIGHT);
+        generateSegmentAt(SEGMENT_WIDTH, StreetApartmentStyle.RIGHT);
         generateSegmentAt(0, StreetApartmentStyle.FILL);
 
-        leftMostGeneratedX = -segmentWidth;
+        leftMostGeneratedX = -SEGMENT_WIDTH;
         generateRandomSegmentToLeft();
 
-        leftMostGeneratedX = -segmentWidth * 2;
+        leftMostGeneratedX = -SEGMENT_WIDTH * 2;
         generateRandomSegmentToLeft();
     }
 
+    /**
+     * 玩家接近目前最左生成位置時，繼續往左生成區段。
+     */
     private void generateMoreSegmentsIfNeeded() {
-        if (player == null) {
-            return;
-        }
-
         double playerX = player.getX();
 
-        /*
-         * 玩家越往左，playerX 越小。
-         * 當玩家接近目前最左邊已生成區域，就繼續往左生成。
-         */
-        while (playerX - leftMostGeneratedX < segmentWidth * 3.0) {
-            leftMostGeneratedX -= segmentWidth;
+        while (playerX - leftMostGeneratedX < SEGMENT_WIDTH * 3.0) {
+            leftMostGeneratedX -= SEGMENT_WIDTH;
             generateRandomSegmentToLeft();
         }
     }
 
+    /**
+     * 往左生成隨機相容的街道區段。
+     */
     private void generateRandomSegmentToLeft() {
         StreetApartmentStyle rightNeighborStyle = segments.isEmpty()
                 ? StreetApartmentStyle.FILL
                 : segments.get(0).style();
 
-        StreetApartmentStyle style = randomCompatibleStyleForLeftOf(rightNeighborStyle);
+        StreetApartmentStyle style =
+                randomCompatibleStyleForLeftOf(rightNeighborStyle);
 
         generateSegmentAt(leftMostGeneratedX, style);
     }
 
-    private StreetApartmentStyle randomCompatibleStyleForLeftOf(StreetApartmentStyle rightNeighbor) {
+    /**
+     * 根據右側鄰居挑選可銜接的左側區段樣式。
+     */
+    private StreetApartmentStyle randomCompatibleStyleForLeftOf(
+            StreetApartmentStyle rightNeighbor
+    ) {
         List<StreetApartmentStyle> candidates = new ArrayList<>();
 
         for (StreetApartmentStyle style : StreetApartmentStyle.values()) {
-            /*
-             * 新生成的區塊在左邊。
-             * 它的右側是否銜接，必須符合右邊鄰居的左側是否銜接。
-             */
             if (style.connectsRight() == rightNeighbor.connectsLeft()) {
                 candidates.add(style);
             }
@@ -416,133 +613,292 @@ public class StreetEndlessScene {
         return candidates.get(random.nextInt(candidates.size()));
     }
 
+    /**
+     * 在指定 X 生成一段街道。
+     */
+    private void generateSegmentAt(
+            double x,
+            StreetApartmentStyle style
+    ) {
+        Entity floorVisual = spawn(
+                "street_floor",
+                new SpawnData(x, FLOOR_Y)
+                        .put("width", SEGMENT_WIDTH)
+                        .put("height", FLOOR_VISUAL_HEIGHT)
+        );
+
+        Entity apartment = null;
+        Entity foreground = null;
+
+        if (style.isVisibleApartment()) {
+            apartment = spawn(
+                    "street_apartment_bg",
+                    new SpawnData(x, 150)
+                            .put("width", SEGMENT_WIDTH)
+                            .put("height", 544.0)
+                            .put("style", style.name())
+            );
+
+            if (random.nextBoolean()) {
+                foreground = spawn(
+                        "street_apartment_fg",
+                        new SpawnData(x, 150)
+                                .put("width", SEGMENT_WIDTH)
+                                .put("height", 544.0)
+                                .put("style", style.name())
+                );
+            }
+        }
+
+        segments.add(
+                0,
+                new StreetSegment(
+                        x,
+                        style,
+                        floorVisual,
+                        apartment,
+                        foreground
+                )
+        );
+    }
+
+    /**
+     * 清除鏡頭右側太遠的舊區段。
+     */
+    private void cleanupFarRightSegments() {
+        double cameraX = getGameScene().getViewport().getX();
+        double removeRightX = cameraX + SCREEN_WIDTH + SEGMENT_WIDTH * 3;
+
+        segments.removeIf(segment -> {
+            if (segment.x() < removeRightX) {
+                return false;
+            }
+
+            removeEntity(segment.floorVisual());
+            removeEntity(segment.apartment());
+            removeEntity(segment.foreground());
+
+            return true;
+        });
+    }
+
+
+    // =========================================================
+    // Endless Floor Collider / Boundary
+    // =========================================================
+
+    /**
+     * 生成超長地板碰撞箱。
+     *
+     * 使用單一長 floor 避免分段地板接縫卡住玩家。
+     */
+    private void spawnEndlessFloorCollider() {
+        double x = lockedCameraX - ENDLESS_FLOOR_COLLIDER_WIDTH / 2.0;
+
+        endlessFloorCollider = spawn(
+                "floor",
+                new SpawnData(x, FLOOR_Y)
+                        .put("width", ENDLESS_FLOOR_COLLIDER_WIDTH)
+                        .put("height", ENDLESS_FLOOR_COLLIDER_HEIGHT)
+        );
+    }
+
+    /**
+     * 讓長地板碰撞箱跟著鏡頭移動。
+     */
+    private void updateEndlessFloorCollider() {
+        if (endlessFloorCollider == null) {
+            return;
+        }
+
+        double x = lockedCameraX - ENDLESS_FLOOR_COLLIDER_WIDTH / 2.0;
+
+        PhysicsComponent physics =
+                endlessFloorCollider.getComponent(PhysicsComponent.class);
+
+        physics.overwritePosition(new Point2D(x, FLOOR_Y));
+    }
+
+    /**
+     * 生成右側邊界。
+     */
+    private void spawnRightBoundary() {
+        spawn(
+                "wall",
+                new SpawnData(1278, 0)
+                        .put("width", 40.0)
+                        .put("height", SCREEN_HEIGHT)
+        );
+
+        cameraRightWall = spawn(
+                "wall",
+                new SpawnData(1278, 0)
+                        .put("width", 40.0)
+                        .put("height", SCREEN_HEIGHT)
+        );
+    }
+
+    /**
+     * 讓右側牆跟著鏡頭右側移動。
+     */
+    private void updateCameraRightWall() {
+        if (cameraRightWall == null) {
+            return;
+        }
+
+        double wallX = lockedCameraX + SCREEN_WIDTH - 8;
+
+        PhysicsComponent physics =
+                cameraRightWall.getComponent(PhysicsComponent.class);
+
+        physics.overwritePosition(new Point2D(wallX, 0));
+    }
+
+
+    // =========================================================
+    // Obstacles
+    // =========================================================
+
+    /**
+     * 重置障礙物生成器。
+     */
     private void resetObstacleSpawner() {
         obstacleGroups.clear();
 
-        /*
-         * 一開始不要太靠近玩家，避免出生附近直接卡住。
-         */
         nextTransformerCheckX = config.getPlayerStartX() - 1000;
         nextRaisedTileCheckX = config.getPlayerStartX() - 750;
     }
 
+    /**
+     * 根據玩家位置預生成障礙物。
+     */
     private void generateObstaclesIfNeeded() {
-        if (player == null) {
-            return;
-        }
-
-        /*
-         * 玩家往左跑，所以 playerX 會越來越小。
-         * 我們要提前在玩家左側更遠處生成障礙物。
-         */
-        double generateUntilX = player.getX() - obstacleGenerateAheadDistance;
+        double generateUntilX =
+                player.getX() - OBSTACLE_GENERATE_AHEAD_DISTANCE;
 
         while (nextTransformerCheckX > generateUntilX) {
             tryGenerateTransformerAt(nextTransformerCheckX);
+
             nextTransformerCheckX -= randomRange(
-                    transformerCheckMinDistance,
-                    transformerCheckMaxDistance
+                    TRANSFORMER_CHECK_MIN_DISTANCE,
+                    TRANSFORMER_CHECK_MAX_DISTANCE
             );
         }
 
         while (nextRaisedTileCheckX > generateUntilX) {
             tryGenerateRaisedTileAt(nextRaisedTileCheckX);
+
             nextRaisedTileCheckX -= randomRange(
-                    raisedTileCheckMinDistance,
-                    raisedTileCheckMaxDistance
+                    RAISED_TILE_CHECK_MIN_DISTANCE,
+                    RAISED_TILE_CHECK_MAX_DISTANCE
             );
         }
     }
 
-    private double randomRange(double min, double max) {
-        return min + random.nextDouble() * (max - min);
-    }
-
+    /**
+     * 嘗試在指定位置生成變電箱。
+     */
     private void tryGenerateTransformerAt(double x) {
-        if (random.nextDouble() > transformerSpawnChance) {
+        if (random.nextDouble() > TRANSFORMER_SPAWN_CHANCE) {
             return;
         }
 
-        /*
-         * 稍微加一點隨機偏移，避免每次剛好在檢查點。
-         */
         double spawnX = x + randomRange(-80, 80);
-        double visualY = floorY - transformerHeight;
+        double visualY = FLOOR_Y - TRANSFORMER_HEIGHT;
 
-        Entity visual = spawn("street_transformer_box", new SpawnData(spawnX, visualY)
-                .put("width", transformerWidth)
-                .put("height", transformerHeight));
+        Entity visual = spawn(
+                "street_transformer_box",
+                new SpawnData(spawnX, visualY)
+                        .put("width", TRANSFORMER_WIDTH)
+                        .put("height", TRANSFORMER_HEIGHT)
+        );
 
-        double colliderX = spawnX + (transformerWidth - transformerColliderWidth) / 2.0;
-        double colliderY = floorY - transformerColliderHeight;
+        double colliderX =
+                spawnX + (TRANSFORMER_WIDTH - TRANSFORMER_COLLIDER_WIDTH) / 2.0;
 
-        Entity collider = spawn("floor", new SpawnData(colliderX, colliderY)
-                .put("width", transformerColliderWidth)
-                .put("height", transformerColliderHeight));
+        double colliderY =
+                FLOOR_Y - TRANSFORMER_COLLIDER_HEIGHT;
 
-        obstacleGroups.add(new StreetObstacleGroup(
-                spawnX,
-                visual,
-                collider
-        ));
+        Entity collider = spawn(
+                "floor",
+                new SpawnData(colliderX, colliderY)
+                        .put("width", TRANSFORMER_COLLIDER_WIDTH)
+                        .put("height", TRANSFORMER_COLLIDER_HEIGHT)
+        );
+
+        obstacleGroups.add(
+                new StreetObstacleGroup(
+                        spawnX,
+                        visual,
+                        collider
+                )
+        );
     }
 
+    /**
+     * 嘗試在指定位置生成凸起磁磚。
+     */
     private void tryGenerateRaisedTileAt(double x) {
-        if (random.nextDouble() > raisedTileSpawnChance) {
+        if (random.nextDouble() > RAISED_TILE_SPAWN_CHANCE) {
             return;
         }
 
         double spawnX = x + randomRange(-70, 70);
-        double visualY = floorY - raisedTileHeight;
+        double visualY = FLOOR_Y - RAISED_TILE_HEIGHT;
 
-        Entity visual = spawn("street_protruding_tile", new SpawnData(spawnX, visualY)
-                .put("width", raisedTileWidth)
-                .put("height", raisedTileHeight));
+        Entity visual = spawn(
+                "street_protruding_tile",
+                new SpawnData(spawnX, visualY)
+                        .put("width", RAISED_TILE_WIDTH)
+                        .put("height", RAISED_TILE_HEIGHT)
+        );
 
-        /*
-         * 凸起磁磚不擋玩家，但碰到即死。
-         * 若你只是想讓玩家撞到跌倒，也可以改成別的 DeathReason。
-         */
-        Entity trigger = spawn("death_zone", new SpawnData(spawnX, visualY)
-                .put("width", raisedTileWidth)
-                .put("height", raisedTileHeight)
-                .put("deathReason", DeathReason.TRIPPED_BY_SIDEWALK_TILE));
+        Entity trigger = spawn(
+                "death_zone",
+                new SpawnData(spawnX, visualY)
+                        .put("width", RAISED_TILE_WIDTH)
+                        .put("height", RAISED_TILE_HEIGHT)
+                        .put("deathReason", DeathReason.TRIPPED_BY_SIDEWALK_TILE)
+        );
 
-        obstacleGroups.add(new StreetObstacleGroup(
-                spawnX,
-                visual,
-                trigger
-        ));
+        obstacleGroups.add(
+                new StreetObstacleGroup(
+                        spawnX,
+                        visual,
+                        trigger
+                )
+        );
     }
 
+    /**
+     * 清除鏡頭右側太遠的障礙物。
+     */
     private void cleanupObstacles() {
         double cameraX = getGameScene().getViewport().getX();
-        double removeRightX = cameraX + screenWidth + obstacleCleanupRightPadding;
+
+        double removeRightX =
+                cameraX + SCREEN_WIDTH + OBSTACLE_CLEANUP_RIGHT_PADDING;
 
         obstacleGroups.removeIf(group -> {
             if (group.x() < removeRightX) {
                 return false;
             }
 
-            if (group.visual() != null) {
-                group.visual().removeFromWorld();
-            }
-
-            if (group.colliderOrTrigger() != null) {
-                group.colliderOrTrigger().removeFromWorld();
-            }
+            removeEntity(group.visual());
+            removeEntity(group.colliderOrTrigger());
 
             return true;
         });
     }
 
-    private record StreetObstacleGroup(
-            double x,
-            Entity visual,
-            Entity colliderOrTrigger
-    ) {
-    }
 
+    // =========================================================
+    // Scooter System
+    // =========================================================
+
+    /**
+     * 重置左右機車計時器與警告 UI。
+     */
     private void resetScooterTimers() {
         leftScooterTimer = randomScooterInterval();
         rightScooterTimer = randomScooterInterval();
@@ -553,20 +909,13 @@ public class StreetEndlessScene {
         leftWarningTimer = 0;
         rightWarningTimer = 0;
 
-        if (leftWarningIcon != null) {
-            leftWarningIcon.setVisible(false);
-        }
-
-        if (rightWarningIcon != null) {
-            rightWarningIcon.setVisible(false);
-        }
+        setVisibleIfNotNull(leftWarningIcon, false);
+        setVisibleIfNotNull(rightWarningIcon, false);
     }
 
-    private double randomScooterInterval() {
-        return scooterMinInterval +
-                random.nextDouble() * (scooterMaxInterval - scooterMinInterval);
-    }
-
+    /**
+     * 更新左右機車系統。
+     */
     private void updateScooterSystem(double tpf) {
         updateScooterSideTimer(tpf, true);
         updateScooterSideTimer(tpf, false);
@@ -574,140 +923,182 @@ public class StreetEndlessScene {
         updateScooters(tpf);
     }
 
-    private void updateScooterSideTimer(double tpf, boolean fromLeft) {
+    /**
+     * 更新指定方向的機車生成倒數。
+     *
+     * @param fromLeft true 表示左側來車，false 表示右側來車
+     */
+    private void updateScooterSideTimer(
+            double tpf,
+            boolean fromLeft
+    ) {
         if (fromLeft) {
-            if (leftWarningActive) {
-                leftWarningTimer -= tpf;
-                updateWarningIcon(leftWarningIcon, leftWarningTimer);
-
-                if (leftWarningTimer <= 0) {
-                    leftWarningActive = false;
-                    leftWarningIcon.setVisible(false);
-
-                    spawnScooter(true);
-                    leftScooterTimer = randomScooterInterval();
-                }
-
-                return;
-            }
-
-            leftScooterTimer -= tpf;
-
-            if (leftScooterTimer <= 0) {
-                leftWarningActive = true;
-                leftWarningTimer = scooterWarningDuration;
-
-                leftWarningIcon.setVisible(true);
-                updateWarningIcon(leftWarningIcon, leftWarningTimer);
-            }
+            leftScooterTimer = updateSingleScooterSide(
+                    tpf,
+                    true,
+                    leftScooterTimer,
+                    leftWarningActive,
+                    leftWarningTimer,
+                    leftWarningIcon
+            );
 
             return;
         }
 
-        /*
-         * fromRight
-         */
-        if (rightWarningActive) {
-            rightWarningTimer -= tpf;
-            updateWarningIcon(rightWarningIcon, rightWarningTimer);
+        rightScooterTimer = updateSingleScooterSide(
+                tpf,
+                false,
+                rightScooterTimer,
+                rightWarningActive,
+                rightWarningTimer,
+                rightWarningIcon
+        );
+    }
 
-            if (rightWarningTimer <= 0) {
-                rightWarningActive = false;
-                rightWarningIcon.setVisible(false);
+    /**
+     * 更新單側機車狀態。
+     *
+     * 由於 Java primitive 傳值不會回寫，
+     * 這裡會在內部依照 fromLeft 更新對應欄位，
+     * 並回傳新的 sideTimer。
+     */
+    private double updateSingleScooterSide(
+            double tpf,
+            boolean fromLeft,
+            double sideTimer,
+            boolean warningActive,
+            double warningTimer,
+            StackPane warningIcon
+    ) {
+        if (warningActive) {
+            warningTimer -= tpf;
+            updateWarningIcon(warningIcon, warningTimer);
 
-                spawnScooter(false);
-                rightScooterTimer = randomScooterInterval();
+            if (warningTimer <= 0) {
+                warningActive = false;
+                setVisibleIfNotNull(warningIcon, false);
+
+                spawnScooter(fromLeft);
+                sideTimer = randomScooterInterval();
             }
 
-            return;
+            setScooterWarningState(fromLeft, warningActive, warningTimer);
+            return sideTimer;
         }
 
-        rightScooterTimer -= tpf;
+        sideTimer -= tpf;
 
-        if (rightScooterTimer <= 0) {
-            rightWarningActive = true;
-            rightWarningTimer = scooterWarningDuration;
+        if (sideTimer <= 0) {
+            warningActive = true;
+            warningTimer = SCOOTER_WARNING_DURATION;
 
-            rightWarningIcon.setVisible(true);
-            updateWarningIcon(rightWarningIcon, rightWarningTimer);
+            setVisibleIfNotNull(warningIcon, true);
+            updateWarningIcon(warningIcon, warningTimer);
+        }
+
+        setScooterWarningState(fromLeft, warningActive, warningTimer);
+        return sideTimer;
+    }
+
+    /**
+     * 回寫指定方向的 warning 狀態。
+     */
+    private void setScooterWarningState(
+            boolean fromLeft,
+            boolean active,
+            double timer
+    ) {
+        if (fromLeft) {
+            leftWarningActive = active;
+            leftWarningTimer = timer;
+        } else {
+            rightWarningActive = active;
+            rightWarningTimer = timer;
         }
     }
 
+    /**
+     * 生成機車與死亡 hitbox。
+     */
     private void spawnScooter(boolean fromLeft) {
         double cameraX = getGameScene().getViewport().getX();
+
+        double scooterY = getScooterY();
 
         double startX;
         double velocityX;
 
         if (fromLeft) {
-            startX = cameraX - scooterWidth - 80;
-            velocityX = scooterSpeed;
+            startX = cameraX - SCOOTER_WIDTH - 80;
+            velocityX = SCOOTER_SPEED;
         } else {
-            startX = cameraX + screenWidth + 80;
-            velocityX = -scooterSpeed;
+            startX = cameraX + SCREEN_WIDTH + 80;
+            velocityX = -SCOOTER_SPEED;
         }
 
-        Entity visual = spawn("street_scooter", new SpawnData(startX, scooterY)
-                .put("width", scooterWidth)
-                .put("height", scooterHeight)
-                .put("fromLeft", fromLeft));
+        Entity visual = spawn(
+                "street_scooter",
+                new SpawnData(startX, scooterY)
+                        .put("width", SCOOTER_WIDTH)
+                        .put("height", SCOOTER_HEIGHT)
+                        .put("fromLeft", fromLeft)
+        );
 
-        Entity hitbox = spawn("street_scooter_death_wall", new SpawnData(
-                startX + scooterHitboxOffsetX,
-                scooterY + scooterHitboxOffsetY
-        )
-                .put("width", scooterHitboxWidth)
-                .put("height", scooterHitboxHeight)
-                .put("deathReason", DeathReason.HIT_BY_SCOOTER));
+        Entity hitbox = spawn(
+                "street_scooter_death_wall",
+                new SpawnData(
+                        startX + SCOOTER_HITBOX_OFFSET_X,
+                        scooterY + SCOOTER_HITBOX_OFFSET_Y
+                )
+                        .put("width", SCOOTER_HITBOX_WIDTH)
+                        .put("height", SCOOTER_HITBOX_HEIGHT)
+                        .put("deathReason", DeathReason.HIT_BY_SCOOTER)
+        );
 
-        scooters.add(new ScooterInstance(
-                visual,
-                hitbox,
-                velocityX
-        ));
+        scooters.add(
+                new ScooterInstance(
+                        visual,
+                        hitbox,
+                        velocityX
+                )
+        );
     }
 
+    /**
+     * 更新所有機車位置並清除離開畫面的機車。
+     */
     private void updateScooters(double tpf) {
         double cameraX = getGameScene().getViewport().getX();
 
         scooters.removeIf(scooter -> {
             double dx = scooter.velocityX() * tpf;
 
-            Entity visual = scooter.visual();
-            Entity hitbox = scooter.hitbox();
+            scooter.visual().setX(scooter.visual().getX() + dx);
+            scooter.hitbox().setX(scooter.hitbox().getX() + dx);
 
-            visual.setX(visual.getX() + dx);
-            hitbox.setX(hitbox.getX() + dx);
+            boolean outLeft =
+                    scooter.visual().getX() + SCOOTER_WIDTH < cameraX - 260;
 
-            boolean outLeft = visual.getX() + scooterWidth < cameraX - 260;
-            boolean outRight = visual.getX() > cameraX + screenWidth + 260;
+            boolean outRight =
+                    scooter.visual().getX() > cameraX + SCREEN_WIDTH + 260;
 
             if (!outLeft && !outRight) {
                 return false;
             }
 
-            visual.removeFromWorld();
-            hitbox.removeFromWorld();
+            removeEntity(scooter.visual());
+            removeEntity(scooter.hitbox());
 
             return true;
         });
     }
 
-    private record ScooterInstance(
-            Entity visual,
-            Entity hitbox,
-            double velocityX
-    ) {
-    }
-
-    private double getScooterWarningScreenY() {
-        return scooterY + scooterHeight / 2.0 - warningIconSize / 2.0
-                - getGameScene().getViewport().getY();
-    }
-
+    /**
+     * 建立左右來車警告 UI。
+     */
     private void createScooterWarningUI() {
-        leftWarningIcon = createWarningIcon(true);
-        rightWarningIcon = createWarningIcon(false);
+        leftWarningIcon = createWarningIcon();
+        rightWarningIcon = createWarningIcon();
 
         leftWarningIcon.setVisible(false);
         rightWarningIcon.setVisible(false);
@@ -715,69 +1106,16 @@ public class StreetEndlessScene {
         double warningY = getScooterWarningScreenY();
 
         addUINode(leftWarningIcon, 34, warningY);
-        addUINode(rightWarningIcon, screenWidth - warningIconSize - 34, warningY);
+        addUINode(
+                rightWarningIcon,
+                SCREEN_WIDTH - WARNING_ICON_SIZE - 34,
+                warningY
+        );
     }
 
-    private StackPane createWarningIcon(boolean fromLeft) {
-        StackPane box = new StackPane();
-        box.setPrefSize(warningIconSize, warningIconSize);
-        box.setMinSize(warningIconSize, warningIconSize);
-        box.setMaxSize(warningIconSize, warningIconSize);
-        box.setMouseTransparent(true);
-
-        ImageView dangerView = new ImageView();
-
-        try {
-            var url = getClass().getResource("/assets/textures/Scene2/UI/danger.png");
-
-            if (url != null) {
-                Image image = new Image(url.toExternalForm());
-                dangerView.setImage(image);
-            } else {
-                System.out.println("Danger icon not found: /assets/textures/Scene2/UI/danger.png");
-            }
-
-        } catch (Exception e) {
-            System.out.println("Danger icon load failed.");
-            e.printStackTrace();
-        }
-
-        dangerView.setFitWidth(warningIconSize);
-        dangerView.setFitHeight(warningIconSize);
-        dangerView.setPreserveRatio(true);
-        dangerView.setSmooth(true);
-
-        dangerView.setEffect(new DropShadow(12, Color.BLACK));
-
-        box.getChildren().add(dangerView);
-
-        return box;
-    }
-
-    private void updateWarningIcon(StackPane icon, double timer) {
-        if (icon == null) {
-            return;
-        }
-
-        /*
-         * timer 從 duration 倒數到 0。
-         * progress 越接近 1，表示摩托車越快出現。
-         */
-        double progress = 1.0 - timer / scooterWarningDuration;
-        progress = Math.max(0, Math.min(1, progress));
-
-        double scale = 0.75 + progress * 0.75;
-
-        icon.setScaleX(scale);
-        icon.setScaleY(scale);
-
-        /*
-         * 越接近越明顯，稍微閃爍。
-         */
-        double pulse = Math.sin(progress * Math.PI * 8) * 0.12;
-        icon.setOpacity(0.72 + progress * 0.28 + pulse);
-    }
-
+    /**
+     * 更新來車警告 UI 的 Y 位置。
+     */
     private void updateScooterWarningPosition() {
         double warningY = getScooterWarningScreenY();
 
@@ -790,78 +1128,119 @@ public class StreetEndlessScene {
         }
     }
 
+    /**
+     * 取得機車警告 UI 的螢幕 Y。
+     */
+    private double getScooterWarningScreenY() {
+        return getScooterY() + SCOOTER_HEIGHT / 2.0 -
+                WARNING_ICON_SIZE / 2.0 -
+                getGameScene().getViewport().getY();
+    }
+
+    /**
+     * 取得機車 Y 座標。
+     */
+    private double getScooterY() {
+        return FLOOR_Y - SCOOTER_HEIGHT + 2;
+    }
+
+    /**
+     * 取得隨機機車間隔。
+     */
+    private double randomScooterInterval() {
+        return randomRange(SCOOTER_MIN_INTERVAL, SCOOTER_MAX_INTERVAL);
+    }
+
+
+    // =========================================================
+    // Warning Icon
+    // =========================================================
+
+    /**
+     * 建立通用危險警告 Icon。
+     */
+    private StackPane createWarningIcon() {
+        StackPane box = new StackPane();
+
+        box.setPrefSize(WARNING_ICON_SIZE, WARNING_ICON_SIZE);
+        box.setMinSize(WARNING_ICON_SIZE, WARNING_ICON_SIZE);
+        box.setMaxSize(WARNING_ICON_SIZE, WARNING_ICON_SIZE);
+        box.setMouseTransparent(true);
+
+        ImageView dangerView = new ImageView(loadDangerIcon());
+
+        dangerView.setFitWidth(WARNING_ICON_SIZE);
+        dangerView.setFitHeight(WARNING_ICON_SIZE);
+        dangerView.setPreserveRatio(true);
+        dangerView.setSmooth(true);
+        dangerView.setEffect(new DropShadow(12, Color.BLACK));
+
+        box.getChildren().add(dangerView);
+
+        return box;
+    }
+
+    /**
+     * 載入危險警告圖示。
+     */
+    private Image loadDangerIcon() {
+        var url = getClass().getResource(DANGER_ICON_PATH);
+
+        if (url == null) {
+            System.out.println("Danger icon not found: " + DANGER_ICON_PATH);
+            return null;
+        }
+
+        return new Image(url.toExternalForm());
+    }
+
+    /**
+     * 更新倒數警告 Icon 的縮放與透明度。
+     */
+    private void updateWarningIcon(
+            StackPane icon,
+            double timer
+    ) {
+        if (icon == null) {
+            return;
+        }
+
+        double progress =
+                1.0 - timer / SCOOTER_WARNING_DURATION;
+
+        progress = clamp01(progress);
+
+        double scale = 0.75 + progress * 0.75;
+
+        icon.setScaleX(scale);
+        icon.setScaleY(scale);
+
+        double pulse =
+                Math.sin(progress * Math.PI * 8) * 0.12;
+
+        icon.setOpacity(0.72 + progress * 0.28 + pulse);
+    }
+
+
+    // =========================================================
+    // Falling Object System
+    // =========================================================
+
+    /**
+     * 重置掉落物系統。
+     */
     private void resetFallingObjectSystem() {
         fallingObjectTimer = randomRange(
-                fallingObjectMinInterval,
-                fallingObjectMaxInterval
+                FALLING_OBJECT_MIN_INTERVAL,
+                FALLING_OBJECT_MAX_INTERVAL
         );
 
         fallingObjects.clear();
     }
 
-    private void spawnFallingObject() {
-        double cameraX = getGameScene().getViewport().getX();
-        double cameraY = getGameScene().getViewport().getY();
-
-        FallingObjectVariant variant = random.nextBoolean()
-                ? FallingObjectVariant.FRIDGE
-                : FallingObjectVariant.HELI;
-
-        /*
-         * 可以生成在目前視窗，也可以生成在左側即將抵達的地方。
-         */
-        double minX = cameraX - fallingSpawnAheadLeftDistance;
-        double maxX = cameraX + screenWidth + fallingSpawnRightPadding;
-
-        double spawnX = randomRange(minX, maxX);
-
-        double aboveDistance = randomRange(
-                fallingSpawnMinHeightAboveScreen,
-                fallingSpawnMaxHeightAboveScreen
-        );
-
-        double spawnY = cameraY - aboveDistance;
-
-        Entity object = spawn("street_falling_object", new SpawnData(spawnX, spawnY)
-                .put("variant", variant.name()));
-
-        PhysicsComponent physics = object.getComponent(PhysicsComponent.class);
-        physics.setVelocityX(randomRange(-35, 35));
-
-        /*
-         * 無物理即死 trigger。
-         * 尺寸可以略小於外觀，手感比較合理。
-         */
-        double triggerWidth = variant.getWidth() * 0.86;
-        double triggerHeight = variant.getHeight() * 0.86;
-
-        Entity trigger = spawn("street_falling_object_trigger", new SpawnData(
-                spawnX + (variant.getWidth() - triggerWidth) / 2.0,
-                spawnY + (variant.getHeight() - triggerHeight) / 2.0
-        )
-                .put("width", triggerWidth)
-                .put("height", triggerHeight)
-                .put("deathReason", variant.getDeathReason()));
-
-        StackPane warningIcon = createFallingWarningIcon();
-
-        /*
-         * 先放 0,0，下一行 updateOneFallingWarning() 會立刻更新位置。
-         */
-        addUINode(warningIcon, 0, 0);
-
-        FallingObjectInstance instance = new FallingObjectInstance(
-                object,
-                trigger,
-                warningIcon,
-                variant
-        );
-
-        fallingObjects.add(instance);
-
-        updateFallingWarning(instance);
-    }
-
+    /**
+     * 更新掉落物系統。
+     */
     private void updateFallingObjectSystem(double tpf) {
         fallingObjectTimer -= tpf;
 
@@ -869,14 +1248,173 @@ public class StreetEndlessScene {
             spawnFallingObject();
 
             fallingObjectTimer = randomRange(
-                    fallingObjectMinInterval,
-                    fallingObjectMaxInterval
+                    FALLING_OBJECT_MIN_INTERVAL,
+                    FALLING_OBJECT_MAX_INTERVAL
             );
         }
 
         updateFallingObjects(tpf);
     }
 
+    /**
+     * 生成掉落物、死亡 trigger 與警告 UI。
+     */
+    private void spawnFallingObject() {
+        double cameraX = getGameScene().getViewport().getX();
+        double cameraY = getGameScene().getViewport().getY();
+
+        FallingObjectVariant variant = randomFallingObjectVariant();
+
+        double minX = cameraX - FALLING_SPAWN_AHEAD_LEFT_DISTANCE;
+        double maxX = cameraX + SCREEN_WIDTH + FALLING_SPAWN_RIGHT_PADDING;
+
+        double spawnX = randomRange(minX, maxX);
+
+        double aboveDistance = randomRange(
+                FALLING_SPAWN_MIN_HEIGHT_ABOVE_SCREEN,
+                FALLING_SPAWN_MAX_HEIGHT_ABOVE_SCREEN
+        );
+
+        double spawnY = cameraY - aboveDistance;
+
+        Entity object = spawn(
+                "street_falling_object",
+                new SpawnData(spawnX, spawnY)
+                        .put("variant", variant.name())
+        );
+
+        PhysicsComponent physics = object.getComponent(PhysicsComponent.class);
+        physics.setVelocityX(randomRange(-35, 35));
+
+        Entity trigger = spawnFallingObjectTrigger(
+                spawnX,
+                spawnY,
+                variant
+        );
+
+        StackPane warningIcon = createFallingWarningIcon();
+        addUINode(warningIcon, 0, 0);
+
+        FallingObjectInstance instance =
+                new FallingObjectInstance(
+                        object,
+                        trigger,
+                        warningIcon,
+                        variant
+                );
+
+        fallingObjects.add(instance);
+
+        updateFallingWarning(instance);
+    }
+
+    /**
+     * 隨機選擇掉落物種類。
+     */
+    private FallingObjectVariant randomFallingObjectVariant() {
+        return random.nextBoolean()
+                ? FallingObjectVariant.FRIDGE
+                : FallingObjectVariant.HELI;
+    }
+
+    /**
+     * 生成掉落物死亡 trigger。
+     */
+    private Entity spawnFallingObjectTrigger(
+            double objectX,
+            double objectY,
+            FallingObjectVariant variant
+    ) {
+        double triggerWidth = getFallingTriggerWidth(variant);
+        double triggerHeight = getFallingTriggerHeight(variant);
+
+        return spawn(
+                "street_falling_object_trigger",
+                new SpawnData(
+                        objectX + (variant.getWidth() - triggerWidth) / 2.0,
+                        objectY + (variant.getHeight() - triggerHeight) / 2.0
+                )
+                        .put("width", triggerWidth)
+                        .put("height", triggerHeight)
+                        .put("deathReason", variant.getDeathReason())
+        );
+    }
+
+    /**
+     * 更新所有掉落物。
+     */
+    private void updateFallingObjects(double tpf) {
+        double cameraX = getGameScene().getViewport().getX();
+        double cameraY = getGameScene().getViewport().getY();
+
+        fallingObjects.removeIf(instance ->
+                updateSingleFallingObject(
+                        instance,
+                        tpf,
+                        cameraX,
+                        cameraY
+                )
+        );
+    }
+
+    /**
+     * 更新單一掉落物。
+     *
+     * @return true 表示應從清單移除
+     */
+    private boolean updateSingleFallingObject(
+            FallingObjectInstance instance,
+            double tpf,
+            double cameraX,
+            double cameraY
+    ) {
+        Entity object = instance.object();
+
+        if (object == null || !object.isActive()) {
+            removeFallingObjectRuntimeNodes(instance);
+            return true;
+        }
+
+        updateFallingTriggerPosition(instance);
+        updateFallingWarning(instance);
+
+        updateFallingStoppedTimer(instance, tpf);
+
+        if (shouldRemoveFallingObject(instance, cameraX, cameraY)) {
+            fadeOutAndRemoveFallingObject(instance);
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * 更新掉落物停止計時。
+     */
+    private void updateFallingStoppedTimer(
+            FallingObjectInstance instance,
+            double tpf
+    ) {
+        PhysicsComponent physics =
+                instance.object().getComponent(PhysicsComponent.class);
+
+        double vx = Math.abs(physics.getVelocityX());
+        double vy = Math.abs(physics.getVelocityY());
+
+        boolean nearlyStopped =
+                vx < FALLING_STOP_SPEED_THRESHOLD &&
+                        vy < FALLING_STOP_SPEED_THRESHOLD;
+
+        if (nearlyStopped) {
+            instance.setStoppedTimer(instance.stoppedTimer() + tpf);
+        } else {
+            instance.setStoppedTimer(0);
+        }
+    }
+
+    /**
+     * 判斷掉落物是否該移除。
+     */
     private boolean shouldRemoveFallingObject(
             FallingObjectInstance instance,
             double cameraX,
@@ -884,24 +1422,27 @@ public class StreetEndlessScene {
     ) {
         Entity object = instance.object();
 
-        PhysicsComponent physics = object.getComponent(PhysicsComponent.class);
-
-        double vx = Math.abs(physics.getVelocityX());
-        double vy = Math.abs(physics.getVelocityY());
-
         double objectScreenX = object.getX() - cameraX;
         double objectScreenY = object.getY() - cameraY;
 
-        boolean stoppedOnGround = vx < 4 && vy < 4 && object.getY() >= floorY - 120;
+        boolean stoppedLongEnough =
+                instance.stoppedTimer() >= FALLING_STOP_REMOVE_SECONDS;
 
-        boolean outRight = objectScreenX > screenWidth + 260;
+        boolean outRight =
+                objectScreenX > SCREEN_WIDTH + FALLING_REMOVE_PADDING;
 
-        boolean outBottom = objectScreenY > screenHeight + 260;
+        boolean outBottom =
+                objectScreenY > SCREEN_HEIGHT + FALLING_REMOVE_PADDING;
 
-        return stoppedOnGround || outRight || outBottom;
+        return stoppedLongEnough || outRight || outBottom;
     }
 
-    private void fadeOutAndRemoveFallingObject(FallingObjectInstance instance) {
+    /**
+     * 淡出並移除掉落物。
+     */
+    private void fadeOutAndRemoveFallingObject(
+            FallingObjectInstance instance
+    ) {
         if (instance.removing()) {
             return;
         }
@@ -917,12 +1458,7 @@ public class StreetEndlessScene {
             return;
         }
 
-        try {
-            PhysicsComponent physics = object.getComponent(PhysicsComponent.class);
-            physics.setVelocityX(0);
-            physics.setVelocityY(0);
-        } catch (Exception ignored) {
-        }
+        stopFallingObjectPhysics(object);
 
         if (object.getViewComponent().getChildren().isEmpty()) {
             object.removeFromWorld();
@@ -930,14 +1466,14 @@ public class StreetEndlessScene {
         }
 
         FadeTransition fade = new FadeTransition(
-                Duration.seconds(0.35),
+                Duration.seconds(FALLING_FADE_OUT_SECONDS),
                 object.getViewComponent().getChildren().get(0)
         );
 
         fade.setFromValue(1);
         fade.setToValue(0);
 
-        fade.setOnFinished(e -> {
+        fade.setOnFinished(event -> {
             if (object.isActive()) {
                 object.removeFromWorld();
             }
@@ -946,94 +1482,26 @@ public class StreetEndlessScene {
         fade.play();
     }
 
-    private void removeFallingTrigger(FallingObjectInstance instance) {
-        Entity trigger = instance.trigger();
-
-        if (trigger != null && trigger.isActive()) {
-            trigger.removeFromWorld();
-        }
-    }
-
-    private StackPane createFallingWarningIcon() {
-        StackPane box = new StackPane();
-        box.setPrefSize(fallingWarningIconSize, fallingWarningIconSize);
-        box.setMinSize(fallingWarningIconSize, fallingWarningIconSize);
-        box.setMaxSize(fallingWarningIconSize, fallingWarningIconSize);
-        box.setMouseTransparent(true);
-
-        ImageView view = new ImageView();
-
+    /**
+     * 停止掉落物物理速度。
+     */
+    private void stopFallingObjectPhysics(Entity object) {
         try {
-            var url = getClass().getResource("/assets/textures/Scene2/UI/danger.png");
+            PhysicsComponent physics =
+                    object.getComponent(PhysicsComponent.class);
 
-            if (url != null) {
-                view.setImage(new Image(url.toExternalForm()));
-            } else {
-                System.out.println("Falling warning icon not found.");
-            }
-
-        } catch (Exception e) {
-            System.out.println("Falling warning icon load failed.");
-            e.printStackTrace();
+            physics.setVelocityX(0);
+            physics.setVelocityY(0);
+        } catch (Exception ignored) {
         }
-
-        view.setFitWidth(fallingWarningIconSize);
-        view.setFitHeight(fallingWarningIconSize);
-        view.setPreserveRatio(true);
-        view.setSmooth(true);
-
-        box.getChildren().add(view);
-
-        return box;
     }
 
-    private void updateFallingObjects(double tpf) {
-        double cameraX = getGameScene().getViewport().getX();
-        double cameraY = getGameScene().getViewport().getY();
-
-        fallingObjects.removeIf(instance -> {
-            Entity object = instance.object();
-
-            if (object == null || !object.isActive()) {
-                removeFallingWarning(instance);
-                removeFallingTrigger(instance);
-                return true;
-            }
-
-            updateFallingTriggerPosition(instance);
-            updateFallingWarning(instance);
-
-            PhysicsComponent physics = object.getComponent(PhysicsComponent.class);
-
-            double vx = Math.abs(physics.getVelocityX());
-            double vy = Math.abs(physics.getVelocityY());
-
-            boolean nearlyStopped = vx < 4 && vy < 4;
-
-            if (nearlyStopped) {
-                instance.setStoppedTimer(instance.stoppedTimer() + tpf);
-            } else {
-                instance.setStoppedTimer(0);
-            }
-
-            boolean stoppedLongEnough = instance.stoppedTimer() >= 0.35;
-
-            double objectScreenX = object.getX() - cameraX;
-            double objectScreenY = object.getY() - cameraY;
-
-            boolean outRight = objectScreenX > screenWidth + 260;
-            boolean outBottom = objectScreenY > screenHeight + 260;
-
-            if (stoppedLongEnough || outRight || outBottom) {
-                fadeOutAndRemoveFallingObject(instance);
-                return true;
-            }
-
-            return false;
-        });
-    }
-
-    private void updateFallingTriggerPosition(FallingObjectInstance instance) {
+    /**
+     * 更新掉落物 trigger 位置與旋轉。
+     */
+    private void updateFallingTriggerPosition(
+            FallingObjectInstance instance
+    ) {
         Entity object = instance.object();
         Entity trigger = instance.trigger();
 
@@ -1043,33 +1511,62 @@ public class StreetEndlessScene {
 
         FallingObjectVariant variant = instance.variant();
 
-        double triggerWidth = variant.getWidth() * 0.86;
-        double triggerHeight = variant.getHeight() * 0.86;
+        double triggerWidth = getFallingTriggerWidth(variant);
+        double triggerHeight = getFallingTriggerHeight(variant);
 
-        /*
-         * 取得墜落物目前世界中心。
-         * 比起 object.getX() / getY() 更能處理旋轉與物理同步後的位置。
-         */
-        double centerX = object.getBoundingBoxComponent().getCenterWorld().getX();
-        double centerY = object.getBoundingBoxComponent().getCenterWorld().getY();
+        double centerX =
+                object.getBoundingBoxComponent().getCenterWorld().getX();
 
-        /*
-         * 讓 trigger 中心對準墜落物中心。
-         */
-        double triggerX = centerX - triggerWidth / 2.0;
-        double triggerY = centerY - triggerHeight / 2.0;
+        double centerY =
+                object.getBoundingBoxComponent().getCenterWorld().getY();
 
-        trigger.setPosition(triggerX, triggerY);
+        trigger.setPosition(
+                centerX - triggerWidth / 2.0,
+                centerY - triggerHeight / 2.0
+        );
 
-        /*
-         * 同步旋轉。
-         * 如果你的 FXGL 版本 Entity 沒有 getRotation()，改用：
-         * object.getTransformComponent().getRotation()
-         */
         trigger.setRotation(object.getRotation());
     }
 
-    private void updateFallingWarning(FallingObjectInstance instance) {
+    /**
+     * 建立掉落警告 UI。
+     */
+    private StackPane createFallingWarningIcon() {
+        StackPane box = new StackPane();
+
+        box.setPrefSize(
+                FALLING_WARNING_ICON_SIZE,
+                FALLING_WARNING_ICON_SIZE
+        );
+        box.setMinSize(
+                FALLING_WARNING_ICON_SIZE,
+                FALLING_WARNING_ICON_SIZE
+        );
+        box.setMaxSize(
+                FALLING_WARNING_ICON_SIZE,
+                FALLING_WARNING_ICON_SIZE
+        );
+
+        box.setMouseTransparent(true);
+
+        ImageView view = new ImageView(loadDangerIcon());
+
+        view.setFitWidth(FALLING_WARNING_ICON_SIZE);
+        view.setFitHeight(FALLING_WARNING_ICON_SIZE);
+        view.setPreserveRatio(true);
+        view.setSmooth(true);
+
+        box.getChildren().add(view);
+
+        return box;
+    }
+
+    /**
+     * 更新掉落物警告 UI。
+     */
+    private void updateFallingWarning(
+            FallingObjectInstance instance
+    ) {
         if (instance.warningHidden()) {
             return;
         }
@@ -1084,48 +1581,59 @@ public class StreetEndlessScene {
         double cameraX = getGameScene().getViewport().getX();
         double cameraY = getGameScene().getViewport().getY();
 
-        double objectCenterX = object.getBoundingBoxComponent().getCenterWorld().getX();
-        double objectScreenX = objectCenterX - cameraX;
+        double objectCenterX =
+                object.getBoundingBoxComponent().getCenterWorld().getX();
 
+        double objectScreenX = objectCenterX - cameraX;
         double objectScreenY = object.getY() - cameraY;
 
-        /*
-         * 墜落物進入視窗時，警告消失。
-         */
         if (objectScreenY >= -object.getBoundingBoxComponent().getHeight()) {
             warning.setVisible(false);
             instance.setWarningHidden(true);
             return;
         }
 
-        /*
-         * 警告固定在視窗最上方邊緣，X 跟著墜落物中心。
-         */
-        double warningX = objectScreenX - fallingWarningIconSize / 2.0;
+        double warningX =
+                objectScreenX - FALLING_WARNING_ICON_SIZE / 2.0;
 
         warning.setTranslateX(warningX);
         warning.setTranslateY(18);
 
-        /*
-         * objectScreenY 是負數。
-         * 距離頂部越近，distanceToTop 越小，progress 越大。
-         */
         double distanceToTop = Math.max(0, -objectScreenY);
-        double progress = 1.0 - distanceToTop / fallingWarningDistance;
-        progress = Math.max(0, Math.min(1, progress));
+
+        double progress =
+                1.0 - distanceToTop / FALLING_WARNING_DISTANCE;
+
+        progress = clamp01(progress);
 
         double scale = 0.65 + progress * 0.85;
 
         warning.setScaleX(scale);
         warning.setScaleY(scale);
 
-        double pulse = Math.sin(progress * Math.PI * 10) * 0.12;
-        warning.setOpacity(0.72 + progress * 0.28 + pulse);
+        double pulse =
+                Math.sin(progress * Math.PI * 10) * 0.12;
 
+        warning.setOpacity(0.72 + progress * 0.28 + pulse);
         warning.setVisible(true);
     }
 
-    private void removeFallingWarning(FallingObjectInstance instance) {
+    /**
+     * 移除掉落物相關 runtime nodes。
+     */
+    private void removeFallingObjectRuntimeNodes(
+            FallingObjectInstance instance
+    ) {
+        removeFallingWarning(instance);
+        removeFallingTrigger(instance);
+    }
+
+    /**
+     * 移除掉落警告 UI。
+     */
+    private void removeFallingWarning(
+            FallingObjectInstance instance
+    ) {
         StackPane warning = instance.warningIcon();
 
         if (warning != null) {
@@ -1133,7 +1641,286 @@ public class StreetEndlessScene {
         }
     }
 
+    /**
+     * 移除掉落物死亡 trigger。
+     */
+    private void removeFallingTrigger(
+            FallingObjectInstance instance
+    ) {
+        removeEntity(instance.trigger());
+    }
+
+    private double getFallingTriggerWidth(FallingObjectVariant variant) {
+        return variant.getWidth() * FALLING_TRIGGER_SCALE;
+    }
+
+    private double getFallingTriggerHeight(FallingObjectVariant variant) {
+        return variant.getHeight() * FALLING_TRIGGER_SCALE;
+    }
+
+
+    // =========================================================
+    // Distance UI
+    // =========================================================
+
+    /**
+     * 建立距離 UI。
+     */
+    private void createDistanceUI() {
+        distanceText = new Text();
+
+        distanceText.setStyle("""
+                -fx-font-size: 24px;
+                -fx-fill: white;
+                -fx-font-weight: bold;
+                """);
+
+        distanceText.setEffect(new DropShadow(6, Color.BLACK));
+
+        addUINode(distanceText, 32, 42);
+
+        updateDistanceUI();
+    }
+
+    /**
+     * 更新本局跑步距離。
+     */
+    private void updateRunDistance() {
+        double distance = startPlayerX - player.getX();
+
+        if (distance < 0) {
+            distance = 0;
+        }
+
+        currentRunDistance = Math.max(currentRunDistance, distance) / 60.0;
+
+        set("streetRunDistance", currentRunDistance);
+
+        updateDistanceUI();
+    }
+
+    /**
+     * 更新距離文字。
+     */
+    private void updateDistanceUI() {
+        if (distanceText == null) {
+            return;
+        }
+
+        int current = (int) Math.floor(currentRunDistance);
+        int best = (int) Math.floor(bestDistanceBeforeRun);
+
+        if (best > 0) {
+            distanceText.setText(current + " m Best: " + best + " m");
+        } else {
+            distanceText.setText(current + " m");
+        }
+    }
+
+
+    // =========================================================
+    // Camera
+    // =========================================================
+
+    /**
+     * 設定無盡模式攝影機。
+     */
+    private void setupCamera() {
+        getGameScene().getViewport().setBounds(
+                Integer.MIN_VALUE,
+                Integer.MIN_VALUE,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE
+        );
+
+        getGameScene().getViewport().unbind();
+        getGameScene().getViewport().setLazy(false);
+
+        getGameScene().getViewport().setBounds(
+                -100000,
+                0,
+                (int)SCREEN_WIDTH,
+                (int)SCREEN_HEIGHT
+        );
+
+        lockedCameraX = 0;
+
+        getGameScene().getViewport().setX(lockedCameraX);
+        getGameScene().getViewport().setY(0);
+    }
+
+    /**
+     * 更新攝影機。
+     *
+     * 玩家只能推進鏡頭往左；
+     * 若玩家回頭往右，鏡頭不會倒退。
+     */
+    private void updateCamera() {
+        double targetX = player.getX() - 900;
+        double targetCameraX = min(MAX_CAMERA_X, targetX);
+
+        lockedCameraX = min(lockedCameraX, targetCameraX);
+
+        getGameScene().getViewport().setX(lockedCameraX);
+        getGameScene().getViewport().setY(0);
+    }
+
+
+    // =========================================================
+    // Cleanup
+    // =========================================================
+
+    /**
+     * 清理 Street Endless 場景。
+     *
+     * 需要手動移除：
+     * 1. 機車與 hitbox。
+     * 2. 長地板。
+     * 3. 警告 UI。
+     * 4. 距離 UI。
+     * 5. 障礙物。
+     * 6. 掉落物與掉落警告。
+     */
+    public void cleanup() {
+        cleanupScooters();
+        cleanupEndlessFloor();
+        cleanupWarningUI();
+        cleanupDistanceUI();
+        cleanupObstacleGroups();
+        cleanupFallingObjects();
+    }
+
+    private void cleanupScooters() {
+        for (ScooterInstance scooter : scooters) {
+            removeEntity(scooter.visual());
+            removeEntity(scooter.hitbox());
+        }
+
+        scooters.clear();
+    }
+
+    private void cleanupEndlessFloor() {
+        removeEntity(endlessFloorCollider);
+        endlessFloorCollider = null;
+    }
+
+    private void cleanupWarningUI() {
+        removeUINodeIfNotNull(leftWarningIcon);
+        removeUINodeIfNotNull(rightWarningIcon);
+
+        leftWarningIcon = null;
+        rightWarningIcon = null;
+    }
+
+    private void cleanupDistanceUI() {
+        removeUINodeIfNotNull(distanceText);
+        distanceText = null;
+    }
+
+    private void cleanupObstacleGroups() {
+        for (StreetObstacleGroup group : obstacleGroups) {
+            removeEntity(group.visual());
+            removeEntity(group.colliderOrTrigger());
+        }
+
+        obstacleGroups.clear();
+    }
+
+    private void cleanupFallingObjects() {
+        for (FallingObjectInstance instance : fallingObjects) {
+            removeFallingWarning(instance);
+            removeFallingTrigger(instance);
+            removeEntity(instance.object());
+        }
+
+        fallingObjects.clear();
+    }
+
+
+    // =========================================================
+    // Utility
+    // =========================================================
+
+    private double randomRange(double min, double max) {
+        return min + random.nextDouble() * (max - min);
+    }
+
+    private double clamp01(double value) {
+        return max(0, min(1, value));
+    }
+
+    private void setVisibleIfNotNull(
+            StackPane node,
+            boolean visible
+    ) {
+        if (node != null) {
+            node.setVisible(visible);
+        }
+    }
+
+    private void removeUINodeIfNotNull(javafx.scene.Node node) {
+        if (node != null) {
+            removeUINode(node);
+        }
+    }
+
+    private void removeEntity(Entity entity) {
+        if (entity != null && entity.isActive()) {
+            entity.removeFromWorld();
+        }
+    }
+
+
+    // =========================================================
+    // Data Records
+    // =========================================================
+
+    private record FarBackgroundSegment(
+            double baseX,
+            Entity entity
+    ) {
+    }
+
+    private record StreetSegment(
+            double x,
+            StreetApartmentStyle style,
+            Entity floorVisual,
+            Entity apartment,
+            Entity foreground
+    ) {
+    }
+
+    private record StreetObstacleGroup(
+            double x,
+            Entity visual,
+            Entity colliderOrTrigger
+    ) {
+    }
+
+    private record ScooterInstance(
+            Entity visual,
+            Entity hitbox,
+            double velocityX
+    ) {
+    }
+
+
+    // =========================================================
+    // Mutable Data Class
+    // =========================================================
+
+    /**
+     * FallingObjectInstance
+     *
+     * 掉落物 runtime 狀態。
+     *
+     * 不能改成 record 的原因：
+     * - warningHidden 會改變。
+     * - removing 會改變。
+     * - stoppedTimer 會改變。
+     */
     private static class FallingObjectInstance {
+
         private final Entity object;
         private final Entity trigger;
         private final StackPane warningIcon;
@@ -1194,346 +1981,5 @@ public class StreetEndlessScene {
         public void setStoppedTimer(double stoppedTimer) {
             this.stoppedTimer = stoppedTimer;
         }
-    }
-
-    private void createDistanceUI() {
-        distanceText = new Text();
-        distanceText.setStyle("""
-            -fx-font-size: 24px;
-            -fx-fill: white;
-            -fx-font-weight: bold;
-            """);
-        distanceText.setEffect(new DropShadow(6, Color.BLACK));
-
-        addUINode(distanceText, 32, 42);
-
-        updateDistanceUI();
-    }
-
-    private void updateRunDistance() {
-        if (player == null) {
-            return;
-        }
-
-        /*
-         * 往左跑時 player.getX() 會變小。
-         * 距離 = 起始 X - 目前 X。
-         *
-         * 往右走不倒扣，所以用 max 保留目前本局最遠距離。
-         */
-        double distance = startPlayerX - player.getX();
-
-        if (distance < 0) {
-            distance = 0;
-        }
-
-        currentRunDistance = Math.max(currentRunDistance, distance) / 60;
-
-        set("streetRunDistance", currentRunDistance);
-
-        updateDistanceUI();
-    }
-
-    private void updateDistanceUI() {
-        if (distanceText == null) {
-            return;
-        }
-
-        int current = (int) Math.floor(currentRunDistance);
-        int best = (int) Math.floor(bestDistanceBeforeRun);
-
-        if (best > 0) {
-            distanceText.setText(
-                    current + " m " + "Best: " + best + " m"
-            );
-        } else {
-            distanceText.setText(
-                    current + " m"
-            );
-        }
-    }
-
-    private void generateSegmentAt(double x, StreetApartmentStyle style) {
-        Entity floorVisual = spawn("street_floor", new SpawnData(x, floorY)
-                .put("width", segmentWidth)
-                .put("height", 70.0));
-
-        Entity apartment = null;
-        Entity foreground = null;
-
-        if (style.isVisibleApartment()) {
-            apartment = spawn("street_apartment_bg", new SpawnData(x, 150)
-                    .put("width", segmentWidth)
-                    .put("height", 544.0)
-                    .put("style", style.name()));
-
-            if (random.nextBoolean()) {
-                foreground = spawn("street_apartment_fg", new SpawnData(x, 150)
-                        .put("width", segmentWidth)
-                        .put("height", 544.0)
-                        .put("style", style.name()));
-            }
-        }
-
-        StreetSegment segment = new StreetSegment(
-                x,
-                style,
-                floorVisual,
-                apartment,
-                foreground
-        );
-
-        segments.add(0, segment);
-    }
-
-    private void cleanupFarRightSegments() {
-        double cameraX = getGameScene().getViewport().getX();
-        double removeRightX = cameraX + screenWidth + segmentWidth * 3;
-
-        segments.removeIf(segment -> {
-            if (segment.x() < removeRightX) {
-                return false;
-            }
-
-            if (segment.floorVisual() != null) {
-                segment.floorVisual().removeFromWorld();
-            }
-
-            if (segment.apartment() != null) {
-                segment.apartment().removeFromWorld();
-            }
-
-            if (segment.foreground() != null) {
-                segment.foreground().removeFromWorld();
-            }
-
-            return true;
-        });
-    }
-
-    private void spawnRightBoundary() {
-        /*
-         * 原本的起始右邊牆。
-         * 保留它，避免玩家一開始往右跑出起始畫面。
-         */
-        spawn("wall", new SpawnData(1278, 0)
-                .put("width", 40.0)
-                .put("height", 720.0));
-
-        /*
-         * 新增：跟著鏡頭右側移動的牆。
-         * 當鏡頭往左推進後，玩家回頭往右時會撞到目前畫面右側，
-         * 不會因 overwritePosition 產生瞬移感。
-         */
-        cameraRightWall = spawn("wall", new SpawnData(1278, 0)
-                .put("width", 40.0)
-                .put("height", 720.0));
-    }
-
-    private void setupCamera() {
-        getGameScene().getViewport().setBounds(Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE);
-        getGameScene().getViewport().unbind();
-        getGameScene().getViewport().setLazy(false);
-
-        getGameScene().getViewport().setBounds(
-                -100000,
-                0,
-                1280,
-                720
-        );
-
-        lockedCameraX = 0;
-
-        getGameScene().getViewport().setX(lockedCameraX);
-        getGameScene().getViewport().setY(0);
-    }
-
-    private void updateCamera() {
-        /*
-         * 玩家越往左，targetX 越小。
-         * 但 cameraX 最大只能是 0，避免鏡頭往右超過起始畫面。
-         */
-        double targetX = player.getX() - 900;
-
-        double targetCameraX = min(maxCameraX, targetX);
-
-        /*
-         * 關鍵：
-         * cameraX 越小代表鏡頭越往左。
-         * 所以只在 targetCameraX 比目前 lockedCameraX 更小時更新。
-         * 玩家回頭往右時 targetCameraX 會變大，此時不更新，鏡頭固定。
-         */
-        lockedCameraX = min(lockedCameraX, targetCameraX);
-
-        getGameScene().getViewport().setX(lockedCameraX);
-        getGameScene().getViewport().setY(0);
-    }
-
-    private void updateCameraRightWall() {
-        if (cameraRightWall == null) {
-            return;
-        }
-
-        double wallX = lockedCameraX + screenWidth - 8;
-
-        PhysicsComponent physics = cameraRightWall.getComponent(PhysicsComponent.class);
-        physics.overwritePosition(new javafx.geometry.Point2D(wallX, 0));
-    }
-
-    private void updateParallaxBackground() {
-        double cameraX = getGameScene().getViewport().getX();
-
-        /*
-         * 正確公式：
-         *
-         * screenX = entityX - cameraX
-         *
-         * 如果希望遠景畫面位置是：
-         * screenX = baseX - cameraX * parallax
-         *
-         * 那 entityX 應該是：
-         * entityX = baseX + cameraX * (1 - parallax)
-         */
-        for (FarBackgroundSegment segment : farBackgrounds) {
-            segment.entity().setX(
-                    segment.baseX() + cameraX * (1.0 - farBackgroundParallax)
-            );
-            segment.entity().setY(0);
-        }
-
-        generateMoreFarBackgroundIfNeeded();
-        cleanupFarBackground();
-    }
-
-    private void generateMoreFarBackgroundIfNeeded() {
-        double cameraX = getGameScene().getViewport().getX();
-
-        /*
-         * 用畫面座標判斷遠景是否快露出空白。
-         *
-         * screenX = baseX - cameraX * parallax
-         */
-        double leftMostScreenX = leftMostFarBaseX - cameraX * farBackgroundParallax;
-
-        while (leftMostScreenX > -farBackgroundWidth) {
-            leftMostFarBaseX -= farBackgroundWidth;
-            spawnFarBackgroundAt(leftMostFarBaseX);
-
-            leftMostScreenX = leftMostFarBaseX - cameraX * farBackgroundParallax;
-        }
-
-        double rightMostScreenX = rightMostFarBaseX - cameraX * farBackgroundParallax;
-
-        while (rightMostScreenX + farBackgroundWidth < screenWidth + farBackgroundWidth) {
-            rightMostFarBaseX += farBackgroundWidth;
-            spawnFarBackgroundAt(rightMostFarBaseX);
-
-            rightMostScreenX = rightMostFarBaseX - cameraX * farBackgroundParallax;
-        }
-    }
-
-    private void cleanupFarBackground() {
-        double cameraX = getGameScene().getViewport().getX();
-
-        farBackgrounds.removeIf(segment -> {
-            double screenX = segment.baseX() - cameraX * farBackgroundParallax;
-
-            boolean tooFarRight = screenX > screenWidth + farBackgroundWidth * 2;
-            boolean tooFarLeft = screenX + farBackgroundWidth < -farBackgroundWidth * 2;
-
-            if (!tooFarRight && !tooFarLeft) {
-                return false;
-            }
-
-            segment.entity().removeFromWorld();
-            return true;
-        });
-
-        /*
-         * 重新計算目前最左 / 最右 baseX。
-         */
-        if (!farBackgrounds.isEmpty()) {
-            leftMostFarBaseX = farBackgrounds.stream()
-                    .mapToDouble(FarBackgroundSegment::baseX)
-                    .min()
-                    .orElse(0);
-
-            rightMostFarBaseX = farBackgrounds.stream()
-                    .mapToDouble(FarBackgroundSegment::baseX)
-                    .max()
-                    .orElse(0);
-        }
-    }
-
-    public void cleanup() {
-        for (ScooterInstance scooter : scooters) {
-            if (scooter.visual() != null) {
-                scooter.visual().removeFromWorld();
-            }
-
-            if (scooter.hitbox() != null) {
-                scooter.hitbox().removeFromWorld();
-            }
-        }
-
-        scooters.clear();
-
-        if (endlessFloorCollider != null) {
-            endlessFloorCollider.removeFromWorld();
-            endlessFloorCollider = null;
-        }
-
-        if (leftWarningIcon != null) {
-            removeUINode(leftWarningIcon);
-            leftWarningIcon = null;
-        }
-
-        if (rightWarningIcon != null) {
-            removeUINode(rightWarningIcon);
-            rightWarningIcon = null;
-        }
-
-        if (distanceText != null) {
-            removeUINode(distanceText);
-            distanceText = null;
-        }
-
-        for (StreetObstacleGroup group : obstacleGroups) {
-            if (group.visual() != null) {
-                group.visual().removeFromWorld();
-            }
-
-            if (group.colliderOrTrigger() != null) {
-                group.colliderOrTrigger().removeFromWorld();
-            }
-        }
-
-        obstacleGroups.clear();
-
-        for (FallingObjectInstance instance : fallingObjects) {
-            removeFallingWarning(instance);
-            removeFallingTrigger(instance);
-
-            if (instance.object() != null && instance.object().isActive()) {
-                instance.object().removeFromWorld();
-            }
-        }
-
-        fallingObjects.clear();
-    }
-
-    private record FarBackgroundSegment(
-            double baseX,
-            Entity entity
-    ) {
-    }
-
-    private record StreetSegment(
-            double x,
-            StreetApartmentStyle style,
-            Entity floorVisual,
-            Entity apartment,
-            Entity foreground
-    ) {
     }
 }

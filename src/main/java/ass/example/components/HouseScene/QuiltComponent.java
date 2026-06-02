@@ -4,7 +4,7 @@ import ass.example.components.LoadSaveComponent;
 import ass.example.core.QuestType;
 import ass.example.core.SoundId;
 import ass.example.system.AudioSystem;
-import ass.example.system.quest.QuestSystem;
+import ass.example.system.QuestSystem;
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.component.Component;
 

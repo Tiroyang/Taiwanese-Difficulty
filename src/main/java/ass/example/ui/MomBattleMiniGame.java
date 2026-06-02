@@ -6,18 +6,24 @@ import ass.example.system.AudioSystem;
 import ass.example.system.DeathSystem;
 import ass.example.system.MusicSystem;
 import ass.example.system.dialogue.DialogueSystem;
-import javafx.animation.*;
-import javafx.geometry.Insets;
-import javafx.geometry.Point2D;
-import javafx.geometry.Pos;
+import javafx.animation.Animation;
+import javafx.animation.AnimationTimer;
+import javafx.animation.FadeTransition;
+import javafx.animation.Interpolator;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.ParallelTransition;
+import javafx.animation.PauseTransition;
+import javafx.animation.ScaleTransition;
+import javafx.animation.SequentialTransition;
+import javafx.animation.Timeline;
+import javafx.animation.TranslateTransition;
 import javafx.scene.Node;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
-import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.media.Media;
@@ -27,14 +33,55 @@ import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
 
-import static com.almasb.fxgl.dsl.FXGL.*;
+import static com.almasb.fxgl.dsl.FXGL.addUINode;
+import static com.almasb.fxgl.dsl.FXGL.removeUINode;
 
+/**
+ * MomBattleMiniGame
+ *
+ * 媽媽戰鬥小遊戲 UI Layer。
+ *
+ * 功能：
+ * 1. 播放類似 Pokémon Encounter 的黑格逆時針過場。
+ * 2. 顯示 Undertale 風格戰鬥畫面。
+ * 3. 玩家控制 Heart 在白框內移動。
+ * 4. 隨機產生橫向或縱向攻擊。
+ * 5. Heart 碰到正式攻擊判定後死亡。
+ * 6. 根據存活時間決定死亡原因。
+ *
+ * 單例判斷：
+ * 此 class 不適合做成單例。
+ *
+ * 原因：
+ * - 它是一次性 UI Layer。
+ * - 每次戰鬥都需要重新初始化攻擊、音樂、鍵盤、存活時間。
+ * - 若做成單例，容易殘留舊 Timeline、AnimationTimer、MediaPlayer。
+ *
+ * 適合單例的是它依賴的系統：
+ * - AudioSystem
+ * - DeathSystem
+ * - DialogueSystem
+ * - MusicSystem
+ */
 public class MomBattleMiniGame extends StackPane {
 
-    private static final double SCREEN_WIDTH = 1280;
-    private static final double SCREEN_HEIGHT = 720;
+    // =========================================================
+    // Screen Constants
+    // =========================================================
+
+    private static final double SCREEN_WIDTH = 1280.0;
+    private static final double SCREEN_HEIGHT = 720.0;
+
+
+    // =========================================================
+    // Asset Paths
+    // =========================================================
 
     private static final String MOM_BATTLE_IMAGE =
             "/assets/textures/characters/mom/mom_battle.png";
@@ -51,52 +98,123 @@ public class MomBattleMiniGame extends StackPane {
     private static final String BATTLE_LOOP_BGM =
             "/assets/music/dialogue/Dark Souls III OST 10 - Vordt of the Boreal Valley.mp3";
 
-    /*
-     * 方框尺寸。
-     * 3 x 3 攻擊區域會依這個尺寸平均切割。
+
+    // =========================================================
+    // Arena Constants
+    // =========================================================
+
+    /**
+     * 戰鬥白框大小。
+     *
+     * 攻擊區域會用 3 x 3 方式切分這個白框。
      */
-    private static final double ARENA_SIZE = 330;
-    private static final double ARENA_X = (SCREEN_WIDTH - ARENA_SIZE) / 2.0;
-    private static final double ARENA_Y = 360;
+    private static final double ARENA_SIZE = 330.0;
 
-    /*
-     * heart.png 原圖 520x520，但有效圖案大約 40x40。
-     * 這裡讓整張圖縮成 52x52，實際碰撞再用比較小的範圍。
+    private static final double ARENA_X =
+            (SCREEN_WIDTH - ARENA_SIZE) / 2.0;
+
+    private static final double ARENA_Y = 360.0;
+
+
+    // =========================================================
+    // Heart Constants
+    // =========================================================
+
+    /**
+     * heart.png 原圖很大，但有效圖案在中心。
+     *
+     * 這裡保留大圖顯示，碰撞則使用較小 hitbox。
      */
-    private static final double HEART_VIEW_SIZE = 520;
-    private static final double HEART_HITBOX_SIZE = 42;
+    private static final double HEART_VIEW_SIZE = 520.0;
 
-    private static final double HEART_HITBOX_X_OFFSET = 239;
-    private static final double HEART_HITBOX_Y_OFFSET = 232;
+    /**
+     * Heart 實際碰撞大小。
+     */
+    private static final double HEART_HITBOX_SIZE = 42.0;
 
-    private final AudioSystem audioSystem = AudioSystem.getInstance();
-    private final DeathSystem deathSystem = DeathSystem.getInstance();
-    private final DialogueSystem dialogueSystem;
+    /**
+     * 從 ImageView 左上角偏移到有效 Heart hitbox 的位置。
+     */
+    private static final double HEART_HITBOX_X_OFFSET = 239.0;
+    private static final double HEART_HITBOX_Y_OFFSET = 232.0;
+
+    private static final double HEART_SPEED = 250.0;
+
+
+    // =========================================================
+    // Transition Constants
+    // =========================================================
+
+    private static final int TRANSITION_COLUMNS = 22;
+    private static final int TRANSITION_ROWS = 12;
+
+    private static final double TRANSITION_STEP_SECONDS = 0.010;
+    private static final double TRANSITION_BLACK_HOLD_SECONDS = 0.25;
+
+
+    // =========================================================
+    // Attack Constants
+    // =========================================================
+
+    private static final double ATTACK_INTERVAL_SECONDS = 1.15;
+
+    private static final double WARNING_FLASH_SECONDS = 0.08;
+    private static final double WARNING_HOLD_SECONDS = 0.30;
+
+    private static final double AIM_LINE_WIDTH = 2.0;
+    private static final double AIM_LINE_HOLD_SECONDS = 0.10;
+
+    private static final double ATTACK_EXPAND_SECONDS = 0.06;
+    private static final double ATTACK_ACTIVE_SECONDS = 0.48;
+    private static final double ATTACK_FADE_SECONDS = 0.16;
+
+    private static final String ACTIVE_ATTACK_TAG = "ACTIVE_ATTACK";
+
+
+    // =========================================================
+    // Death Thresholds
+    // =========================================================
+
+    /**
+     * 存活不到 60 秒：死亡 A。
+     * 存活 60 到 120 秒：死亡 B。
+     * 存活超過 120 秒：死亡 C。
+     */
+    private static final double DEATH_A_TIME_LIMIT = 60.0;
+    private static final double DEATH_C_TIME_LIMIT = 120.0;
+
+
+    // =========================================================
+    // Systems
+    // =========================================================
+
+    private final AudioSystem audioSystem =
+            AudioSystem.getInstance();
+
+    private final DeathSystem deathSystem =
+            DeathSystem.getInstance();
+
+    private final DialogueSystem dialogueSystem =
+            DialogueSystem.getInstance();
+
+    private final MusicSystem musicSystem =
+            MusicSystem.getInstance();
+
+
+    // =========================================================
+    // Death Result
+    // =========================================================
 
     private final DeathReason deathA;
     private final DeathReason deathB;
     private final DeathReason deathC;
 
+
+    // =========================================================
+    // Runtime State
+    // =========================================================
+
     private final Random random = new Random();
-
-    private Rectangle battleBackground;
-
-    private final Pane gameLayer = new Pane();
-    private final Pane battleLayer = new Pane();
-    private final Pane attackLayer = new Pane();
-    private final Pane transitionLayer = new Pane();
-
-    private ImageView momView;
-    private ImageView heartView;
-
-    private Rectangle arenaBorder;
-
-    private AnimationTimer gameLoop;
-    private Timeline attackLoop;
-
-    private MediaPlayer startMusic;
-    private MediaPlayer battleMusic;
-
     private final Set<KeyCode> pressedKeys = new HashSet<>();
 
     private boolean battleStarted = false;
@@ -105,21 +223,63 @@ public class MomBattleMiniGame extends StackPane {
     private double heartX;
     private double heartY;
 
-    private double aliveTime = 0;
+    private double aliveTime = 0.0;
 
-    private double heartSpeed = 250;
+
+    // =========================================================
+    // Layers
+    // =========================================================
+
+    private final Pane battleLayer = new Pane();
+    private final Pane attackLayer = new Pane();
+    private final Pane transitionLayer = new Pane();
+
+
+    // =========================================================
+    // UI Nodes
+    // =========================================================
+
+    private ImageView momView;
+    private ImageView heartView;
+
+    private Rectangle arenaBorder;
+
+
+    // =========================================================
+    // Animations / Music
+    // =========================================================
+
+    private AnimationTimer gameLoop;
+    private Timeline attackLoop;
+
+    private MediaPlayer startMusic;
+    private MediaPlayer battleMusic;
+
+
+    // =========================================================
+    // Constructor
+    // =========================================================
 
     public MomBattleMiniGame(
-            DialogueSystem dialogueSystem,
             DeathReason deathA,
             DeathReason deathB,
             DeathReason deathC
     ) {
-        this.dialogueSystem = dialogueSystem;
         this.deathA = deathA;
         this.deathB = deathB;
         this.deathC = deathC;
 
+        setupRoot();
+        setupLayers();
+        setupKeyboardInput();
+    }
+
+
+    // =========================================================
+    // Initial Setup
+    // =========================================================
+
+    private void setupRoot() {
         setPrefSize(SCREEN_WIDTH, SCREEN_HEIGHT);
         setMinSize(SCREEN_WIDTH, SCREEN_HEIGHT);
         setMaxSize(SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -127,199 +287,303 @@ public class MomBattleMiniGame extends StackPane {
         setFocusTraversable(true);
         setPickOnBounds(true);
 
-        setupRoot();
-        setupKeyInput();
-    }
-
-    private void setupRoot() {
         /*
-         * 不要一開始就放黑底。
-         * 否則 Transition 的黑色格子會蓋在黑底上，看起來完全沒有動畫。
+         * 不要一開始放黑底。
+         * 否則黑格過場會蓋在黑底上，看起來像沒有動畫。
          */
         setStyle("-fx-background-color: transparent;");
+    }
 
-        gameLayer.setPrefSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+    private void setupLayers() {
         battleLayer.setPrefSize(SCREEN_WIDTH, SCREEN_HEIGHT);
         attackLayer.setPrefSize(SCREEN_WIDTH, SCREEN_HEIGHT);
         transitionLayer.setPrefSize(SCREEN_WIDTH, SCREEN_HEIGHT);
 
         battleLayer.setVisible(false);
+        attackLayer.setMouseTransparent(true);
+        transitionLayer.setMouseTransparent(true);
 
         getChildren().addAll(
-                gameLayer,
                 battleLayer,
                 transitionLayer
         );
     }
 
-    private void setupKeyInput() {
-        setOnKeyPressed(e -> pressedKeys.add(e.getCode()));
-        setOnKeyReleased(e -> pressedKeys.remove(e.getCode()));
+    private void setupKeyboardInput() {
+        setOnKeyPressed(event ->
+                pressedKeys.add(event.getCode())
+        );
+
+        setOnKeyReleased(event ->
+                pressedKeys.remove(event.getCode())
+        );
     }
 
+
+    // =========================================================
+    // Public API
+    // =========================================================
+
+    /**
+     * 開始媽媽戰鬥。
+     *
+     * 呼叫時機：
+     * DialogueSystem 選到「戰鬥」選項後。
+     */
     public void start() {
         requestFocus();
 
         /*
-         * 停止對話 BGM。
+         * 停止對話 BGM，改播戰鬥音樂。
          */
-        MusicSystem.getInstance().stopBGM();
+        musicSystem.stopBGM();
 
         playStartMusic();
         playEncounterTransition();
     }
 
+    /**
+     * 外部強制移除小遊戲時呼叫。
+     *
+     * 例如：
+     * - 切場景
+     * - 關閉 UI Layer
+     * - 玩家死亡後清理
+     */
+    public void dispose() {
+        ended = true;
+        battleStarted = false;
+
+        stopAttackLoop();
+        stopGameLoop();
+        stopOwnMusic();
+
+        pressedKeys.clear();
+        attackLayer.getChildren().clear();
+        transitionLayer.getChildren().clear();
+    }
+
+
+    // =========================================================
+    // Music
+    // =========================================================
+
     private void playStartMusic() {
         stopOwnMusic();
 
-        try {
-            URL url = getClass().getResource(BATTLE_START_BGM);
+        startMusic = createMediaPlayer(BATTLE_START_BGM, false);
 
-            if (url == null) {
-                System.out.println("Battle start music not found: " + BATTLE_START_BGM);
-                return;
-            }
-
-            startMusic = new MediaPlayer(new Media(url.toExternalForm()));
-            startMusic.setOnReady(startMusic::play);
-            startMusic.setOnEndOfMedia(this::playBattleLoopMusic);
-
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (startMusic == null) {
+            playBattleLoopMusic();
+            return;
         }
+
+        startMusic.setOnEndOfMedia(this::playBattleLoopMusic);
+        startMusic.setOnReady(() -> {
+            applyOwnMusicVolume(startMusic);
+            startMusic.play();
+        });
     }
 
     private void playBattleLoopMusic() {
-        try {
-            if (battleMusic != null) {
-                battleMusic.stop();
-                battleMusic.dispose();
-            }
+        stopBattleLoopMusic();
 
-            URL url = getClass().getResource(BATTLE_LOOP_BGM);
+        battleMusic = createMediaPlayer(BATTLE_LOOP_BGM, true);
+
+        if (battleMusic == null) {
+            return;
+        }
+
+        battleMusic.setOnReady(() -> {
+            applyOwnMusicVolume(battleMusic);
+            battleMusic.play();
+        });
+    }
+
+    private MediaPlayer createMediaPlayer(
+            String path,
+            boolean loop
+    ) {
+        try {
+            URL url = getClass().getResource(path);
 
             if (url == null) {
-                System.out.println("Battle loop music not found: " + BATTLE_LOOP_BGM);
-                return;
+                System.out.println("Music not found: " + path);
+                return null;
             }
 
-            battleMusic = new MediaPlayer(new Media(url.toExternalForm()));
-            battleMusic.setCycleCount(MediaPlayer.INDEFINITE);
-            battleMusic.setOnReady(battleMusic::play);
+            MediaPlayer player = new MediaPlayer(
+                    new Media(url.toExternalForm())
+            );
 
-        } catch (Exception e) {
-            e.printStackTrace();
+            player.setCycleCount(
+                    loop
+                            ? MediaPlayer.INDEFINITE
+                            : 1
+            );
+
+            return player;
+
+        } catch (Exception exception) {
+            System.out.println("Music load failed: " + path);
+            exception.printStackTrace();
+            return null;
         }
     }
 
+    private void applyOwnMusicVolume(MediaPlayer player) {
+        if (player != null) {
+            player.setVolume(audioSystem.getEffectiveMusicVolume());
+        }
+    }
+
+    private void stopOwnMusic() {
+        stopStartMusic();
+        stopBattleLoopMusic();
+    }
+
+    private void stopStartMusic() {
+        if (startMusic == null) {
+            return;
+        }
+
+        startMusic.stop();
+        startMusic.dispose();
+        startMusic = null;
+    }
+
+    private void stopBattleLoopMusic() {
+        if (battleMusic == null) {
+            return;
+        }
+
+        battleMusic.stop();
+        battleMusic.dispose();
+        battleMusic = null;
+    }
+
+
+    // =========================================================
+    // Encounter Transition
+    // =========================================================
+
+    /**
+     * 播放由外向內的黑格逆時針過場。
+     */
     private void playEncounterTransition() {
         transitionLayer.getChildren().clear();
 
-        int cols = 22;
-        int rows = 12;
+        double cellWidth = SCREEN_WIDTH / TRANSITION_COLUMNS;
+        double cellHeight = SCREEN_HEIGHT / TRANSITION_ROWS;
 
-        double cellW = SCREEN_WIDTH / cols;
-        double cellH = SCREEN_HEIGHT / rows;
-
-        // 1. 建立 Canvas 代替 GridPane
         Canvas canvas = new Canvas(SCREEN_WIDTH, SCREEN_HEIGHT);
-        GraphicsContext gc = canvas.getGraphicsContext2D();
+        GraphicsContext graphics = canvas.getGraphicsContext2D();
+
         transitionLayer.getChildren().add(canvas);
 
-        // 2. 依然建立這個陣列，只是為了丟進你原本的螺旋演算法
-        Rectangle[][] cells = new Rectangle[rows][cols];
-        for (int y = 0; y < rows; y++) {
-            for (int x = 0; x < cols; x++) {
-                Rectangle r = new Rectangle();
-                GridPane.setColumnIndex(r, x); // 把 X 座標存進去
-                GridPane.setRowIndex(r, y);    // 把 Y 座標存進去
-                cells[y][x] = r;
-            }
-        }
+        List<GridCell> spiralOrder = createCounterClockwiseSpiralOrder(
+                TRANSITION_ROWS,
+                TRANSITION_COLUMNS
+        );
 
-        // 3. 沿用你原本的排序列
-        List<Rectangle> order = createCounterClockwiseSpiralOrder(cells, rows, cols);
+        Timeline transition = new Timeline();
 
-        Timeline timeline = new Timeline();
-        double delay = 0;
-        double step = 0.010;
+        double delay = 0.0;
 
-        for (Rectangle cell : order) {
-            // 從實體中取出當初存的 X 和 Y 網格座標
-            int x = GridPane.getColumnIndex(cell);
-            int y = GridPane.getRowIndex(cell);
-
-            timeline.getKeyFrames().add(
-                    new KeyFrame(Duration.seconds(delay), e -> {
-                        gc.setFill(Color.BLACK);
-                        // 關鍵：網格座標 * 單一格子寬高 = 繪製畫面的起點。 寬高 + 0.5 像素徹底補滿縫隙
-                        gc.fillRect(x * cellW, y * cellH, cellW + 0.5, cellH + 0.5);
-                    })
+        for (GridCell cell : spiralOrder) {
+            transition.getKeyFrames().add(
+                    new KeyFrame(
+                            Duration.seconds(delay),
+                            event -> drawBlackCell(
+                                    graphics,
+                                    cell,
+                                    cellWidth,
+                                    cellHeight
+                            )
+                    )
             );
-            delay += step;
+
+            delay += TRANSITION_STEP_SECONDS;
         }
 
-        timeline.setOnFinished(e -> {
+        transition.setOnFinished(event -> {
             setupBattleScreen();
 
-            PauseTransition wait = new PauseTransition(Duration.seconds(0.25));
-            wait.setOnFinished(event -> {
+            PauseTransition holdBlack = new PauseTransition(
+                    Duration.seconds(TRANSITION_BLACK_HOLD_SECONDS)
+            );
+
+            holdBlack.setOnFinished(done -> {
                 transitionLayer.getChildren().clear();
                 startBattle();
             });
-            wait.play();
+
+            holdBlack.play();
         });
 
-        timeline.play();
+        transition.play();
     }
 
-
-
-    private List<Rectangle> createCounterClockwiseSpiralOrder(
-            Rectangle[][] cells,
-            int rows,
-            int cols
+    private void drawBlackCell(
+            GraphicsContext graphics,
+            GridCell cell,
+            double cellWidth,
+            double cellHeight
     ) {
-        List<Rectangle> result = new ArrayList<>();
+        graphics.setFill(Color.BLACK);
+
+        /*
+         * +0.5 是為了補掉 Canvas 繪製時可能出現的細縫。
+         */
+        graphics.fillRect(
+                cell.column() * cellWidth,
+                cell.row() * cellHeight,
+                cellWidth + 0.5,
+                cellHeight + 0.5
+        );
+    }
+
+    /**
+     * 建立逆時針螺旋順序。
+     *
+     * 順序：
+     * 1. 左邊往下
+     * 2. 下邊往右
+     * 3. 右邊往上
+     * 4. 上邊往左
+     */
+    private List<GridCell> createCounterClockwiseSpiralOrder(
+            int rows,
+            int columns
+    ) {
+        List<GridCell> result = new ArrayList<>();
 
         int top = 0;
         int bottom = rows - 1;
         int left = 0;
-        int right = cols - 1;
+        int right = columns - 1;
 
         while (top <= bottom && left <= right) {
-            /*
-             * 左邊往下。
-             */
-            for (int y = top; y <= bottom; y++) {
-                result.add(cells[y][left]);
+            for (int row = top; row <= bottom; row++) {
+                result.add(new GridCell(row, left));
             }
             left++;
 
-            /*
-             * 下邊往右。
-             */
-            for (int x = left; x <= right; x++) {
-                result.add(cells[bottom][x]);
+            for (int column = left; column <= right; column++) {
+                result.add(new GridCell(bottom, column));
             }
             bottom--;
 
-            /*
-             * 右邊往上。
-             */
             if (left <= right) {
-                for (int y = bottom; y >= top; y--) {
-                    result.add(cells[y][right]);
+                for (int row = bottom; row >= top; row--) {
+                    result.add(new GridCell(row, right));
                 }
                 right--;
             }
 
-            /*
-             * 上邊往左。
-             */
             if (top <= bottom) {
-                for (int x = right; x >= left; x--) {
-                    result.add(cells[top][x]);
+                for (int column = right; column >= left; column--) {
+                    result.add(new GridCell(top, column));
                 }
                 top++;
             }
@@ -328,47 +592,31 @@ public class MomBattleMiniGame extends StackPane {
         return result;
     }
 
+    private record GridCell(
+            int row,
+            int column
+    ) {
+    }
+
+
+    // =========================================================
+    // Battle Screen Setup
+    // =========================================================
+
     private void setupBattleScreen() {
         battleLayer.getChildren().clear();
+        attackLayer.getChildren().clear();
 
-        battleBackground = new Rectangle(SCREEN_WIDTH, SCREEN_HEIGHT);
-        battleBackground.setFill(Color.BLACK);
+        Rectangle background = createBattleBackground();
+        StackPane momBox = createMomBox();
 
-        momView = new ImageView(loadImage(MOM_BATTLE_IMAGE));
-        momView.setFitHeight(300);
-        momView.setPreserveRatio(true);
-        momView.setSmooth(false);
-        momView.setOpacity(0);
-        momView.setTranslateY(-30);
+        arenaBorder = createArenaBorder();
 
-        StackPane momBox = new StackPane(momView);
-        momBox.setPrefSize(SCREEN_WIDTH, 260);
-        momBox.setLayoutX(0);
-        momBox.setLayoutY(50);
-
-        arenaBorder = new Rectangle(ARENA_SIZE, ARENA_SIZE);
-        arenaBorder.setFill(Color.TRANSPARENT);
-        arenaBorder.setStroke(Color.WHITE);
-        arenaBorder.setStrokeWidth(4);
-        arenaBorder.setLayoutX(ARENA_X);
-        arenaBorder.setLayoutY(ARENA_Y);
-
-        attackLayer.setPrefSize(SCREEN_WIDTH, SCREEN_HEIGHT);
-        attackLayer.setMouseTransparent(true);
-
-        heartView = new ImageView(loadImage(HEART_IMAGE));
-        heartView.setFitWidth(HEART_VIEW_SIZE);
-        heartView.setFitHeight(HEART_VIEW_SIZE);
-        heartView.setPreserveRatio(true);
-        heartView.setSmooth(false);
-
-        heartX = ARENA_X + ARENA_SIZE / 2.0 - HEART_VIEW_SIZE / 2.0;
-        heartY = ARENA_Y + ARENA_SIZE / 2.0 - HEART_VIEW_SIZE / 2.0;
-
-        updateHeartPosition();
+        heartView = createHeartView();
+        resetHeartToArenaCenter();
 
         battleLayer.getChildren().addAll(
-                battleBackground,
+                background,
                 momBox,
                 arenaBorder,
                 attackLayer,
@@ -377,34 +625,129 @@ public class MomBattleMiniGame extends StackPane {
 
         battleLayer.setVisible(true);
 
-        ParallelTransition appear = new ParallelTransition();
+        playMomAppearAnimation();
+    }
 
-        FadeTransition fade = new FadeTransition(Duration.seconds(0.28), momView);
+    private Rectangle createBattleBackground() {
+        Rectangle background = new Rectangle(
+                SCREEN_WIDTH,
+                SCREEN_HEIGHT
+        );
+
+        background.setFill(Color.BLACK);
+
+        return background;
+    }
+
+    private StackPane createMomBox() {
+        momView = new ImageView(loadImage(MOM_BATTLE_IMAGE));
+
+        momView.setFitHeight(300);
+        momView.setPreserveRatio(true);
+        momView.setSmooth(false);
+
+        momView.setOpacity(0);
+        momView.setTranslateY(-30);
+        momView.setScaleX(0.75);
+        momView.setScaleY(0.75);
+
+        StackPane momBox = new StackPane(momView);
+        momBox.setPrefSize(SCREEN_WIDTH, 260);
+        momBox.setLayoutX(0);
+        momBox.setLayoutY(50);
+
+        return momBox;
+    }
+
+    private Rectangle createArenaBorder() {
+        Rectangle border = new Rectangle(
+                ARENA_SIZE,
+                ARENA_SIZE
+        );
+
+        border.setFill(Color.TRANSPARENT);
+        border.setStroke(Color.WHITE);
+        border.setStrokeWidth(4);
+
+        border.setLayoutX(ARENA_X);
+        border.setLayoutY(ARENA_Y);
+
+        return border;
+    }
+
+    private ImageView createHeartView() {
+        ImageView view = new ImageView(loadImage(HEART_IMAGE));
+
+        view.setFitWidth(HEART_VIEW_SIZE);
+        view.setFitHeight(HEART_VIEW_SIZE);
+        view.setPreserveRatio(true);
+        view.setSmooth(false);
+
+        return view;
+    }
+
+    private void resetHeartToArenaCenter() {
+        heartX =
+                ARENA_X +
+                        ARENA_SIZE / 2.0 -
+                        HEART_VIEW_SIZE / 2.0;
+
+        heartY =
+                ARENA_Y +
+                        ARENA_SIZE / 2.0 -
+                        HEART_VIEW_SIZE / 2.0;
+
+        updateHeartPosition();
+    }
+
+    private void playMomAppearAnimation() {
+        FadeTransition fade = new FadeTransition(
+                Duration.seconds(0.28),
+                momView
+        );
         fade.setFromValue(0);
         fade.setToValue(1);
 
-        TranslateTransition popMove = new TranslateTransition(Duration.seconds(0.28), momView);
-        popMove.setFromY(-30);
-        popMove.setToY(0);
-        popMove.setInterpolator(Interpolator.EASE_OUT);
+        TranslateTransition move = new TranslateTransition(
+                Duration.seconds(0.28),
+                momView
+        );
+        move.setFromY(-30);
+        move.setToY(0);
+        move.setInterpolator(Interpolator.EASE_OUT);
 
-        ScaleTransition popScale = new ScaleTransition(Duration.seconds(0.28), momView);
-        popScale.setFromX(0.75);
-        popScale.setFromY(0.75);
-        popScale.setToX(1.0);
-        popScale.setToY(1.0);
-        popScale.setInterpolator(Interpolator.EASE_OUT);
+        ScaleTransition scale = new ScaleTransition(
+                Duration.seconds(0.28),
+                momView
+        );
+        scale.setFromX(0.75);
+        scale.setFromY(0.75);
+        scale.setToX(1.0);
+        scale.setToY(1.0);
+        scale.setInterpolator(Interpolator.EASE_OUT);
 
-        appear.getChildren().addAll(fade, popMove, popScale);
-        appear.play();
+        new ParallelTransition(
+                fade,
+                move,
+                scale
+        ).play();
     }
+
+
+    // =========================================================
+    // Battle Start / Loops
+    // =========================================================
 
     private void startBattle() {
         battleStarted = true;
-        aliveTime = 0;
+        ended = false;
+        aliveTime = 0.0;
+
         requestFocus();
 
-        if (battleMusic == null && (startMusic == null || startMusic.getStatus() != MediaPlayer.Status.PLAYING)) {
+        if (battleMusic == null &&
+                (startMusic == null ||
+                        startMusic.getStatus() != MediaPlayer.Status.PLAYING)) {
             playBattleLoopMusic();
         }
 
@@ -413,23 +756,25 @@ public class MomBattleMiniGame extends StackPane {
     }
 
     private void startGameLoop() {
+        stopGameLoop();
+
         gameLoop = new AnimationTimer() {
-            private long last = 0;
+            private long lastTime = 0;
 
             @Override
             public void handle(long now) {
                 if (ended || !battleStarted) {
-                    last = now;
+                    lastTime = now;
                     return;
                 }
 
-                if (last == 0) {
-                    last = now;
+                if (lastTime == 0) {
+                    lastTime = now;
                     return;
                 }
 
-                double tpf = (now - last) / 1_000_000_000.0;
-                last = now;
+                double tpf = (now - lastTime) / 1_000_000_000.0;
+                lastTime = now;
 
                 updateBattle(tpf);
             }
@@ -437,6 +782,39 @@ public class MomBattleMiniGame extends StackPane {
 
         gameLoop.start();
     }
+
+    private void startAttackLoop() {
+        stopAttackLoop();
+
+        attackLoop = new Timeline(
+                new KeyFrame(
+                        Duration.seconds(ATTACK_INTERVAL_SECONDS),
+                        event -> spawnRandomAttack()
+                )
+        );
+
+        attackLoop.setCycleCount(Animation.INDEFINITE);
+        attackLoop.play();
+    }
+
+    private void stopGameLoop() {
+        if (gameLoop != null) {
+            gameLoop.stop();
+            gameLoop = null;
+        }
+    }
+
+    private void stopAttackLoop() {
+        if (attackLoop != null) {
+            attackLoop.stop();
+            attackLoop = null;
+        }
+    }
+
+
+    // =========================================================
+    // Battle Update
+    // =========================================================
 
     private void updateBattle(double tpf) {
         aliveTime += tpf;
@@ -446,55 +824,80 @@ public class MomBattleMiniGame extends StackPane {
     }
 
     private void updateHeartMovement(double tpf) {
-        double dx = 0;
-        double dy = 0;
+        double dx = 0.0;
+        double dy = 0.0;
 
-        if (pressedKeys.contains(KeyCode.LEFT) || pressedKeys.contains(KeyCode.A)) {
-            dx -= 1;
+        if (isPressed(KeyCode.LEFT, KeyCode.A)) {
+            dx -= 1.0;
         }
 
-        if (pressedKeys.contains(KeyCode.RIGHT) || pressedKeys.contains(KeyCode.D)) {
-            dx += 1;
+        if (isPressed(KeyCode.RIGHT, KeyCode.D)) {
+            dx += 1.0;
         }
 
-        if (pressedKeys.contains(KeyCode.UP) || pressedKeys.contains(KeyCode.W)) {
-            dy -= 1;
+        if (isPressed(KeyCode.UP, KeyCode.W)) {
+            dy -= 1.0;
         }
 
-        if (pressedKeys.contains(KeyCode.DOWN) || pressedKeys.contains(KeyCode.S)) {
-            dy += 1;
+        if (isPressed(KeyCode.DOWN, KeyCode.S)) {
+            dy += 1.0;
         }
 
         if (dx != 0 && dy != 0) {
-            double inv = 1.0 / Math.sqrt(2);
-            dx *= inv;
-            dy *= inv;
+            double inverseSqrtTwo = 1.0 / Math.sqrt(2.0);
+            dx *= inverseSqrtTwo;
+            dy *= inverseSqrtTwo;
         }
 
-        heartX += dx * heartSpeed * tpf;
-        heartY += dy * heartSpeed * tpf;
+        heartX += dx * HEART_SPEED * tpf;
+        heartY += dy * HEART_SPEED * tpf;
 
-        heartX = clamp(heartX + HEART_HITBOX_X_OFFSET, ARENA_X, ARENA_X + ARENA_SIZE - HEART_HITBOX_SIZE) - HEART_HITBOX_X_OFFSET;
-        heartY = clamp(heartY + HEART_HITBOX_Y_OFFSET, ARENA_Y, ARENA_Y + ARENA_SIZE - HEART_HITBOX_SIZE) - HEART_HITBOX_Y_OFFSET;
+        clampHeartInsideArena();
 
         updateHeartPosition();
     }
 
-    private void updateHeartPosition() {
-        if (heartView != null) {
-            heartView.setLayoutX(heartX);
-            heartView.setLayoutY(heartY);
-        }
+    private boolean isPressed(KeyCode first, KeyCode second) {
+        return pressedKeys.contains(first) ||
+                pressedKeys.contains(second);
     }
 
-    private void startAttackLoop() {
-        attackLoop = new Timeline(
-                new KeyFrame(Duration.seconds(1.15), e -> spawnRandomAttack())
+    /**
+     * 將 Heart 的有效 hitbox 限制在白框內。
+     */
+    private void clampHeartInsideArena() {
+        double hitboxX = heartX + HEART_HITBOX_X_OFFSET;
+        double hitboxY = heartY + HEART_HITBOX_Y_OFFSET;
+
+        hitboxX = clamp(
+                hitboxX,
+                ARENA_X,
+                ARENA_X + ARENA_SIZE - HEART_HITBOX_SIZE
         );
 
-        attackLoop.setCycleCount(Animation.INDEFINITE);
-        attackLoop.play();
+        hitboxY = clamp(
+                hitboxY,
+                ARENA_Y,
+                ARENA_Y + ARENA_SIZE - HEART_HITBOX_SIZE
+        );
+
+        heartX = hitboxX - HEART_HITBOX_X_OFFSET;
+        heartY = hitboxY - HEART_HITBOX_Y_OFFSET;
     }
+
+    private void updateHeartPosition() {
+        if (heartView == null) {
+            return;
+        }
+
+        heartView.setLayoutX(heartX);
+        heartView.setLayoutY(heartY);
+    }
+
+
+    // =========================================================
+    // Attack Spawning
+    // =========================================================
 
     private void spawnRandomAttack() {
         if (ended) {
@@ -504,161 +907,254 @@ public class MomBattleMiniGame extends StackPane {
         boolean rowAttack = random.nextBoolean();
         int index = random.nextInt(3);
 
-        Rectangle attackRect = createAttackRectangle(rowAttack, index);
+        Rectangle attack = createAttackRectangle(rowAttack, index);
 
-        // 紀錄原本的完整攻擊尺寸與位置，供後續瞬間變寬時還原
-        final double originalX = attackRect.getLayoutX();
-        final double originalY = attackRect.getLayoutY();
-        final double originalWidth = attackRect.getWidth();
-        final double originalHeight = attackRect.getHeight();
+        AttackShape originalShape = AttackShape.from(attack);
 
-        /*
-         * 紅色警告。
-         */
-        attackRect.setFill(Color.rgb(255, 0, 0, 0.48));
-        attackLayer.getChildren().add(attackRect);
+        playAttackWarningSequence(
+                attack,
+                rowAttack,
+                originalShape
+        );
+    }
 
-        FadeTransition redFlash1 = new FadeTransition(Duration.seconds(0.08), attackRect);
-        redFlash1.setFromValue(0.25);
-        redFlash1.setToValue(0.8);
+    private Rectangle createAttackRectangle(
+            boolean rowAttack,
+            int index
+    ) {
+        double cellSize = ARENA_SIZE / 3.0;
 
-        FadeTransition redFlash2 = new FadeTransition(Duration.seconds(0.08), attackRect);
-        redFlash2.setFromValue(0.8);
-        redFlash2.setToValue(0.25);
+        Rectangle attack;
 
-        FadeTransition redFlash3 = new FadeTransition(Duration.seconds(0.08), attackRect);
-        redFlash3.setFromValue(0.25);
-        redFlash3.setToValue(0.85);
+        if (rowAttack) {
+            attack = new Rectangle(SCREEN_WIDTH, cellSize);
+            attack.setLayoutX(0);
+            attack.setLayoutY(ARENA_Y + index * cellSize);
+        } else {
+            attack = new Rectangle(cellSize, SCREEN_HEIGHT);
+            attack.setLayoutX(ARENA_X + index * cellSize);
+            attack.setLayoutY(0);
+        }
 
-        PauseTransition warningHold = new PauseTransition(Duration.seconds(0.3));
+        attack.setMouseTransparent(true);
+        attack.setOpacity(1.0);
+
+        return attack;
+    }
+
+    private void playAttackWarningSequence(
+            Rectangle attack,
+            boolean rowAttack,
+            AttackShape originalShape
+    ) {
+        attack.setFill(Color.rgb(255, 0, 0, 0.48));
+        attackLayer.getChildren().add(attack);
 
         SequentialTransition warning = new SequentialTransition(
-                redFlash1,
-                redFlash2,
-                redFlash3,
-                warningHold
+                createWarningFlash(attack, 0.25, 0.80),
+                createWarningFlash(attack, 0.80, 0.25),
+                createWarningFlash(attack, 0.25, 0.85),
+                new PauseTransition(Duration.seconds(WARNING_HOLD_SECONDS))
         );
 
-        // 警告動畫結束
-        warning.setOnFinished(e -> {
-            // 1. 將顏色改為指示線顏色（例如白色），不透明度設為 1.0
-            attackRect.setFill(Color.rgb(255, 255, 255, 1.0));
-            attackRect.setOpacity(1.0);
-
-            // 2. 將 Rectangle 變形為一條跨越畫面的細線 (厚度 2.0 像素)
-            double lineWidth = 2.0;
-            if (rowAttack) {
-                // 橫向攻擊：高度變細，Y 座標下移至該區域的中心
-                attackRect.setHeight(lineWidth);
-                attackRect.setLayoutY(originalY + (originalHeight - lineWidth) / 2.0);
-            } else {
-                // 縱向攻擊：寬度變細，X 座標右移至該區域的中心
-                attackRect.setWidth(lineWidth);
-                attackRect.setLayoutX(originalX + (originalWidth - lineWidth) / 2.0);
-            }
-
-            // 3. 預備線顯示時間（此期間不算攻擊判定，維持 0.2 秒，可自訂）
-            PauseTransition lineHold = new PauseTransition(Duration.seconds(0.1));
-
-            lineHold.setOnFinished(lineEvent -> {
-                // 設定擴展動畫的時間（例如 0.06 秒，可依手感調整）
-                Duration expandDuration = Duration.seconds(0.06);
-
-                // 4. 正式進入攻擊判定期間（動畫開始時就加入判定，或動畫結束再加，這裡選擇開始時加入）
-                attackRect.setUserData("ACTIVE_ATTACK");
-
-                // 5. 使用 Timeline 製作極短時間的擴展動畫
-                KeyValue kvX = new KeyValue(attackRect.layoutXProperty(), originalX);
-                KeyValue kvY = new KeyValue(attackRect.layoutYProperty(), originalY);
-                KeyValue kvW = new KeyValue(attackRect.widthProperty(), originalWidth);
-                KeyValue kvH = new KeyValue(attackRect.heightProperty(), originalHeight);
-                // 顏色在動畫期間漸變為原本攻擊的半透明白色
-                KeyValue kvFill = new KeyValue(attackRect.fillProperty(), Color.rgb(255, 255, 255, 0.82));
-
-                KeyFrame kf = new KeyFrame(expandDuration, kvX, kvY, kvW, kvH, kvFill);
-                Timeline expandTimeline = new Timeline(kf);
-
-                expandTimeline.setOnFinished(expandDoneEvent -> {
-                    // 6. 擴展動畫結束後，維持攻擊判定的時間（原 0.48 秒）
-                    PauseTransition activeTime = new PauseTransition(Duration.seconds(0.48));
-                    activeTime.setOnFinished(event -> {
-                        FadeTransition fade = new FadeTransition(Duration.seconds(0.16), attackRect);
-                        fade.setFromValue(attackRect.getOpacity());
-                        fade.setToValue(0);
-                        fade.setOnFinished(done -> attackLayer.getChildren().remove(attackRect));
-                        fade.play();
-                    });
-                    activeTime.play();
-                });
-
-                expandTimeline.play();
-            });
-
-            lineHold.play();
-        });
+        warning.setOnFinished(event ->
+                showAimLineBeforeAttack(
+                        attack,
+                        rowAttack,
+                        originalShape
+                )
+        );
 
         warning.play();
     }
 
-    private Rectangle createAttackRectangle(boolean rowAttack, int index) {
-        double cell = ARENA_SIZE / 3.0;
+    private FadeTransition createWarningFlash(
+            Rectangle attack,
+            double fromOpacity,
+            double toOpacity
+    ) {
+        FadeTransition flash = new FadeTransition(
+                Duration.seconds(WARNING_FLASH_SECONDS),
+                attack
+        );
 
-        Rectangle rect;
+        flash.setFromValue(fromOpacity);
+        flash.setToValue(toOpacity);
+
+        return flash;
+    }
+
+    /**
+     * 警告結束後，先將攻擊範圍縮成細線。
+     *
+     * 這段期間不算正式攻擊判定。
+     */
+    private void showAimLineBeforeAttack(
+            Rectangle attack,
+            boolean rowAttack,
+            AttackShape originalShape
+    ) {
+        attack.setFill(Color.WHITE);
+        attack.setOpacity(1.0);
 
         if (rowAttack) {
-            rect = new Rectangle(SCREEN_WIDTH, cell);
-            rect.setLayoutX(0);
-            rect.setLayoutY(ARENA_Y + index * cell);
+            attack.setHeight(AIM_LINE_WIDTH);
+            attack.setLayoutY(
+                    originalShape.y() +
+                            (originalShape.height() - AIM_LINE_WIDTH) / 2.0
+            );
         } else {
-            rect = new Rectangle(cell, SCREEN_HEIGHT);
-            rect.setLayoutX(ARENA_X + index * cell);
-            rect.setLayoutY(0);
+            attack.setWidth(AIM_LINE_WIDTH);
+            attack.setLayoutX(
+                    originalShape.x() +
+                            (originalShape.width() - AIM_LINE_WIDTH) / 2.0
+            );
         }
 
-        rect.setMouseTransparent(true);
-        rect.setOpacity(1.0);
+        PauseTransition lineHold = new PauseTransition(
+                Duration.seconds(AIM_LINE_HOLD_SECONDS)
+        );
 
-        return rect;
+        lineHold.setOnFinished(event ->
+                expandAimLineIntoActiveAttack(
+                        attack,
+                        originalShape
+                )
+        );
+
+        lineHold.play();
     }
+
+    /**
+     * 將細線快速擴展回完整攻擊範圍。
+     *
+     * 從這一刻開始，才加入正式攻擊判定。
+     */
+    private void expandAimLineIntoActiveAttack(
+            Rectangle attack,
+            AttackShape originalShape
+    ) {
+        attack.setUserData(ACTIVE_ATTACK_TAG);
+
+        Timeline expand = new Timeline(
+                new KeyFrame(
+                        Duration.seconds(ATTACK_EXPAND_SECONDS),
+                        new KeyValue(attack.layoutXProperty(), originalShape.x()),
+                        new KeyValue(attack.layoutYProperty(), originalShape.y()),
+                        new KeyValue(attack.widthProperty(), originalShape.width()),
+                        new KeyValue(attack.heightProperty(), originalShape.height()),
+                        new KeyValue(attack.fillProperty(), Color.rgb(255, 255, 255, 0.82))
+                )
+        );
+
+        expand.setOnFinished(event ->
+                holdActiveAttackThenFadeOut(attack)
+        );
+
+        expand.play();
+    }
+
+    private void holdActiveAttackThenFadeOut(Rectangle attack) {
+        PauseTransition activeTime = new PauseTransition(
+                Duration.seconds(ATTACK_ACTIVE_SECONDS)
+        );
+
+        activeTime.setOnFinished(event ->
+                fadeOutAndRemoveAttack(attack)
+        );
+
+        activeTime.play();
+    }
+
+    private void fadeOutAndRemoveAttack(Rectangle attack) {
+        FadeTransition fade = new FadeTransition(
+                Duration.seconds(ATTACK_FADE_SECONDS),
+                attack
+        );
+
+        fade.setFromValue(attack.getOpacity());
+        fade.setToValue(0.0);
+
+        fade.setOnFinished(event ->
+                attackLayer.getChildren().remove(attack)
+        );
+
+        fade.play();
+    }
+
+    private record AttackShape(
+            double x,
+            double y,
+            double width,
+            double height
+    ) {
+        private static AttackShape from(Rectangle rectangle) {
+            return new AttackShape(
+                    rectangle.getLayoutX(),
+                    rectangle.getLayoutY(),
+                    rectangle.getWidth(),
+                    rectangle.getHeight()
+            );
+        }
+    }
+
+
+    // =========================================================
+    // Collision
+    // =========================================================
 
     private void checkAttackCollision() {
         if (ended || heartView == null) {
             return;
         }
 
-        // 【修改這裡】改用您定義的固定偏移量（Offset）來計算 Hitbox 座標
-        double hx = heartX + HEART_HITBOX_X_OFFSET;
-        double hy = heartY + HEART_HITBOX_Y_OFFSET;
-
-        Rectangle heartHitbox = new Rectangle(
-                hx,
-                hy,
-                HEART_HITBOX_SIZE,
-                HEART_HITBOX_SIZE
-        );
+        Rectangle heartHitbox = createHeartHitbox();
 
         for (Node node : attackLayer.getChildren()) {
             if (!(node instanceof Rectangle attack)) {
                 continue;
             }
 
-            if (!"ACTIVE_ATTACK".equals(attack.getUserData())) {
+            if (!ACTIVE_ATTACK_TAG.equals(attack.getUserData())) {
                 continue;
             }
 
-            Rectangle attackBounds = new Rectangle(
-                    attack.getLayoutX() + 2,
-                    attack.getLayoutY() + 2,
-                    attack.getWidth() - 4,
-                    attack.getHeight() - 4
-            );
+            Rectangle attackHitbox = createAttackHitbox(attack);
 
-            if (heartHitbox.getBoundsInParent().intersects(attackBounds.getBoundsInParent())) {
+            if (heartHitbox
+                    .getBoundsInParent()
+                    .intersects(attackHitbox.getBoundsInParent())) {
                 triggerGameOver();
                 return;
             }
         }
     }
+
+    private Rectangle createHeartHitbox() {
+        return new Rectangle(
+                heartX + HEART_HITBOX_X_OFFSET,
+                heartY + HEART_HITBOX_Y_OFFSET,
+                HEART_HITBOX_SIZE,
+                HEART_HITBOX_SIZE
+        );
+    }
+
+    /**
+     * 攻擊判定略微縮小 2px，避免看起來沒碰到卻死亡。
+     */
+    private Rectangle createAttackHitbox(Rectangle attack) {
+        return new Rectangle(
+                attack.getLayoutX() + 2,
+                attack.getLayoutY() + 2,
+                Math.max(0, attack.getWidth() - 4),
+                Math.max(0, attack.getHeight() - 4)
+        );
+    }
+
+
+    // =========================================================
+    // Game Over / Death
+    // =========================================================
 
     private void triggerGameOver() {
         if (ended) {
@@ -666,14 +1162,10 @@ public class MomBattleMiniGame extends StackPane {
         }
 
         ended = true;
+        battleStarted = false;
 
-        if (attackLoop != null) {
-            attackLoop.stop();
-        }
-
-        if (gameLoop != null) {
-            gameLoop.stop();
-        }
+        stopAttackLoop();
+        stopGameLoop();
 
         pressedKeys.clear();
 
@@ -684,60 +1176,51 @@ public class MomBattleMiniGame extends StackPane {
         stopOwnMusic();
         audioSystem.playSFX(SoundId.MOM_BATTLE_DEATH);
 
-        PauseTransition waitGif = new PauseTransition(Duration.seconds(2.3));
-        waitGif.setOnFinished(e -> finishAndDeath());
-        waitGif.play();
+        PauseTransition waitForDeathGif = new PauseTransition(
+                Duration.seconds(2.3)
+        );
+
+        waitForDeathGif.setOnFinished(event ->
+                finishAndTriggerDeath()
+        );
+
+        waitForDeathGif.play();
     }
 
-    private void finishAndDeath() {
-        /*
-         * 先移除小遊戲。
-         */
+    private void finishAndTriggerDeath() {
+        dispose();
+
         removeUINode(this);
 
         /*
          * 結束對話。
-         * 注意：如果你的 DialogueSystem.endDialogue() 會播回 scene BGM，
-         * 這裡後面會再 stop 一次，避免死亡時又短暫播回場景音樂。
+         *
+         * 若 DialogueSystem.endDialogue() 會恢復場景 BGM，
+         * DeathSystem.die() 之後死亡畫面會接管狀態。
          */
-        if (dialogueSystem != null && dialogueSystem.isActive()) {
+        if (dialogueSystem.isActive()) {
             dialogueSystem.endDialogue();
         }
 
-        DeathReason reason = (aliveTime < 60.0) ? deathA : ((aliveTime >= 120.0) ? deathC : deathB);
-        deathSystem.die(reason);
+        deathSystem.die(selectDeathReasonByAliveTime());
     }
 
-    public void dispose() {
-        ended = true;
-
-        if (attackLoop != null) {
-            attackLoop.stop();
-            attackLoop = null;
+    private DeathReason selectDeathReasonByAliveTime() {
+        if (aliveTime < DEATH_A_TIME_LIMIT) {
+            return deathA;
         }
 
-        if (gameLoop != null) {
-            gameLoop.stop();
-            gameLoop = null;
+        if (aliveTime >= DEATH_C_TIME_LIMIT) {
+            return deathC;
         }
 
-        stopOwnMusic();
-        pressedKeys.clear();
+        return deathB;
     }
 
-    private void stopOwnMusic() {
-        if (startMusic != null) {
-            startMusic.stop();
-            startMusic.dispose();
-            startMusic = null;
-        }
 
-        if (battleMusic != null) {
-            battleMusic.stop();
-            battleMusic.dispose();
-            battleMusic = null;
-        }
-    }
+    // =========================================================
+    // Utility
+    // =========================================================
 
     private Image loadImage(String path) {
         try {
@@ -750,14 +1233,18 @@ public class MomBattleMiniGame extends StackPane {
 
             return new Image(url.toExternalForm());
 
-        } catch (Exception e) {
+        } catch (Exception exception) {
             System.out.println("Image load failed: " + path);
-            e.printStackTrace();
+            exception.printStackTrace();
             return null;
         }
     }
 
-    private double clamp(double value, double min, double max) {
+    private double clamp(
+            double value,
+            double min,
+            double max
+    ) {
         return Math.max(min, Math.min(max, value));
     }
 }

@@ -1,32 +1,62 @@
 package ass.example.ui;
 
 import ass.example.Main;
-import ass.example.core.*;
-import ass.example.scenes.SceneManager;
-import ass.example.system.*;
-import ass.example.ui.CursorManager;
+import ass.example.core.Language;
+import ass.example.core.DeathReason;
+import ass.example.core.SceneType;
+import ass.example.core.SoundId;
+import ass.example.core.WindowMode;
+import ass.example.scenes.system.SceneManager;
+import ass.example.system.AchievementSystem;
+import ass.example.system.AudioSystem;
+import ass.example.system.LanguageSystem;
+import ass.example.system.MusicSystem;
+import ass.example.system.StreetEndlessRecordSystem;
+import ass.example.system.WindowSystem;
 import ass.example.ui.save.SaveMenuMode;
 import ass.example.ui.save.SaveSlotPanel;
+import com.almasb.fxgl.app.scene.FXGLMenu;
+import com.almasb.fxgl.app.scene.MenuType;
 import com.almasb.fxgl.dsl.FXGL;
-import javafx.animation.*;
+import javafx.animation.FadeTransition;
+import javafx.animation.Interpolator;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.ParallelTransition;
+import javafx.animation.PauseTransition;
+import javafx.animation.ScaleTransition;
+import javafx.animation.SequentialTransition;
+import javafx.animation.Timeline;
+import javafx.animation.TranslateTransition;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.ImageCursor;
 import javafx.scene.Node;
-import javafx.scene.control.*;
+import javafx.scene.Parent;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Slider;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.*;
-import javafx.scene.media.Media;
-import javafx.scene.media.MediaPlayer;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.Border;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.BorderStroke;
+import javafx.scene.layout.BorderStrokeStyle;
+import javafx.scene.layout.BorderWidths;
+import javafx.scene.layout.CornerRadii;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.util.Duration;
-import com.almasb.fxgl.app.scene.FXGLMenu;
-import com.almasb.fxgl.app.scene.MenuType;
 import javafx.util.StringConverter;
 
 import java.io.IOException;
@@ -35,78 +65,127 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 
-import static com.almasb.fxgl.dsl.FXGL.getGameScene;
 import static com.almasb.fxgl.dsl.FXGLForKtKt.getGameController;
 
+/**
+ * MainMenu
+ *
+ * 遊戲主選單。
+ *
+ * 功能：
+ * 1. 顯示主畫面背景、Logo、主選單按鈕。
+ * 2. 播放主選單進場動畫。
+ * 3. 提供故事模式、迷你遊戲、成就、設定、離開遊戲等入口。
+ * 4. 管理主選單內的子頁切換。
+ * 5. 管理音量、視窗、語言、開發者模式、重置資料等設定頁。
+ * 6. 管理成就列表展示。
+ *
+ * 單例判斷：
+ * MainMenu 不適合做成單例。
+ *
+ * 原因：
+ * - 它繼承 FXGLMenu，生命週期由 FXGL 管理。
+ * - 它是 UI 畫面本身，不是純資料或全域系統。
+ * - 它持有 pageLayer、selectedSettingsButton、expandedAchievementCell 等 UI 狀態。
+ * - 若做成單例，切換 Scene 或重新建立 Menu 時容易殘留舊 UI 狀態。
+ */
 public class MainMenu extends FXGLMenu {
 
-    private static final double SCREEN_WIDTH = 1280;
-    private static final double SCREEN_HEIGHT = 720;
+    // =========================================================
+    // Layout Constants
+    // =========================================================
+
+    private static final double SCREEN_WIDTH = 1280.0;
+    private static final double SCREEN_HEIGHT = 720.0;
+
+    private static final double MAIN_BUTTON_WIDTH = 280.0;
+    private static final double MAIN_BUTTON_HEIGHT = 58.0;
+
+    private static final double SUB_BUTTON_WIDTH = 240.0;
+    private static final double SUB_BUTTON_HEIGHT = 46.0;
+
+    private static final double SETTINGS_SIDE_BUTTON_WIDTH = 240.0;
+    private static final double SETTINGS_SIDE_BUTTON_HEIGHT = 46.0;
+
+
+    // =========================================================
+    // Assets
+    // =========================================================
+
+    private static final String MAIN_MENU_BG_PATH =
+            "/assets/textures/ui/mainmenu/titlescreen_bg.png";
+
+    private static final String MAIN_MENU_LOGO_PATH =
+            "/assets/textures/ui/mainmenu/titlescreen_logo.png";
+
+    private static final String MAIN_MENU_BGM_PATH =
+            "/assets/music/mainmenu/Happy Wheels Theme.mp3";
+
+
+    // =========================================================
+    // Dependencies
+    // =========================================================
+
+    private final AchievementSystem achievementSystem =
+            AchievementSystem.getInstance();
+
+    private final WindowSystem windowSystem =
+            WindowSystem.getInstance();
+
+    private final LanguageSystem languageSystem =
+            LanguageSystem.getInstance();
+
+    private final MusicSystem musicSystem =
+            MusicSystem.getInstance();
+
+    private final AudioSystem audioSystem =
+            AudioSystem.getInstance();
+
+
+    // =========================================================
+    // Root UI
+    // =========================================================
 
     private final StackPane root = new StackPane();
 
     private ImageView backgroundView;
     private ImageView logoView;
-    private VBox mainButtonBox;
 
+    private VBox mainButtonBox;
     private StackPane pageLayer;
-    private StackPane expandedAchievementCell = null;
+    private Rectangle darkOverlay;
 
     private Label devModeLabel;
+
+
+    // =========================================================
+    // Page State
+    // =========================================================
+
+    private StackPane selectedSettingsButton;
+    private StackPane expandedAchievementCell;
 
     private boolean firstCreate = true;
     private boolean cutscene = true;
 
-    private final AchievementSystem achievementSystem = new AchievementSystem();
 
-    // 選項頁
-    private Rectangle darkOverlay;
-    private StackPane selectedSettingsButton = null;
+    // =========================================================
+    // Cached Images
+    // =========================================================
+
     private Image volumeIcon;
     private Image volumeDownIcon;
     private Image volumeMuteIcon;
-    private final WindowSystem windowSystem = WindowSystem.getInstance();
-    private final LanguageSystem languageSystem = LanguageSystem.getInstance();
 
-    // Sound
-    private final MusicSystem musicSystem = MusicSystem.getInstance();
-    private final AudioSystem audioSystem = AudioSystem.getInstance();
 
-    @Override
-    public void onCreate() {
-        windowSystem.installResizeListener();
-        windowSystem.applySavedSettings();
-
-        musicSystem.stopBGM();
-
-        if (firstCreate) {
-            firstCreate = false;
-
-            resetToMainMenuFirst();
-            playIntroAnimation();
-        } else {
-            resetToMainMenuSecondary();
-        }
-
-        musicSystem.playBGMIntroThenLoop(
-                "/assets/music/mainmenu/Happy Wheels Theme.mp3",
-                1.0,
-                20.5
-        );
-    }
-
-    @Override
-    public void onDestroy() {
-        musicSystem.stopBGM();
-    }
+    // =========================================================
+    // Constructor / FXGL Lifecycle
+    // =========================================================
 
     public MainMenu() {
         super(MenuType.MAIN_MENU);
 
-        root.setPrefSize(SCREEN_WIDTH, SCREEN_HEIGHT);
-        root.setMinSize(0, 0);
-        root.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
-
+        setupRoot();
         createBackground();
         createDarkOverlay();
         createPageLayer();
@@ -116,22 +195,63 @@ public class MainMenu extends FXGLMenu {
 
         getContentRoot().getChildren().add(root);
 
-        CursorManager.applyCustomCursorRecursively(getContentRoot());
+        CursorManager.install(getContentRoot());
 
         resetToMainMenuFirst();
     }
 
-    private String text(String key) {
-        return languageSystem.text(key);
+    /**
+     * FXGL Menu 建立時呼叫。
+     */
+    @Override
+    public void onCreate() {
+        CursorManager.install(getContentRoot());
+
+        windowSystem.installResizeListener();
+        windowSystem.applySavedSettings();
+
+        musicSystem.stopBGM();
+
+        if (firstCreate) {
+            firstCreate = false;
+            resetToMainMenuFirst();
+            playIntroAnimation();
+        } else {
+            resetToMainMenuSecondary();
+        }
+
+        musicSystem.playBGMIntroThenLoop(
+                MAIN_MENU_BGM_PATH,
+                1.0,
+                20.5
+        );
     }
 
-    // =========================
-    // 基礎畫面
-    // =========================
+    /**
+     * FXGL Menu 銷毀時呼叫。
+     */
+    @Override
+    public void onDestroy() {
+        musicSystem.stopBGM();
+    }
 
+
+    // =========================================================
+    // Basic Setup
+    // =========================================================
+
+    private void setupRoot() {
+        root.setPrefSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+        root.setMinSize(0, 0);
+        root.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+    }
+
+    /**
+     * 建立主選單背景。
+     */
     private void createBackground() {
         backgroundView = loadImageView(
-                "/assets/textures/ui/mainmenu/titlescreen_bg.png",
+                MAIN_MENU_BG_PATH,
                 SCREEN_WIDTH,
                 SCREEN_HEIGHT
         );
@@ -139,19 +259,43 @@ public class MainMenu extends FXGLMenu {
         backgroundView.setOpacity(0);
         backgroundView.setPreserveRatio(false);
 
-        /*
-         * 重點：
-         * 背景跟著 root 尺寸鋪滿，不會因視窗變大被推到一邊。
-         */
         backgroundView.fitWidthProperty().bind(root.widthProperty());
         backgroundView.fitHeightProperty().bind(root.heightProperty());
 
         root.getChildren().add(backgroundView);
     }
 
+    /**
+     * 建立黑色半透明遮罩。
+     *
+     * 用於打開子頁時讓主畫面變暗。
+     */
+    private void createDarkOverlay() {
+        darkOverlay = new Rectangle(SCREEN_WIDTH, SCREEN_HEIGHT);
+        darkOverlay.setFill(Color.rgb(0, 0, 0, 0.5));
+        darkOverlay.setOpacity(0);
+        darkOverlay.setMouseTransparent(true);
+
+        root.getChildren().add(darkOverlay);
+    }
+
+    /**
+     * 建立子頁圖層。
+     */
+    private void createPageLayer() {
+        pageLayer = new StackPane();
+        pageLayer.setVisible(false);
+        pageLayer.setPickOnBounds(false);
+
+        root.getChildren().add(pageLayer);
+    }
+
+    /**
+     * 建立 Logo。
+     */
     private void createLogo() {
         logoView = loadImageView(
-                "/assets/textures/ui/mainmenu/titlescreen_logo.png",
+                MAIN_MENU_LOGO_PATH,
                 612,
                 195
         );
@@ -166,37 +310,29 @@ public class MainMenu extends FXGLMenu {
         root.getChildren().add(logoView);
     }
 
-    private void createPageLayer() {
-        pageLayer = new StackPane();
-        pageLayer.setVisible(false);
-        pageLayer.setPickOnBounds(false);
-
-        root.getChildren().add(pageLayer);
-    }
-
+    /**
+     * 建立主選單按鈕。
+     */
     private void createMainButtons() {
         mainButtonBox = new VBox(16);
         mainButtonBox.setAlignment(Pos.CENTER);
         mainButtonBox.setOpacity(0);
         mainButtonBox.setTranslateY(80);
 
-        mainButtonBox.getChildren().addAll(
-                createMenuButton(text("menu.story"), this::showStoryModePage),
-                createMenuButton(text("menu.miniGame"), this::showMiniGameModePage),
-                createMenuButton(text("menu.achievement"), this::showAchievementPage),
-                createMenuButton(text("menu.settings"), this::showSettingsPage),
-                createMenuButton(text("menu.exit"), this::requestExitGame , exitButtonStyle())
-        );
+        refreshMainMenuTexts();
 
         StackPane.setAlignment(mainButtonBox, Pos.TOP_CENTER);
-
         StackPane.setMargin(mainButtonBox, new Insets(225, 0, 0, 0));
 
         root.getChildren().add(mainButtonBox);
     }
 
+    /**
+     * 建立 DEV MODE 標籤。
+     */
     private void createDeveloperLabel() {
         devModeLabel = new Label("DEV MODE");
+
         devModeLabel.setStyle("""
                 -fx-font-size: 13px;
                 -fx-text-fill: rgba(255,255,255,0.65);
@@ -212,92 +348,135 @@ public class MainMenu extends FXGLMenu {
         root.getChildren().add(devModeLabel);
     }
 
-    // =========================
-    // 主畫面動畫
-    // =========================
 
+    // =========================================================
+    // Main Menu Animation
+    // =========================================================
+
+    /**
+     * 播放第一次進入主選單的動畫。
+     */
     private void playIntroAnimation() {
-        FadeTransition bgFade = new FadeTransition(Duration.seconds(0.85), backgroundView);
-        bgFade.setFromValue(0);
-        bgFade.setToValue(1);
+        ParallelTransition backgroundIntro = createBackgroundIntroAnimation();
+        ParallelTransition logoIntro = createLogoIntroAnimation();
+        ParallelTransition buttonIntro = createMainButtonsIntroAnimation();
 
-        ScaleTransition bgScale = new ScaleTransition(Duration.seconds(0.65), backgroundView);
-        bgScale.setFromX(1.08);
-        bgScale.setFromY(1.08);
-        bgScale.setToX(1.0);
-        bgScale.setToY(1.0);
-        bgScale.setInterpolator(Interpolator.EASE_OUT);
-
-        ParallelTransition bgIntro = new ParallelTransition(
-                bgFade,
-                bgScale
+        SequentialTransition sequence = new SequentialTransition(
+                backgroundIntro,
+                logoIntro,
+                buttonIntro
         );
 
-        FadeTransition logoFade = new FadeTransition(Duration.seconds(0.35), logoView);
-        logoFade.setFromValue(0);
-        logoFade.setToValue(1);
-
-        ScaleTransition logoScale = new ScaleTransition(Duration.seconds(0.42), logoView);
-        logoScale.setFromX(0.4);
-        logoScale.setFromY(0.4);
-        logoScale.setToX(1.0);
-        logoScale.setToY(1.0);
-        logoScale.setInterpolator(Interpolator.EASE_OUT);
-
-        ParallelTransition logoPop = new ParallelTransition(logoFade, logoScale);
-
-        FadeTransition buttonFade = new FadeTransition(Duration.seconds(0.45), mainButtonBox);
-        buttonFade.setFromValue(0);
-        buttonFade.setToValue(1);
-
-        TranslateTransition buttonMove = new TranslateTransition(Duration.seconds(0.45), mainButtonBox);
-        buttonMove.setFromY(80);
-        buttonMove.setToY(0);
-        buttonMove.setInterpolator(Interpolator.EASE_OUT);
-
-        ParallelTransition buttonAnim = new ParallelTransition(buttonFade, buttonMove);
-
-        SequentialTransition seq = new SequentialTransition(
-                bgIntro,
-                // new PauseTransition(Duration.seconds(1.5)),
-                logoPop,
-                // new PauseTransition(Duration.seconds(0.13)),
-                buttonAnim
-        );
-
-        seq.setOnFinished(e -> {
-            cutscene = false;
-        });
-
-        seq.play();
+        sequence.setOnFinished(event -> cutscene = false);
+        sequence.play();
     }
 
-    // =========================
-    // Page 切換
-    // =========================
+    private ParallelTransition createBackgroundIntroAnimation() {
+        FadeTransition fade = new FadeTransition(
+                Duration.seconds(0.85),
+                backgroundView
+        );
+        fade.setFromValue(0);
+        fade.setToValue(1);
 
+        ScaleTransition scale = new ScaleTransition(
+                Duration.seconds(0.65),
+                backgroundView
+        );
+        scale.setFromX(1.08);
+        scale.setFromY(1.08);
+        scale.setToX(1.0);
+        scale.setToY(1.0);
+        scale.setInterpolator(Interpolator.EASE_OUT);
+
+        return new ParallelTransition(fade, scale);
+    }
+
+    private ParallelTransition createLogoIntroAnimation() {
+        FadeTransition fade = new FadeTransition(
+                Duration.seconds(0.35),
+                logoView
+        );
+        fade.setFromValue(0);
+        fade.setToValue(1);
+
+        ScaleTransition scale = new ScaleTransition(
+                Duration.seconds(0.42),
+                logoView
+        );
+        scale.setFromX(0.4);
+        scale.setFromY(0.4);
+        scale.setToX(1.0);
+        scale.setToY(1.0);
+        scale.setInterpolator(Interpolator.EASE_OUT);
+
+        return new ParallelTransition(fade, scale);
+    }
+
+    private ParallelTransition createMainButtonsIntroAnimation() {
+        FadeTransition fade = new FadeTransition(
+                Duration.seconds(0.45),
+                mainButtonBox
+        );
+        fade.setFromValue(0);
+        fade.setToValue(1);
+
+        TranslateTransition move = new TranslateTransition(
+                Duration.seconds(0.45),
+                mainButtonBox
+        );
+        move.setFromY(80);
+        move.setToY(0);
+        move.setInterpolator(Interpolator.EASE_OUT);
+
+        return new ParallelTransition(fade, move);
+    }
+
+
+    // =========================================================
+    // Page Navigation
+    // =========================================================
+
+    /**
+     * 顯示子頁。
+     */
     private void showPage(Node page) {
+        selectedSettingsButton = null;
+
         pageLayer.getChildren().clear();
         pageLayer.getChildren().add(page);
 
         pageLayer.setVisible(true);
+        pageLayer.setPickOnBounds(true);
         pageLayer.setOpacity(0);
 
-        FadeTransition darkFade = new FadeTransition(Duration.seconds(0.25), darkOverlay);
-        darkFade.setFromValue(darkOverlay.getOpacity());
-        darkFade.setToValue(1.0);
+        FadeTransition darkFade = createFadeTransition(
+                darkOverlay,
+                darkOverlay.getOpacity(),
+                1.0,
+                0.25
+        );
 
-        FadeTransition logoFade = new FadeTransition(Duration.seconds(0.18), logoView);
-        logoFade.setFromValue(logoView.getOpacity());
-        logoFade.setToValue(0);
+        FadeTransition logoFade = createFadeTransition(
+                logoView,
+                logoView.getOpacity(),
+                0,
+                0.18
+        );
 
-        FadeTransition buttonFade = new FadeTransition(Duration.seconds(0.18), mainButtonBox);
-        buttonFade.setFromValue(mainButtonBox.getOpacity());
-        buttonFade.setToValue(0);
+        FadeTransition buttonFade = createFadeTransition(
+                mainButtonBox,
+                mainButtonBox.getOpacity(),
+                0,
+                0.18
+        );
 
-        FadeTransition pageFade = new FadeTransition(Duration.seconds(0.28), pageLayer);
-        pageFade.setFromValue(0);
-        pageFade.setToValue(1);
+        FadeTransition pageFade = createFadeTransition(
+                pageLayer,
+                0,
+                1,
+                0.28
+        );
 
         ParallelTransition transition = new ParallelTransition(
                 darkFade,
@@ -306,7 +485,7 @@ public class MainMenu extends FXGLMenu {
                 pageFade
         );
 
-        transition.setOnFinished(e -> {
+        transition.setOnFinished(event -> {
             logoView.setVisible(false);
             mainButtonBox.setVisible(false);
         });
@@ -314,25 +493,40 @@ public class MainMenu extends FXGLMenu {
         transition.play();
     }
 
+    /**
+     * 關閉目前子頁，回主選單。
+     */
     private void closePage() {
         logoView.setVisible(true);
         mainButtonBox.setVisible(true);
 
-        FadeTransition pageFade = new FadeTransition(Duration.seconds(0.18), pageLayer);
-        pageFade.setFromValue(pageLayer.getOpacity());
-        pageFade.setToValue(0);
+        FadeTransition pageFade = createFadeTransition(
+                pageLayer,
+                pageLayer.getOpacity(),
+                0,
+                0.18
+        );
 
-        FadeTransition darkFade = new FadeTransition(Duration.seconds(0.22), darkOverlay);
-        darkFade.setFromValue(darkOverlay.getOpacity());
-        darkFade.setToValue(0);
+        FadeTransition darkFade = createFadeTransition(
+                darkOverlay,
+                darkOverlay.getOpacity(),
+                0,
+                0.22
+        );
 
-        FadeTransition logoFade = new FadeTransition(Duration.seconds(0.22), logoView);
-        logoFade.setFromValue(0);
-        logoFade.setToValue(1);
+        FadeTransition logoFade = createFadeTransition(
+                logoView,
+                0,
+                1,
+                0.22
+        );
 
-        FadeTransition buttonFade = new FadeTransition(Duration.seconds(0.22), mainButtonBox);
-        buttonFade.setFromValue(0);
-        buttonFade.setToValue(1);
+        FadeTransition buttonFade = createFadeTransition(
+                mainButtonBox,
+                0,
+                1,
+                0.22
+        );
 
         ParallelTransition transition = new ParallelTransition(
                 pageFade,
@@ -341,115 +535,165 @@ public class MainMenu extends FXGLMenu {
                 buttonFade
         );
 
-        transition.setOnFinished(e -> {
+        transition.setOnFinished(event -> {
             pageLayer.getChildren().clear();
             pageLayer.setVisible(false);
+            pageLayer.setPickOnBounds(false);
         });
 
         transition.play();
     }
 
-    // =========================
-    // 故事模式
-    // =========================
+    /**
+     * 更換右側內容。
+     */
+    private void showRightContent(BorderPane page, Node content) {
+        page.setCenter(content);
+    }
+
+
+    // =========================================================
+    // Story Mode Page
+    // =========================================================
 
     private void showStoryModePage() {
         BorderPane page = createSubPageBase();
 
         VBox leftMenu = createLeftMenu(
-                createSubButton(text("menu.storyMode.newGame"), () -> {
-                    fireNewGame();
-                }),
-                createSubButton(text("menu.storyMode.loadSaves"), () -> {
-                    showRightContent(
-                            page,
-                            new SaveSlotPanel(
-                                    SaveMenuMode.LOAD,
-                                    null,
-                                    slotIndex -> {
-                                        fireNewGame();
-                                    },
-                                    null
-                            )
-                    );
-                }),
+                createSubButton(text("menu.storyMode.newGame"), this::startStoryNewGame),
 
-                createSubButton(text("menu.storyMode.editSave"), () -> {
-                    showRightContent(
-                            page,
-                            new SaveSlotPanel(
-                                    SaveMenuMode.EDIT,
-                                    null,
-                                    null,
-                                    null
-                            )
-                    );
-                }),
+                createSubButton(text("menu.storyMode.loadSaves"), () ->
+                        showRightContent(
+                                page,
+                                new SaveSlotPanel(
+                                        SaveMenuMode.LOAD,
+                                        null,
+                                        slotIndex -> fireNewGame(),
+                                        null
+                                )
+                        )
+                ),
+
+                createSubButton(text("menu.storyMode.editSave"), () ->
+                        showRightContent(
+                                page,
+                                new SaveSlotPanel(
+                                        SaveMenuMode.EDIT,
+                                        null,
+                                        null,
+                                        null
+                                )
+                        )
+                ),
+
                 createSubButton(text("menu.common.back"), this::closePage)
         );
 
         page.setLeft(leftMenu);
-        page.setCenter(createInfoPanel(text("menu.story"), text("menu.storyMode.description")));
-
-        showPage(page);
-    }
-
-    // =========================
-    // 無盡模式
-    // =========================
-
-    private void showMiniGameModePage() {
-        BorderPane page = createSubPageBase();
-
-        VBox leftMenu = createLeftMenu(
-                createSubButton(text("menu.miniGameMode.StreetEndless"), () -> {
-                    musicSystem.stopBGM();
-                    SceneManager.requestStartScene(SceneType.STREET_ENDLESS);
-                    fireNewGame();
-                }),
-                createSubButton(text("menu.miniGameMode.comingSoon"), () -> showRightContent(page, createInfoPanel(text("menu.miniGameMode.comingSoon"), text("menu.miniGameMode.comingSoon.description")))),
-                createSubButton(text("menu.miniGameMode.comingSoon"), () -> showRightContent(page, createInfoPanel(text("menu.miniGameMode.comingSoon"), text("menu.miniGameMode.comingSoon.description")))),
-                createSubButton(text("menu.miniGameMode.comingSoon"), () -> showRightContent(page, createInfoPanel(text("menu.miniGameMode.comingSoon"), text("menu.miniGameMode.comingSoon.description")))),
-                createSubButton(text("menu.common.back"), this::closePage)
-        );
-
-        page.setLeft(leftMenu);
-        page.setCenter(createInfoPanel(text("menu.miniGame"), text("menu.miniGameMode.description")
+        page.setCenter(createInfoPanel(
+                text("menu.story"),
+                text("menu.storyMode.description")
         ));
 
         showPage(page);
     }
 
-    // =========================
-    // 成就頁
-    // =========================
+    /**
+     * 開始故事模式新遊戲。
+     */
+    private void startStoryNewGame() {
+        musicSystem.stopBGM();
+        SceneManager.clearPendingStartScene();
+        fireNewGame();
+    }
+
+
+    // =========================================================
+    // Mini Game Page
+    // =========================================================
+
+    private void showMiniGameModePage() {
+        BorderPane page = createSubPageBase();
+
+        VBox leftMenu = createLeftMenu(
+                createSubButton(
+                        text("menu.miniGameMode.StreetEndless"),
+                        this::startStreetEndlessMode
+                ),
+
+                createSubButton(
+                        text("menu.miniGameMode.comingSoon"),
+                        () -> showComingSoonMiniGameInfo(page)
+                ),
+
+                createSubButton(
+                        text("menu.miniGameMode.comingSoon"),
+                        () -> showComingSoonMiniGameInfo(page)
+                ),
+
+                createSubButton(
+                        text("menu.miniGameMode.comingSoon"),
+                        () -> showComingSoonMiniGameInfo(page)
+                ),
+
+                createSubButton(text("menu.common.back"), this::closePage)
+        );
+
+        page.setLeft(leftMenu);
+        page.setCenter(createInfoPanel(
+                text("menu.miniGame"),
+                text("menu.miniGameMode.description")
+        ));
+
+        showPage(page);
+    }
+
+    /**
+     * 開始 Street Endless 迷你遊戲。
+     */
+    private void startStreetEndlessMode() {
+        musicSystem.stopBGM();
+        SceneManager.requestStartScene(SceneType.STREET_ENDLESS);
+        fireNewGame();
+    }
+
+    /**
+     * 顯示尚未開放關卡資訊。
+     */
+    private void showComingSoonMiniGameInfo(BorderPane page) {
+        showRightContent(
+                page,
+                createInfoPanel(
+                        text("menu.miniGameMode.comingSoon"),
+                        text("menu.miniGameMode.comingSoon.description")
+                )
+        );
+    }
+
+
+    // =========================================================
+    // Achievement Page
+    // =========================================================
 
     private void showAchievementPage() {
         StackPane page = new StackPane();
         page.setPrefSize(SCREEN_WIDTH, SCREEN_HEIGHT);
 
-        Text pageTitle = createPageTitle("成就");
+        Text pageTitle = createPageTitle(text("menu.achievement"));
         StackPane.setAlignment(pageTitle, Pos.TOP_CENTER);
         StackPane.setMargin(pageTitle, new Insets(42, 0, 0, 0));
 
         ScrollPane achievementScroll = createAchievementScroll();
-        achievementScroll.setPrefSize(SCREEN_WIDTH, 530);
-        achievementScroll.setMaxSize(Double.MAX_VALUE, 530);
-        achievementScroll.getStyleClass().add("settings-scroll");
-        achievementScroll.getStylesheets().add(
-                getClass().getResource("/style.css").toExternalForm()
-        );
 
         StackPane.setAlignment(achievementScroll, Pos.CENTER);
         StackPane.setMargin(achievementScroll, new Insets(90, 0, 70, 0));
 
-        StackPane backButton = createSubButton(text("menu.common.back"), this::closePage);
-        StackPane.setAlignment(backButton, Pos.BOTTOM_LEFT);
+        StackPane backButton = createSubButton(
+                text("menu.common.back"),
+                this::closePage
+        );
 
-        /*
-         * 目前 X 值維持左側，但 Y 再偏下。
-         * 如果還想更低，把 bottom 的 18 改成 8。
-         */
+        StackPane.setAlignment(backButton, Pos.BOTTOM_LEFT);
         StackPane.setMargin(backButton, new Insets(0, 0, 42, 57));
 
         page.getChildren().addAll(
@@ -465,84 +709,36 @@ public class MainMenu extends FXGLMenu {
         VBox list = new VBox(18);
         list.setAlignment(Pos.TOP_CENTER);
         list.setPadding(new Insets(18, 0, 18, 0));
+        list.setStyle("-fx-background-color: transparent;");
 
         expandedAchievementCell = null;
 
-        DeathReason[] reasons = DeathReason.values();
-
-        for (DeathReason reason : reasons) {
+        for (DeathReason reason : DeathReason.values()) {
             list.getChildren().add(createExpandableAchievementCell(reason));
         }
 
         ScrollPane scroll = new ScrollPane(list);
-
-        /*
-         * 讓 ScrollPane 吃滿左右。
-         * 這樣捲軸會靠在畫面最右側。
-         */
+        scroll.setPrefSize(SCREEN_WIDTH, 530);
+        scroll.setMaxSize(Double.MAX_VALUE, 530);
         scroll.setPrefWidth(SCREEN_WIDTH);
         scroll.setMaxWidth(Double.MAX_VALUE);
-
         scroll.setFitToWidth(true);
         scroll.setPannable(true);
         scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
 
-        /*
-         * 關鍵：
-         * list 的寬度綁定 ScrollPane viewport 寬度。
-         * 這樣 VBox 的 Pos.TOP_CENTER 才會以整個畫面寬度置中。
-         */
         list.prefWidthProperty().bind(scroll.widthProperty());
 
         scroll.setStyle("""
-            -fx-background: transparent;
-            -fx-background-color: transparent;
-            -fx-padding: 0;
-            """);
+                -fx-background: transparent;
+                -fx-background-color: transparent;
+                -fx-padding: 0;
+                """);
 
-        list.setStyle("""
-            -fx-background-color: transparent;
-            """);
+        applyStyleSheet(scroll);
+        scroll.getStyleClass().add("settings-scroll");
 
         return scroll;
-    }
-
-    private Node createAchievementIcon(DeathReason reason, boolean unlocked) {
-        if (!unlocked) {
-            Text locked = new Text("?");
-            locked.setStyle("""
-                -fx-font-size: 38px;
-                -fx-fill: white;
-                -fx-font-weight: bold;
-                """);
-            return locked;
-        }
-
-        String iconPath = reason.getIconPath();
-
-        if (iconPath != null && !iconPath.isBlank()) {
-            try {
-                var url = getClass().getResource("/" + iconPath);
-
-                if (url != null) {
-                    ImageView imageView = new ImageView(new Image(url.toExternalForm()));
-                    imageView.setFitWidth(54);
-                    imageView.setFitHeight(54);
-                    imageView.setPreserveRatio(true);
-                    return imageView;
-                }
-            } catch (Exception ignored) {
-            }
-        }
-
-        Text fallback = new Text("☠");
-        fallback.setStyle("""
-            -fx-font-size: 38px;
-            -fx-fill: white;
-            -fx-font-weight: bold;
-            """);
-        return fallback;
     }
 
     private StackPane createExpandableAchievementCell(DeathReason reason) {
@@ -558,173 +754,279 @@ public class MainMenu extends FXGLMenu {
         slot.setMaxSize(expandedWidth, height);
         slot.setAlignment(Pos.CENTER);
 
+        Rectangle background = createAchievementCellBackground(
+                collapsedWidth,
+                height,
+                unlocked
+        );
+
+        StackPane iconBox = new StackPane();
+        iconBox.setPrefSize(70, height);
+        iconBox.setMinSize(70, height);
+        iconBox.getChildren().add(createAchievementIcon(reason, unlocked));
+
+        VBox detailBox = createAchievementDetailBox(reason, unlocked);
+
         HBox card = new HBox(14);
         card.setAlignment(Pos.CENTER_LEFT);
         card.setPrefSize(collapsedWidth, height);
         card.setMinSize(collapsedWidth, height);
         card.setMaxSize(collapsedWidth, height);
         card.setPadding(new Insets(0, 18, 0, 18));
-
-        Rectangle bg = new Rectangle(collapsedWidth, height);
-        bg.setArcWidth(14);
-        bg.setArcHeight(14);
-        bg.setFill(unlocked
-                ? Color.rgb(210, 60, 60, 0.78)
-                : Color.rgb(40, 40, 40, 0.88));
-        bg.setStroke(Color.rgb(255, 255, 255, unlocked ? 0.9 : 0.35));
-        bg.setStrokeWidth(unlocked ? 2.0 : 1.0);
-
-        StackPane iconBox = new StackPane();
-        iconBox.setPrefSize(70, height);
-        iconBox.setMinSize(70, height);
-
-        Node icon = createAchievementIcon(reason, unlocked);
-        iconBox.getChildren().add(icon);
-
-        VBox detailBox = new VBox(5);
-        detailBox.setAlignment(Pos.CENTER_LEFT);
-        detailBox.setOpacity(0);
-        detailBox.setMouseTransparent(true);
-
-        Text title = new Text(unlocked ? reason.getTitle() : text("Locked"));
-        title.setWrappingWidth(220);
-        title.setStyle("""
-            -fx-font-size: 18px;
-            -fx-fill: white;
-            -fx-font-weight: bold;
-            """);
-
-        Text subtitle = new Text(unlocked ? reason.getSubtitle() : text("menu.achievement.description"));
-        subtitle.setWrappingWidth(220);
-        subtitle.setStyle("""
-            -fx-font-size: 14px;
-            -fx-fill: rgba(255,255,255,0.78);
-            """);
-
-        detailBox.getChildren().addAll(title, subtitle);
-
-        StackPane cardBackgroundLayer = new StackPane(bg);
-        cardBackgroundLayer.setMouseTransparent(true);
-        cardBackgroundLayer.setTranslateX(8);
-
         card.getChildren().addAll(iconBox, detailBox);
 
-        StackPane cardWrapper = new StackPane(cardBackgroundLayer, card);
+        StackPane backgroundLayer = new StackPane(background);
+        backgroundLayer.setMouseTransparent(true);
+        backgroundLayer.setTranslateX(8);
+
+        StackPane cardWrapper = new StackPane(backgroundLayer, card);
         cardWrapper.setPrefSize(collapsedWidth, height);
         cardWrapper.setMinSize(collapsedWidth, height);
         cardWrapper.setMaxSize(collapsedWidth, height);
         cardWrapper.setAlignment(Pos.CENTER);
+        cardWrapper.setUserData(false);
 
-        /*
-         * cardWrapper 自己仍然在 slot 中央，
-         * 但 cardWrapper 裡面的內容靠左。
-         */
-        StackPane.setAlignment(cardBackgroundLayer, Pos.CENTER);
-        StackPane.setAlignment(card, Pos.CENTER_LEFT);
-
-        /*
-         * 讓 HBox 的寬度跟著 cardWrapper 展開。
-         * 這樣展開後 icon + detailBox 會自然貼向左側。
-         */
         card.prefWidthProperty().bind(cardWrapper.widthProperty());
         card.minWidthProperty().bind(cardWrapper.widthProperty());
         card.maxWidthProperty().bind(cardWrapper.widthProperty());
 
         slot.getChildren().add(cardWrapper);
 
-        cardWrapper.setUserData(false);
-
-        slot.setOnMouseClicked(e -> {
+        slot.setOnMouseClicked(event -> {
             if (!unlocked) {
                 return;
             }
 
-            boolean currentlyExpanded = (boolean) cardWrapper.getUserData();
-
-            if (currentlyExpanded) {
-                collapseAchievementCell(cardWrapper, bg, detailBox, collapsedWidth, height);
-                expandedAchievementCell = null;
-                return;
-            }
-
-            if (expandedAchievementCell != null && expandedAchievementCell != cardWrapper) {
-                collapseExpandedAchievementCell();
-            }
-
-            expandAchievementCell(cardWrapper, bg, detailBox, expandedWidth, height);
-            expandedAchievementCell = cardWrapper;
+            toggleAchievementCell(
+                    cardWrapper,
+                    background,
+                    detailBox,
+                    collapsedWidth,
+                    expandedWidth,
+                    height
+            );
         });
 
         return slot;
     }
 
-    private void expandAchievementCell(
+    private Rectangle createAchievementCellBackground(
+            double width,
+            double height,
+            boolean unlocked
+    ) {
+        Rectangle background = new Rectangle(width, height);
+
+        background.setArcWidth(14);
+        background.setArcHeight(14);
+        background.setFill(
+                unlocked
+                        ? Color.rgb(210, 60, 60, 0.78)
+                        : Color.rgb(40, 40, 40, 0.88)
+        );
+        background.setStroke(
+                Color.rgb(255, 255, 255, unlocked ? 0.9 : 0.35)
+        );
+        background.setStrokeWidth(unlocked ? 2.0 : 1.0);
+
+        return background;
+    }
+
+    private VBox createAchievementDetailBox(
+            DeathReason reason,
+            boolean unlocked
+    ) {
+        VBox detailBox = new VBox(5);
+        detailBox.setAlignment(Pos.CENTER_LEFT);
+        detailBox.setOpacity(0);
+        detailBox.setMouseTransparent(true);
+
+        Text title = new Text(
+                unlocked
+                        ? reason.getTitle()
+                        : text("menu.achievement.locked")
+        );
+        title.setWrappingWidth(220);
+        title.setStyle("""
+                -fx-font-size: 18px;
+                -fx-fill: white;
+                -fx-font-weight: bold;
+                """);
+
+        Text subtitle = new Text(
+                unlocked
+                        ? reason.getSubtitle()
+                        : text("menu.achievement.description")
+        );
+        subtitle.setWrappingWidth(220);
+        subtitle.setStyle("""
+                -fx-font-size: 14px;
+                -fx-fill: rgba(255,255,255,0.78);
+                """);
+
+        detailBox.getChildren().addAll(title, subtitle);
+
+        return detailBox;
+    }
+
+    private Node createAchievementIcon(
+            DeathReason reason,
+            boolean unlocked
+    ) {
+        if (!unlocked) {
+            return createIconText("?");
+        }
+
+        Image iconImage = loadDeathReasonIcon(reason);
+
+        if (iconImage != null) {
+            ImageView imageView = new ImageView(iconImage);
+            imageView.setFitWidth(54);
+            imageView.setFitHeight(54);
+            imageView.setPreserveRatio(true);
+            return imageView;
+        }
+
+        return createIconText("☠");
+    }
+
+    private Text createIconText(String value) {
+        Text text = new Text(value);
+
+        text.setStyle("""
+                -fx-font-size: 38px;
+                -fx-fill: white;
+                -fx-font-weight: bold;
+                """);
+
+        return text;
+    }
+
+    private Image loadDeathReasonIcon(DeathReason reason) {
+        if (reason == null ||
+                reason.getIconPath() == null ||
+                reason.getIconPath().isBlank()) {
+            return null;
+        }
+
+        String path = reason.getIconPath().startsWith("/")
+                ? reason.getIconPath()
+                : "/" + reason.getIconPath();
+
+        return loadImageOrNull(path);
+    }
+
+    private void toggleAchievementCell(
             StackPane cardWrapper,
-            Rectangle bg,
+            Rectangle background,
             VBox detailBox,
+            double collapsedWidth,
             double expandedWidth,
             double height
     ) {
+        boolean expanded = (boolean) cardWrapper.getUserData();
+
+        if (expanded) {
+            collapseAchievementCell(
+                    cardWrapper,
+                    background,
+                    detailBox,
+                    collapsedWidth
+            );
+            expandedAchievementCell = null;
+            return;
+        }
+
+        if (expandedAchievementCell != null &&
+                expandedAchievementCell != cardWrapper) {
+            collapseExpandedAchievementCell();
+        }
+
+        expandAchievementCell(
+                cardWrapper,
+                background,
+                detailBox,
+                expandedWidth
+        );
+
+        expandedAchievementCell = cardWrapper;
+    }
+
+    private void expandAchievementCell(
+            StackPane cardWrapper,
+            Rectangle background,
+            VBox detailBox,
+            double expandedWidth
+    ) {
         cardWrapper.setUserData(true);
 
-        Timeline widthAnim = new Timeline(
-                new KeyFrame(Duration.seconds(0.22),
-                        new KeyValue(bg.widthProperty(), expandedWidth, Interpolator.EASE_OUT),
+        Timeline widthAnimation = new Timeline(
+                new KeyFrame(
+                        Duration.seconds(0.22),
+                        new KeyValue(background.widthProperty(), expandedWidth, Interpolator.EASE_OUT),
                         new KeyValue(cardWrapper.prefWidthProperty(), expandedWidth, Interpolator.EASE_OUT),
                         new KeyValue(cardWrapper.minWidthProperty(), expandedWidth, Interpolator.EASE_OUT),
                         new KeyValue(cardWrapper.maxWidthProperty(), expandedWidth, Interpolator.EASE_OUT)
                 )
         );
 
-        FadeTransition detailFade = new FadeTransition(Duration.seconds(0.18), detailBox);
+        FadeTransition detailFade = new FadeTransition(
+                Duration.seconds(0.18),
+                detailBox
+        );
         detailFade.setFromValue(0);
         detailFade.setToValue(1);
         detailFade.setDelay(Duration.seconds(0.08));
 
-        TranslateTransition detailMove = new TranslateTransition(Duration.seconds(0.22), detailBox);
+        TranslateTransition detailMove = new TranslateTransition(
+                Duration.seconds(0.22),
+                detailBox
+        );
         detailMove.setFromX(-12);
         detailMove.setToX(0);
         detailMove.setInterpolator(Interpolator.EASE_OUT);
 
-        ParallelTransition anim = new ParallelTransition(
-                widthAnim,
+        new ParallelTransition(
+                widthAnimation,
                 detailFade,
                 detailMove
-        );
-
-        anim.play();
+        ).play();
     }
 
     private void collapseAchievementCell(
             StackPane cardWrapper,
-            Rectangle bg,
+            Rectangle background,
             VBox detailBox,
-            double collapsedWidth,
-            double height
+            double collapsedWidth
     ) {
         cardWrapper.setUserData(false);
 
-        FadeTransition detailFade = new FadeTransition(Duration.seconds(0.08), detailBox);
+        FadeTransition detailFade = new FadeTransition(
+                Duration.seconds(0.08),
+                detailBox
+        );
         detailFade.setFromValue(detailBox.getOpacity());
         detailFade.setToValue(0);
 
-        Timeline widthAnim = new Timeline(
-                new KeyFrame(Duration.seconds(0.18),
-                        new KeyValue(bg.widthProperty(), collapsedWidth, Interpolator.EASE_OUT),
+        Timeline widthAnimation = new Timeline(
+                new KeyFrame(
+                        Duration.seconds(0.18),
+                        new KeyValue(background.widthProperty(), collapsedWidth, Interpolator.EASE_OUT),
                         new KeyValue(cardWrapper.prefWidthProperty(), collapsedWidth, Interpolator.EASE_OUT),
                         new KeyValue(cardWrapper.minWidthProperty(), collapsedWidth, Interpolator.EASE_OUT),
                         new KeyValue(cardWrapper.maxWidthProperty(), collapsedWidth, Interpolator.EASE_OUT)
                 )
         );
 
-        SequentialTransition anim = new SequentialTransition(
+        new SequentialTransition(
                 detailFade,
-                widthAnim
-        );
-
-        anim.play();
+                widthAnimation
+        ).play();
     }
 
+    /**
+     * 收起目前展開中的成就 Cell。
+     */
     private void collapseExpandedAchievementCell() {
         if (expandedAchievementCell == null) {
             return;
@@ -737,30 +1039,34 @@ public class MainMenu extends FXGLMenu {
             return;
         }
 
-        StackPane bgLayer = (StackPane) cardWrapper.getChildren().get(0);
+        StackPane backgroundLayer = (StackPane) cardWrapper.getChildren().get(0);
         HBox card = (HBox) cardWrapper.getChildren().get(1);
 
-        Rectangle bg = (Rectangle) bgLayer.getChildren().get(0);
+        Rectangle background = (Rectangle) backgroundLayer.getChildren().get(0);
 
-        VBox detailBox = null;
-
-        for (Node node : card.getChildren()) {
-            if (node instanceof VBox) {
-                detailBox = (VBox) node;
-                break;
-            }
-        }
+        VBox detailBox = card.getChildren()
+                .stream()
+                .filter(node -> node instanceof VBox)
+                .map(node -> (VBox) node)
+                .findFirst()
+                .orElse(null);
 
         if (detailBox != null) {
-            collapseAchievementCell(cardWrapper, bg, detailBox, 92, 92);
+            collapseAchievementCell(
+                    cardWrapper,
+                    background,
+                    detailBox,
+                    92
+            );
         }
 
         expandedAchievementCell = null;
     }
 
-    // =========================
-    // 設定頁
-    // =========================
+
+    // =========================================================
+    // Settings Page
+    // =========================================================
 
     private void showSettingsPage() {
         BorderPane page = createSubPageBase();
@@ -802,7 +1108,10 @@ public class MainMenu extends FXGLMenu {
                 () -> showRightContent(page, createAboutGamePanel())
         );
 
-        StackPane backButton = createSubButton(text("menu.common.back"), this::closePage);
+        StackPane backButton = createSubButton(
+                text("menu.common.back"),
+                this::closePage
+        );
 
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
@@ -820,42 +1129,45 @@ public class MainMenu extends FXGLMenu {
         );
 
         page.setLeft(leftMenu);
-        page.setCenter(createInfoPanel(text("menu.settings"), text("menu.settings.description")));
+        page.setCenter(createInfoPanel(
+                text("menu.settings"),
+                text("menu.settings.description")
+        ));
 
         showPage(page);
     }
 
-    private StackPane createSettingsSideButton(String text, Runnable action) {
-        double width = 240;
-        double height = 46;
-
+    private StackPane createSettingsSideButton(
+            String labelText,
+            Runnable action
+    ) {
         StackPane button = new StackPane();
-        button.setPrefSize(width, height);
-        button.setMinSize(width, height);
-        button.setMaxSize(width, height);
+        button.setPrefSize(SETTINGS_SIDE_BUTTON_WIDTH, SETTINGS_SIDE_BUTTON_HEIGHT);
+        button.setMinSize(SETTINGS_SIDE_BUTTON_WIDTH, SETTINGS_SIDE_BUTTON_HEIGHT);
+        button.setMaxSize(SETTINGS_SIDE_BUTTON_WIDTH, SETTINGS_SIDE_BUTTON_HEIGHT);
         button.setPickOnBounds(true);
 
-        Rectangle bg = new Rectangle(width, height);
-        bg.setArcWidth(10);
-        bg.setArcHeight(10);
-        bg.setFill(Color.rgb(0, 0, 0, 0.48));
-        bg.setStroke(Color.rgb(255, 255, 255, 0.45));
-        bg.setStrokeWidth(1.2);
+        Rectangle background = new Rectangle(
+                SETTINGS_SIDE_BUTTON_WIDTH,
+                SETTINGS_SIDE_BUTTON_HEIGHT
+        );
+        background.setArcWidth(10);
+        background.setArcHeight(10);
 
-        Text label = new Text(text);
+        Text label = new Text(labelText);
         label.setStyle("""
-            -fx-font-size: 22px;
-            -fx-fill: white;
-            -fx-font-weight: bold;
-            """);
+                -fx-font-size: 22px;
+                -fx-fill: white;
+                -fx-font-weight: bold;
+                """);
 
         Text arrow = new Text(">");
         arrow.setVisible(false);
         arrow.setStyle("""
-            -fx-font-size: 26px;
-            -fx-fill: white;
-            -fx-font-weight: bold;
-            """);
+                -fx-font-size: 26px;
+                -fx-fill: white;
+                -fx-font-weight: bold;
+                """);
 
         StackPane.setAlignment(label, Pos.CENTER_LEFT);
         StackPane.setMargin(label, new Insets(0, 0, 0, 24));
@@ -863,24 +1175,25 @@ public class MainMenu extends FXGLMenu {
         StackPane.setAlignment(arrow, Pos.CENTER_RIGHT);
         StackPane.setMargin(arrow, new Insets(0, -28, 0, 0));
 
-        button.getChildren().addAll(bg, label, arrow);
+        button.getChildren().addAll(background, label, arrow);
+        button.setUserData(new SettingsButtonState(background, arrow));
 
-        button.setUserData(new SettingsButtonState(bg, arrow));
+        setSettingsButtonSelected(button, false);
 
-        button.setOnMouseEntered(e -> {
+        button.setOnMouseEntered(event -> {
             if (button != selectedSettingsButton) {
                 audioSystem.playButtonSFX(SoundId.BUTTON_HOVER);
-                bg.setFill(Color.rgb(255, 255, 255, 0.14));
+                background.setFill(Color.rgb(255, 255, 255, 0.14));
             }
         });
 
-        button.setOnMouseExited(e -> {
+        button.setOnMouseExited(event -> {
             if (button != selectedSettingsButton) {
-                bg.setFill(Color.rgb(0, 0, 0, 0.48));
+                setSettingsButtonSelected(button, false);
             }
         });
 
-        button.setOnMouseClicked(e -> {
+        button.setOnMouseClicked(event -> {
             audioSystem.playButtonSFX(SoundId.BUTTON_PRESSED);
             selectSettingsButton(button);
 
@@ -901,33 +1214,113 @@ public class MainMenu extends FXGLMenu {
         setSettingsButtonSelected(button, true);
     }
 
-    private void setSettingsButtonSelected(StackPane button, boolean selected) {
+    private void setSettingsButtonSelected(
+            StackPane button,
+            boolean selected
+    ) {
         Object data = button.getUserData();
 
         if (!(data instanceof SettingsButtonState state)) {
             return;
         }
 
-        Rectangle bg = state.background();
+        Rectangle background = state.background();
         Text arrow = state.arrow();
 
         arrow.setVisible(selected);
 
         if (selected) {
-            bg.setFill(Color.rgb(255, 255, 255, 0.24));
-            bg.setStroke(Color.WHITE);
-            bg.setStrokeWidth(2.0);
-        } else {
-            bg.setFill(Color.rgb(0, 0, 0, 0.48));
-            bg.setStroke(Color.rgb(255, 255, 255, 0.45));
-            bg.setStrokeWidth(1.2);
+            background.setFill(Color.rgb(255, 255, 255, 0.24));
+            background.setStroke(Color.WHITE);
+            background.setStrokeWidth(2.0);
+            return;
         }
+
+        background.setFill(Color.rgb(0, 0, 0, 0.48));
+        background.setStroke(Color.rgb(255, 255, 255, 0.45));
+        background.setStrokeWidth(1.2);
     }
 
-    private record SettingsButtonState(Rectangle background, Text arrow) {
+    private record SettingsButtonState(
+            Rectangle background,
+            Text arrow
+    ) {
     }
 
-    // 操作配置
+
+    // =========================================================
+    // Key Config Panel
+    // =========================================================
+
+    private VBox createKeyConfigPanel() {
+        VBox box = createPanelBox();
+
+        box.getChildren().addAll(
+                createKeyConfigRow(
+                        "/assets/textures/ui/keys/key-a.png",
+                        " / ",
+                        "/assets/textures/ui/keys/key-left.png",
+                        text("menu.settings.keyConfig.left")
+                ),
+                createKeyConfigRow(
+                        "/assets/textures/ui/keys/key-d.png",
+                        " / ",
+                        "/assets/textures/ui/keys/key-right.png",
+                        text("menu.settings.keyConfig.right")
+                ),
+                createKeyConfigRow(
+                        "/assets/textures/ui/keys/key-w.png",
+                        " / ",
+                        "/assets/textures/ui/keys/key-up.png",
+                        " / ",
+                        "/assets/textures/ui/keys/key-space.png",
+                        text("menu.settings.keyConfig.jump")
+                ),
+                createKeyConfigRow(
+                        "/assets/textures/ui/keys/key-s.png",
+                        " / ",
+                        "/assets/textures/ui/keys/key-down.png",
+                        text("menu.settings.keyConfig.drop")
+                ),
+                createKeyConfigRow(
+                        "/assets/textures/ui/keys/key-f.png",
+                        text("menu.settings.keyConfig.interact")
+                ),
+                createKeyConfigRow(
+                        "/assets/textures/ui/keys/key-shift.png",
+                        text("menu.settings.keyConfig.dash")
+                ),
+                createKeyConfigRow(
+                        "/assets/textures/ui/keys/key-escape.png",
+                        text("menu.settings.keyConfig.pause")
+                )
+        );
+
+        return box;
+    }
+
+    /**
+     * 建立按鍵說明列。
+     *
+     * items 可傳 String 或圖片路徑：
+     * - 若 String 以 /assets/ 開頭，會視為圖片。
+     * - 其他 String 會視為文字。
+     */
+    private HBox createKeyConfigRow(String... items) {
+        HBox row = new HBox(8);
+        row.setAlignment(Pos.CENTER_LEFT);
+
+        for (String item : items) {
+            if (item.startsWith("/assets/")) {
+                row.getChildren().add(createKeyImage(item));
+            } else {
+                row.getChildren().add(createInlineText(item));
+            }
+        }
+
+        return row;
+    }
+
     private ImageView createKeyImage(String path) {
         Image image = new Image(getClass().getResource(path).toExternalForm());
 
@@ -939,91 +1332,20 @@ public class MainMenu extends FXGLMenu {
         return imageView;
     }
 
-    private Text createInlineText(String text) {
-        Text t = new Text(text);
-        t.setStyle("""
-            -fx-font-size: 22px;
-            -fx-fill: rgba(255,255,255,0.86);
-            """);
-        return t;
+    private Text createInlineText(String value) {
+        Text text = new Text(value);
+        text.setStyle("""
+                -fx-font-size: 22px;
+                -fx-fill: rgba(255,255,255,0.86);
+                """);
+        return text;
     }
 
-    private VBox createKeyConfigPanel() {
-        VBox box = createPanelBox();
 
-        HBox left = new HBox(8);
-        left.setAlignment(Pos.CENTER_LEFT);
-        left.getChildren().addAll(
-                createKeyImage("/assets/textures/ui/keys/key-a.png"),
-                createInlineText(" / "),
-                createKeyImage("/assets/textures/ui/keys/key-left.png"),
-                createInlineText(text("menu.settings.keyConfig.left"))
-        );
+    // =========================================================
+    // Volume Panel
+    // =========================================================
 
-        HBox right = new HBox(8);
-        right.setAlignment(Pos.CENTER_LEFT);
-        right.getChildren().addAll(
-                createKeyImage("/assets/textures/ui/keys/key-d.png"),
-                createInlineText(" / "),
-                createKeyImage("/assets/textures/ui/keys/key-right.png"),
-                createInlineText(text("menu.settings.keyConfig.right"))
-        );
-
-        HBox jump = new HBox(8);
-        jump.setAlignment(Pos.CENTER_LEFT);
-        jump.getChildren().addAll(
-                createKeyImage("/assets/textures/ui/keys/key-w.png"),
-                createInlineText(" / "),
-                createKeyImage("/assets/textures/ui/keys/key-up.png"),
-                createInlineText(" / "),
-                createKeyImage("/assets/textures/ui/keys/key-space.png"),
-                createInlineText(text("menu.settings.keyConfig.jump"))
-        );
-
-        HBox drop = new HBox(8);
-        drop.setAlignment(Pos.CENTER_LEFT);
-        drop.getChildren().addAll(
-                createKeyImage("/assets/textures/ui/keys/key-s.png"),
-                createInlineText(" / "),
-                createKeyImage("/assets/textures/ui/keys/key-down.png"),
-                createInlineText(text("menu.settings.keyConfig.drop"))
-        );
-
-        HBox interact = new HBox(8);
-        interact.setAlignment(Pos.CENTER_LEFT);
-        interact.getChildren().addAll(
-                createKeyImage("/assets/textures/ui/keys/key-f.png"),
-                createInlineText(text("menu.settings.keyConfig.interact"))
-        );
-
-        HBox dash = new HBox(8);
-        dash.setAlignment(Pos.CENTER_LEFT);
-        dash.getChildren().addAll(
-                createKeyImage("/assets/textures/ui/keys/key-shift.png"),
-                createInlineText(text("menu.settings.keyConfig.dash"))
-        );
-
-        HBox pause = new HBox(8);
-        pause.setAlignment(Pos.CENTER_LEFT);
-        pause.getChildren().addAll(
-                createKeyImage("/assets/textures/ui/keys/key-escape.png"),
-                createInlineText(text("menu.settings.keyConfig.pause"))
-        );
-
-
-        box.getChildren().addAll(
-                left,
-                right,
-                jump,
-                drop,
-                interact,
-                dash,
-                pause
-        );
-        return box;
-    }
-
-    // 聲音設定
     @FunctionalInterface
     private interface VolumeSetter {
         void set(double value);
@@ -1032,350 +1354,6 @@ public class MainMenu extends FXGLMenu {
     @FunctionalInterface
     private interface MuteSetter {
         void set(boolean muted);
-    }
-
-    private void loadVolumeIcons() {
-        if (volumeIcon != null && volumeDownIcon != null && volumeMuteIcon != null) {
-            return;
-        }
-
-        volumeIcon = loadImageOrNull("/assets/textures/ui/volume/volume.png");
-        volumeDownIcon = loadImageOrNull("/assets/textures/ui/volume/volume-down.png");
-        volumeMuteIcon = loadImageOrNull("/assets/textures/ui/volume/volume-mute.png");
-    }
-
-    private Image loadImageOrNull(String path) {
-        try {
-            var url = getClass().getResource(path);
-
-            if (url == null) {
-                System.out.println("Image not found: " + path);
-                return null;
-            }
-
-            return new Image(url.toExternalForm());
-
-        } catch (Exception e) {
-            System.out.println("Image load failed: " + path);
-            return null;
-        }
-    }
-
-    private void updateVolumeIcon(ImageView iconView, double displayVolume) {
-        if (iconView == null) {
-            return;
-        }
-
-        if (displayVolume <= 0) {
-            iconView.setImage(volumeMuteIcon);
-        } else if (displayVolume <= 0.5) {
-            iconView.setImage(volumeDownIcon);
-        } else {
-            iconView.setImage(volumeIcon);
-        }
-    }
-
-    private String toPercentText(double value) {
-        return Math.round(value * 100) + "%";
-    }
-
-    private void updateSliderProgressStyle(Slider slider) {
-        double min = slider.getMin();
-        double max = slider.getMax();
-        double value = slider.getValue();
-
-        double percent = (value - min) / (max - min) * 100.0;
-
-        slider.lookup(".track").setStyle(String.format("""
-            -fx-background-color:
-                linear-gradient(to right,
-                    rgba(213, 105, 16, 0.95) 0%%,
-                    rgba(213, 105, 16, 0.95) %.1f%%,
-                    rgba(0, 0, 0, 0.55) %.1f%%,
-                    rgba(0, 0, 0, 0.55) 100%%);
-            -fx-border-color: rgba(255, 255, 255, 0.28);
-            -fx-border-width: 1px;
-            -fx-pref-height: 8px;
-            """, percent, percent));
-    }
-
-    @FunctionalInterface
-    private interface ToggleAction {
-        void onToggle(boolean enabled);
-    }
-
-    private record ToggleSwitchState(
-            Rectangle track,
-            Rectangle knob,
-            boolean enabled
-    ) {
-    }
-
-    private StackPane createToggleSwitch(boolean enabled, ToggleAction action) {
-        double width = 64;
-        double height = 32;
-        double knobSize = 26;
-
-        Rectangle track = new Rectangle(width, height);
-        track.setArcWidth(height);
-        track.setArcHeight(height);
-
-        Rectangle knob = new Rectangle(knobSize, knobSize);
-        knob.setArcWidth(knobSize);
-        knob.setArcHeight(knobSize);
-        knob.setFill(Color.WHITE);
-
-        StackPane toggle = new StackPane(track, knob);
-        toggle.setPrefSize(width, height);
-        toggle.setMinSize(width, height);
-        toggle.setMaxSize(width, height);
-        toggle.setPickOnBounds(true);
-
-        StackPane.setAlignment(knob, Pos.CENTER_LEFT);
-        StackPane.setMargin(knob, new Insets(0, 0, 0, 3));
-
-        toggle.setUserData(new ToggleSwitchState(track, knob, enabled));
-
-        /*
-         * 第一次建立：直接放到正確位置，不播放動畫。
-         */
-        updateToggleSwitch(toggle, enabled, false);
-
-        toggle.setOnMouseClicked(e -> {
-            ToggleSwitchState state = (ToggleSwitchState) toggle.getUserData();
-
-            boolean newValue = !state.enabled();
-
-            /*
-             * 點擊切換：播放動畫。
-             */
-            updateToggleSwitch(toggle, newValue, true);
-
-            if (action != null) {
-                action.onToggle(newValue);
-            }
-        });
-
-        return toggle;
-    }
-
-    private HBox createButtonSoundToggleRow() {
-        Label nameLabel = new Label(text("menu.settings.volume.button_sound"));
-        nameLabel.setMinWidth(90);
-        nameLabel.setStyle("""
-            -fx-font-size: 18px;
-            -fx-text-fill: white;
-            -fx-font-weight: bold;
-            """);
-
-        Label stateLabel = new Label(audioSystem.isButtonSoundEnabled() ? text("menu.common.on") : text("menu.common.off"));
-        stateLabel.setMinWidth(52);
-        stateLabel.setStyle("""
-            -fx-font-size: 17px;
-            -fx-text-fill: white;
-            """);
-
-        StackPane toggleSwitch = createToggleSwitch(
-                audioSystem.isButtonSoundEnabled(),
-                enabled -> {
-                    audioSystem.setButtonSoundEnabled(enabled);
-                    stateLabel.setText(enabled ? text("menu.common.on") : text("menu.common.off"));
-
-                    if (enabled) {
-                        audioSystem.playSFX(SoundId.BUTTON_PRESSED);
-                    }
-                }
-        );
-
-        HBox row = new HBox(12);
-        row.setAlignment(Pos.CENTER_LEFT);
-        row.getChildren().addAll(
-                nameLabel,
-                toggleSwitch,
-                stateLabel
-        );
-
-        return row;
-    }
-
-    private void updateToggleSwitch(StackPane toggle, boolean enabled, boolean animate) {
-        Object data = toggle.getUserData();
-
-        if (!(data instanceof ToggleSwitchState state)) {
-            return;
-        }
-
-        Rectangle track = state.track();
-        Rectangle knob = state.knob();
-
-        double targetX = enabled ? 32 : 0;
-
-        track.setFill(enabled
-                ? Color.rgb(255, 255, 255, 0.82)
-                : Color.rgb(0, 0, 0, 0.62));
-
-        track.setStroke(Color.rgb(255, 255, 255, 0.65));
-        track.setStrokeWidth(1.2);
-
-        knob.setFill(enabled
-                ? Color.rgb(213, 105, 16)
-                : Color.rgb(180, 180, 180));
-
-        if (animate) {
-            TranslateTransition move = new TranslateTransition(Duration.seconds(0.14), knob);
-            move.setToX(targetX);
-            move.setInterpolator(Interpolator.EASE_OUT);
-            move.play();
-        } else {
-            /*
-             * 初始化時直接瞬移，不播放動畫。
-             */
-            knob.setTranslateX(targetX);
-        }
-
-        toggle.setUserData(new ToggleSwitchState(track, knob, enabled));
-    }
-
-    private HBox createVolumeRow(
-            String name,
-            double initialVolume,
-            boolean initiallyMuted,
-            VolumeSetter volumeSetter,
-            MuteSetter muteSetter,
-            Runnable onChanged
-    ) {
-        Label nameLabel = new Label(name);
-        nameLabel.setMinWidth(90);
-        nameLabel.setStyle("""
-            -fx-font-size: 18px;
-            -fx-text-fill: white;
-            -fx-font-weight: bold;
-            """);
-
-        ImageView iconView = new ImageView();
-        iconView.setFitWidth(30);
-        iconView.setFitHeight(30);
-        iconView.setPreserveRatio(true);
-        iconView.setSmooth(true);
-
-        double displayVolume = initiallyMuted ? 0 : initialVolume;
-        updateVolumeIcon(iconView, displayVolume);
-
-        StackPane iconButton = new StackPane(iconView);
-        iconButton.setPrefSize(38, 38);
-        iconButton.setMaxSize(38, 38);
-        iconButton.setPickOnBounds(true);
-        iconButton.setStyle("""
-            -fx-background-color: rgba(255,255,255,0.08);
-            -fx-background-radius: 8;
-            """);
-
-        Slider slider = new Slider(0, 1, displayVolume);
-        slider.setMaxWidth(Double.MAX_VALUE);
-        slider.setPrefWidth(360);
-        slider.getStyleClass().add("settings-slider");
-        slider.getStylesheets().add(
-                getClass().getResource("/style.css").toExternalForm()
-        );
-
-        slider.valueProperty().addListener((obs, oldValue, newValue) -> {
-            updateSliderProgressStyle(slider);
-        });
-
-        slider.sceneProperty().addListener((obs, oldScene, newScene) -> {
-            if (newScene != null) {
-                slider.applyCss();
-                updateSliderProgressStyle(slider);
-            }
-        });
-
-        Label percentLabel = new Label(toPercentText(displayVolume));
-        percentLabel.setMinWidth(52);
-        percentLabel.setAlignment(Pos.CENTER_RIGHT);
-        percentLabel.setStyle("""
-            -fx-font-size: 17px;
-            -fx-text-fill: white;
-            """);
-
-        final boolean[] muted = {initiallyMuted};
-        final double[] lastVolumeBeforeMute = {initialVolume > 0 ? initialVolume : 1.0};
-
-        iconButton.setOnMouseClicked(e -> {
-            double sliderValue = slider.getValue();
-
-            if (!muted[0] && sliderValue > 0) {
-                lastVolumeBeforeMute[0] = sliderValue;
-                muted[0] = true;
-
-                muteSetter.set(true);
-                slider.setValue(0);
-
-                percentLabel.setText("0%");
-                updateVolumeIcon(iconView, 0);
-
-                if (onChanged != null) {
-                    onChanged.run();
-                }
-
-                return;
-            }
-
-            if (muted[0]) {
-                muted[0] = false;
-                muteSetter.set(false);
-
-                double restoreVolume = lastVolumeBeforeMute[0] <= 0
-                        ? 1.0
-                        : lastVolumeBeforeMute[0];
-
-                volumeSetter.set(restoreVolume);
-                slider.setValue(restoreVolume);
-
-                percentLabel.setText(toPercentText(restoreVolume));
-                updateVolumeIcon(iconView, restoreVolume);
-
-                if (onChanged != null) {
-                    onChanged.run();
-                }
-            }
-        });
-
-        slider.valueProperty().addListener((obs, oldValue, newValue) -> {
-            double value = newValue.doubleValue();
-
-            if (value > 0) {
-                muted[0] = false;
-                muteSetter.set(false);
-                lastVolumeBeforeMute[0] = value;
-            }
-
-            if (value <= 0) {
-                muted[0] = true;
-                muteSetter.set(true);
-            }
-
-            volumeSetter.set(value);
-
-            percentLabel.setText(toPercentText(value));
-            updateVolumeIcon(iconView, value);
-
-            if (onChanged != null) {
-                onChanged.run();
-            }
-        });
-
-        HBox row = new HBox(12);
-        row.setAlignment(Pos.CENTER_LEFT);
-        row.getChildren().addAll(
-                nameLabel,
-                iconButton,
-                slider,
-                percentLabel
-        );
-
-        HBox.setHgrow(slider, Priority.ALWAYS);
-
-        return row;
     }
 
     private VBox createVolumePanel() {
@@ -1419,55 +1397,443 @@ public class MainMenu extends FXGLMenu {
         return box;
     }
 
-    // 視窗大小
-    private String windowModeText(WindowMode mode) {
-        if (mode == null) {
-            return "";
+    private void loadVolumeIcons() {
+        if (volumeIcon != null &&
+                volumeDownIcon != null &&
+                volumeMuteIcon != null) {
+            return;
         }
 
-        return text(mode.getTextKey());
+        volumeIcon = loadImageOrNull("/assets/textures/ui/volume/volume.png");
+        volumeDownIcon = loadImageOrNull("/assets/textures/ui/volume/volume-down.png");
+        volumeMuteIcon = loadImageOrNull("/assets/textures/ui/volume/volume-mute.png");
     }
+
+    private HBox createVolumeRow(
+            String name,
+            double initialVolume,
+            boolean initiallyMuted,
+            VolumeSetter volumeSetter,
+            MuteSetter muteSetter,
+            Runnable onChanged
+    ) {
+        Label nameLabel = createVolumeNameLabel(name);
+
+        ImageView iconView = createVolumeIconView();
+
+        double displayVolume = initiallyMuted ? 0 : initialVolume;
+        updateVolumeIcon(iconView, displayVolume);
+
+        StackPane iconButton = createVolumeIconButton(iconView);
+
+        Slider slider = createVolumeSlider(displayVolume);
+        Label percentLabel = createVolumePercentLabel(displayVolume);
+
+        VolumeRowState state = new VolumeRowState(
+                initiallyMuted,
+                initialVolume > 0 ? initialVolume : 1.0
+        );
+
+        iconButton.setOnMouseClicked(event -> toggleVolumeMute(
+                state,
+                slider,
+                percentLabel,
+                iconView,
+                volumeSetter,
+                muteSetter,
+                onChanged
+        ));
+
+        slider.valueProperty().addListener((observable, oldValue, newValue) ->
+                handleVolumeSliderChanged(
+                        state,
+                        newValue.doubleValue(),
+                        percentLabel,
+                        iconView,
+                        volumeSetter,
+                        muteSetter,
+                        onChanged
+                )
+        );
+
+        HBox row = new HBox(12);
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.getChildren().addAll(
+                nameLabel,
+                iconButton,
+                slider,
+                percentLabel
+        );
+
+        HBox.setHgrow(slider, Priority.ALWAYS);
+
+        return row;
+    }
+
+    private Label createVolumeNameLabel(String name) {
+        Label label = new Label(name);
+        label.setMinWidth(90);
+        label.setStyle("""
+                -fx-font-size: 18px;
+                -fx-text-fill: white;
+                -fx-font-weight: bold;
+                """);
+        return label;
+    }
+
+    private ImageView createVolumeIconView() {
+        ImageView iconView = new ImageView();
+        iconView.setFitWidth(30);
+        iconView.setFitHeight(30);
+        iconView.setPreserveRatio(true);
+        iconView.setSmooth(true);
+        return iconView;
+    }
+
+    private StackPane createVolumeIconButton(ImageView iconView) {
+        StackPane button = new StackPane(iconView);
+        button.setPrefSize(38, 38);
+        button.setMaxSize(38, 38);
+        button.setPickOnBounds(true);
+        button.setStyle("""
+                -fx-background-color: rgba(255,255,255,0.08);
+                -fx-background-radius: 8;
+                """);
+        return button;
+    }
+
+    private Slider createVolumeSlider(double initialValue) {
+        Slider slider = new Slider(0, 1, initialValue);
+        slider.setMaxWidth(Double.MAX_VALUE);
+        slider.setPrefWidth(360);
+        slider.getStyleClass().add("settings-slider");
+        applyStyleSheet(slider);
+
+        slider.valueProperty().addListener((observable, oldValue, newValue) ->
+                updateSliderProgressStyle(slider)
+        );
+
+        slider.sceneProperty().addListener((observable, oldScene, newScene) -> {
+            if (newScene != null) {
+                slider.applyCss();
+                updateSliderProgressStyle(slider);
+            }
+        });
+
+        return slider;
+    }
+
+    private Label createVolumePercentLabel(double value) {
+        Label label = new Label(toPercentText(value));
+        label.setMinWidth(52);
+        label.setAlignment(Pos.CENTER_RIGHT);
+        label.setStyle("""
+                -fx-font-size: 17px;
+                -fx-text-fill: white;
+                """);
+        return label;
+    }
+
+    private void toggleVolumeMute(
+            VolumeRowState state,
+            Slider slider,
+            Label percentLabel,
+            ImageView iconView,
+            VolumeSetter volumeSetter,
+            MuteSetter muteSetter,
+            Runnable onChanged
+    ) {
+        double sliderValue = slider.getValue();
+
+        if (!state.muted && sliderValue > 0) {
+            state.lastVolumeBeforeMute = sliderValue;
+            state.muted = true;
+
+            muteSetter.set(true);
+            slider.setValue(0);
+
+            percentLabel.setText("0%");
+            updateVolumeIcon(iconView, 0);
+            run(onChanged);
+            return;
+        }
+
+        if (state.muted) {
+            state.muted = false;
+            muteSetter.set(false);
+
+            double restoreVolume = state.lastVolumeBeforeMute <= 0
+                    ? 1.0
+                    : state.lastVolumeBeforeMute;
+
+            volumeSetter.set(restoreVolume);
+            slider.setValue(restoreVolume);
+
+            percentLabel.setText(toPercentText(restoreVolume));
+            updateVolumeIcon(iconView, restoreVolume);
+            run(onChanged);
+        }
+    }
+
+    private void handleVolumeSliderChanged(
+            VolumeRowState state,
+            double value,
+            Label percentLabel,
+            ImageView iconView,
+            VolumeSetter volumeSetter,
+            MuteSetter muteSetter,
+            Runnable onChanged
+    ) {
+        if (value > 0) {
+            state.muted = false;
+            state.lastVolumeBeforeMute = value;
+            muteSetter.set(false);
+        } else {
+            state.muted = true;
+            muteSetter.set(true);
+        }
+
+        volumeSetter.set(value);
+
+        percentLabel.setText(toPercentText(value));
+        updateVolumeIcon(iconView, value);
+        run(onChanged);
+    }
+
+    private void updateVolumeIcon(
+            ImageView iconView,
+            double displayVolume
+    ) {
+        if (displayVolume <= 0) {
+            iconView.setImage(volumeMuteIcon);
+        } else if (displayVolume <= 0.5) {
+            iconView.setImage(volumeDownIcon);
+        } else {
+            iconView.setImage(volumeIcon);
+        }
+    }
+
+    private void updateSliderProgressStyle(Slider slider) {
+        Node track = slider.lookup(".track");
+
+        if (track == null) {
+            return;
+        }
+
+        double min = slider.getMin();
+        double max = slider.getMax();
+        double value = slider.getValue();
+
+        double percent = (value - min) / (max - min) * 100.0;
+
+        track.setStyle(String.format("""
+                -fx-background-color:
+                    linear-gradient(to right,
+                        rgba(213, 105, 16, 0.95) 0%%,
+                        rgba(213, 105, 16, 0.95) %.1f%%,
+                        rgba(0, 0, 0, 0.55) %.1f%%,
+                        rgba(0, 0, 0, 0.55) 100%%);
+                -fx-border-color: rgba(255, 255, 255, 0.28);
+                -fx-border-width: 1px;
+                -fx-pref-height: 8px;
+                """, percent, percent));
+    }
+
+    private String toPercentText(double value) {
+        return Math.round(value * 100) + "%";
+    }
+
+    private static class VolumeRowState {
+        private boolean muted;
+        private double lastVolumeBeforeMute;
+
+        private VolumeRowState(
+                boolean muted,
+                double lastVolumeBeforeMute
+        ) {
+            this.muted = muted;
+            this.lastVolumeBeforeMute = lastVolumeBeforeMute;
+        }
+    }
+
+
+    // =========================================================
+    // Toggle Switch
+    // =========================================================
+
+    @FunctionalInterface
+    private interface ToggleAction {
+        void onToggle(boolean enabled);
+    }
+
+    private record ToggleSwitchState(
+            Rectangle track,
+            Rectangle knob,
+            boolean enabled
+    ) {
+    }
+
+    private HBox createButtonSoundToggleRow() {
+        Label nameLabel = new Label(text("menu.settings.volume.button_sound"));
+        nameLabel.setMinWidth(90);
+        nameLabel.setStyle("""
+            -fx-font-size: 18px;
+            -fx-text-fill: white;
+            -fx-font-weight: bold;
+            """);
+
+        Label stateLabel = new Label(
+                audioSystem.isButtonSoundEnabled()
+                        ? text("menu.common.on")
+                        : text("menu.common.off")
+        );
+        stateLabel.setMinWidth(52);
+        stateLabel.setStyle("""
+            -fx-font-size: 17px;
+            -fx-text-fill: white;
+            """);
+
+        StackPane toggleSwitch = createToggleSwitch(
+                audioSystem.isButtonSoundEnabled(),
+                enabled -> {
+                    audioSystem.setButtonSoundEnabled(enabled);
+
+                    stateLabel.setText(
+                            enabled
+                                    ? text("menu.common.on")
+                                    : text("menu.common.off")
+                    );
+
+                    if (enabled) {
+                        audioSystem.playSFX(SoundId.BUTTON_PRESSED);
+                    }
+                }
+        );
+
+        HBox row = new HBox(12);
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.getChildren().addAll(
+                nameLabel,
+                toggleSwitch,
+                stateLabel
+        );
+
+        return row;
+    }
+
+    private StackPane createToggleSwitch(
+            boolean enabled,
+            ToggleAction action
+    ) {
+        double width = 64;
+        double height = 32;
+        double knobSize = 26;
+
+        Rectangle track = new Rectangle(width, height);
+        track.setArcWidth(height);
+        track.setArcHeight(height);
+
+        Rectangle knob = new Rectangle(knobSize, knobSize);
+        knob.setArcWidth(knobSize);
+        knob.setArcHeight(knobSize);
+        knob.setFill(Color.WHITE);
+
+        StackPane toggle = new StackPane(track, knob);
+        toggle.setPrefSize(width, height);
+        toggle.setMinSize(width, height);
+        toggle.setMaxSize(width, height);
+        toggle.setPickOnBounds(true);
+
+        StackPane.setAlignment(knob, Pos.CENTER_LEFT);
+        StackPane.setMargin(knob, new Insets(0, 0, 0, 3));
+
+        toggle.setUserData(new ToggleSwitchState(track, knob, enabled));
+
+        updateToggleSwitch(toggle, enabled, false);
+
+        toggle.setOnMouseClicked(event -> {
+            ToggleSwitchState state = (ToggleSwitchState) toggle.getUserData();
+            boolean newValue = !state.enabled();
+
+            updateToggleSwitch(toggle, newValue, true);
+
+            if (action != null) {
+                action.onToggle(newValue);
+            }
+        });
+
+        return toggle;
+    }
+
+    private void updateToggleSwitch(
+            StackPane toggle,
+            boolean enabled,
+            boolean animate
+    ) {
+        Object data = toggle.getUserData();
+
+        if (!(data instanceof ToggleSwitchState state)) {
+            return;
+        }
+
+        Rectangle track = state.track();
+        Rectangle knob = state.knob();
+
+        double targetX = enabled ? 32 : 0;
+
+        track.setFill(
+                enabled
+                        ? Color.rgb(255, 255, 255, 0.82)
+                        : Color.rgb(0, 0, 0, 0.62)
+        );
+        track.setStroke(Color.rgb(255, 255, 255, 0.65));
+        track.setStrokeWidth(1.2);
+
+        knob.setFill(
+                enabled
+                        ? Color.rgb(213, 105, 16)
+                        : Color.rgb(180, 180, 180)
+        );
+
+        if (animate) {
+            TranslateTransition move = new TranslateTransition(
+                    Duration.seconds(0.14),
+                    knob
+            );
+            move.setToX(targetX);
+            move.setInterpolator(Interpolator.EASE_OUT);
+            move.play();
+        } else {
+            knob.setTranslateX(targetX);
+        }
+
+        toggle.setUserData(new ToggleSwitchState(track, knob, enabled));
+    }
+
+
+    // =========================================================
+    // Window Size Panel
+    // =========================================================
 
     private VBox createWindowSizePanel() {
         VBox box = createPanelBox();
 
-        Text current = createTextBlock(text("menu.settings.window.current") + windowSystem.getCurrentLabel());
-
-        ComboBox<WindowMode> modeBox = new ComboBox<>();
-        modeBox.getItems().addAll(
-                WindowMode.DEFAULT,
-                WindowMode.CUSTOM,
-                WindowMode.FULLSCREEN
-        );
-        modeBox.getStyleClass().add("settings-combo-box");
-        modeBox.getStylesheets().add(
-                getClass().getResource("/style.css").toExternalForm()
+        Text current = createTextBlock(
+                text("menu.settings.window.current") +
+                        windowSystem.getCurrentLabel()
         );
 
-        modeBox.setValue(windowSystem.getMode());
-        modeBox.setPrefWidth(260);
-        modeBox.setStyle("""
-            -fx-font-size: 18px;
-            """);
-
-        modeBox.setConverter(new StringConverter<>() {
-            @Override
-            public String toString(WindowMode mode) {
-                return windowModeText(mode);
-            }
-
-            @Override
-            public WindowMode fromString(String string) {
-                return null;
-            }
-        });
+        ComboBox<WindowMode> modeBox = createWindowModeComboBox();
 
         StackPane applyButton = createSubButton(text("menu.common.apply"), () -> {
             WindowMode selectedMode = modeBox.getValue();
 
             windowSystem.applyMode(selectedMode);
 
-            current.setText(text("menu.settings.window.current") + windowSystem.getCurrentLabel());
+            current.setText(
+                    text("menu.settings.window.current") +
+                            windowSystem.getCurrentLabel()
+            );
         });
 
         box.getChildren().addAll(
@@ -1481,46 +1847,56 @@ public class MainMenu extends FXGLMenu {
         return box;
     }
 
-    // 語言系統
-    private void refreshMainMenuTexts() {
-        mainButtonBox.getChildren().clear();
+    private ComboBox<WindowMode> createWindowModeComboBox() {
+        ComboBox<WindowMode> modeBox = new ComboBox<>();
 
-        mainButtonBox.getChildren().addAll(
-                createMenuButton(text("menu.story"), this::showStoryModePage),
-                createMenuButton(text("menu.miniGame"), this::showMiniGameModePage),
-                createMenuButton(text("menu.achievement"), this::showAchievementPage),
-                createMenuButton(text("menu.settings"), this::showSettingsPage),
-                createMenuButton(text("menu.exit"), this::requestExitGame, exitButtonStyle())
+        modeBox.getItems().addAll(
+                WindowMode.DEFAULT,
+                WindowMode.CUSTOM,
+                WindowMode.FULLSCREEN
         );
 
-        cutscene = false;
+        modeBox.setValue(windowSystem.getMode());
+        modeBox.setPrefWidth(260);
+        modeBox.setStyle("-fx-font-size: 18px;");
+
+        modeBox.getStyleClass().add("settings-combo-box");
+        applyStyleSheet(modeBox);
+
+        modeBox.setConverter(new StringConverter<>() {
+            @Override
+            public String toString(WindowMode mode) {
+                return mode == null ? "" : text(mode.getTextKey());
+            }
+
+            @Override
+            public WindowMode fromString(String string) {
+                return null;
+            }
+        });
+
+        return modeBox;
     }
+
+
+    // =========================================================
+    // Language Panel
+    // =========================================================
 
     private VBox createLanguagePanel() {
         VBox box = createPanelBox();
 
         Text current = createTextBlock(
-                text("menu.settings.language.current") + languageSystem.getCurrentLanguage()
+                text("menu.settings.language.current") +
+                        languageSystem.getCurrentLanguage()
         );
 
-        ComboBox<Language> languageBox = new ComboBox<>();
-        languageBox.getItems().addAll(Language.ZH_TW, Language.EN_US);
-        languageBox.setValue(languageSystem.getCurrentLanguage());
-        languageBox.getStyleClass().add("settings-combo-box");
-        languageBox.getStylesheets().add(
-                getClass().getResource("/style.css").toExternalForm()
-        );
-
-        languageBox.setPrefWidth(260);
-        languageBox.setStyle("""
-            -fx-font-size: 18px;
-            """);
+        ComboBox<Language> languageBox = createLanguageComboBox();
 
         StackPane applyButton = createSubButton(text("menu.common.apply"), () -> {
             languageSystem.setLanguage(languageBox.getValue());
 
             refreshMainMenuTexts();
-
             showSettingsPage();
         });
 
@@ -1534,24 +1910,125 @@ public class MainMenu extends FXGLMenu {
         return box;
     }
 
-    // 重置遊戲
+    private ComboBox<Language> createLanguageComboBox() {
+        ComboBox<Language> languageBox = new ComboBox<>();
+
+        languageBox.getItems().addAll(
+                Language.ZH_TW,
+                Language.EN_US
+        );
+
+        languageBox.setValue(languageSystem.getCurrentLanguage());
+        languageBox.setPrefWidth(260);
+        languageBox.setStyle("-fx-font-size: 18px;");
+
+        languageBox.getStyleClass().add("settings-combo-box");
+        applyStyleSheet(languageBox);
+
+        return languageBox;
+    }
+
+    /**
+     * 重新建立主選單按鈕文字。
+     *
+     * 切換語言後使用。
+     */
+    private void refreshMainMenuTexts() {
+        if (mainButtonBox == null) {
+            return;
+        }
+
+        mainButtonBox.getChildren().clear();
+
+        mainButtonBox.getChildren().addAll(
+                createMenuButton(text("menu.story"), this::showStoryModePage),
+                createMenuButton(text("menu.miniGame"), this::showMiniGameModePage),
+                createMenuButton(text("menu.achievement"), this::showAchievementPage),
+                createMenuButton(text("menu.settings"), this::showSettingsPage),
+                createMenuButton(
+                        text("menu.exit"),
+                        this::requestExitGame,
+                        exitButtonStyle()
+                )
+        );
+    }
+
+
+    // =========================================================
+    // Reset Panel
+    // =========================================================
+
+    private VBox createResetGamePanel() {
+        VBox box = createPanelBox();
+
+        box.getChildren().addAll(
+                createPageTitle(text("menu.settings.reset")),
+                createTextBlock(text("menu.settings.reset.description")),
+
+                createSubButton(
+                        text("menu.settings.reset.resetSettingsToDefault"),
+                        () -> {
+                            resetSettingsToDefault();
+                            showTextNotice(text("menu.settings.reset.resetSettingsToDefault.notification"));
+                        }
+                ),
+
+                createSubButton(
+                        text("menu.settings.reset.clearAchievement"),
+                        () -> {
+                            achievementSystem.resetAll();
+                            showTextNotice(text("menu.settings.reset.clearAchievement.notification"));
+                        }
+                ),
+
+                createSubButton(
+                        text("menu.settings.reset.deleteLocalData"),
+                        () -> showConfirmPopup(
+                                text("menu.settings.reset.deleteLocalData.comfirmNotice"),
+                                () -> {
+                                    deleteLocalData();
+                                    showTextNotice(text("menu.settings.reset.deleteLocalData.notification"));
+                                }
+                        ),
+                        exitButtonStyle()
+                )
+        );
+
+        return box;
+    }
+
     private void resetSettingsToDefault() {
-        // 音量設定
         audioSystem.resetSettings();
         musicSystem.applyVolume();
 
-        // 視窗設定，如果你有 WindowSystem
-        if (windowSystem != null) {
-            windowSystem.resetSettings();
-            windowSystem.applySavedSettings();
+        windowSystem.resetSettings();
+        windowSystem.applySavedSettings();
+
+        languageSystem.resetSettings();
+
+        refreshMainMenuTexts();
+        showSettingsPage();
+    }
+
+    private void deleteLocalData() {
+        audioSystem.resetSettings();
+        windowSystem.resetSettings();
+        languageSystem.resetSettings();
+
+        achievementSystem.resetAll();
+        StreetEndlessRecordSystem.getInstance().reset();
+
+        deleteLocalSaveFolder();
+
+        if (devModeLabel != null) {
+            devModeLabel.setVisible(false);
         }
 
-        // 語言設定，如果你有 LanguageSystem
-        if (languageSystem != null) {
-            languageSystem.resetSettings();
-            refreshMainMenuTexts();
-            showSettingsPage();
-        }
+        musicSystem.applyVolume();
+        windowSystem.applySavedSettings();
+
+        refreshMainMenuTexts();
+        showSettingsPage();
     }
 
     private void deleteLocalSaveFolder() {
@@ -1570,254 +2047,26 @@ public class MainMenu extends FXGLMenu {
                     .forEach(path -> {
                         try {
                             Files.deleteIfExists(path);
-                        } catch (IOException e) {
+                        } catch (IOException exception) {
                             System.out.println("Failed to delete: " + path);
-                            e.printStackTrace();
+                            exception.printStackTrace();
                         }
                     });
 
-        } catch (IOException e) {
+        } catch (IOException exception) {
             System.out.println("Failed to format local save data.");
-            e.printStackTrace();
+            exception.printStackTrace();
         }
     }
 
-    private void deleteLocalData() {
-        audioSystem.resetSettings();
 
-        if (windowSystem != null) {
-            windowSystem.resetSettings();
-        }
+    // =========================================================
+    // Developer Mode Panel
+    // =========================================================
 
-        if (languageSystem != null) {
-            languageSystem.resetSettings();
-        }
-
-        achievementSystem.resetAll();
-
-        StreetEndlessRecordSystem.getInstance().reset();
-
-        deleteLocalSaveFolder();
-
-        if (devModeLabel != null) {
-            devModeLabel.setVisible(false);
-        }
-
-        musicSystem.applyVolume();
-
-        if (windowSystem != null) {
-            windowSystem.applySavedSettings();
-        }
-        showSettingsPage();
-    }
-
-    private StackPane createPopupButton(String text, Runnable action) {
-        return createPopupButton(text, action, defaultButtonStyle());
-    }
-
-    private StackPane createPopupButton(String text, Runnable action, ButtonStyle style) {
-        StackPane button = createButtonBase(text, 120, 42, style);
-
-        button.setOnMouseClicked(e -> {
-            if (!cutscene) {
-                audioSystem.playButtonSFX(SoundId.BUTTON_PRESSED);
-            }
-
-            if (action != null) {
-                action.run();
-            }
-        });
-
-        return button;
-    }
-
-    private void showConfirmNotice(String message, Runnable onConfirm) {
-        VBox box = new VBox(18);
-        box.setAlignment(Pos.CENTER);
-        box.setPadding(new Insets(24));
-        box.setMaxSize(460, 180);
-
-        Rectangle bg = new Rectangle(460, 180);
-        bg.setArcWidth(18);
-        bg.setArcHeight(18);
-        bg.setFill(Color.rgb(0, 0, 0, 0.88));
-        bg.setStroke(Color.WHITE);
-
-        Text text = createTextBlock(message);
-        text.setWrappingWidth(380);
-        text.setTextAlignment(TextAlignment.CENTER);
-
-        HBox buttons = new HBox(16);
-        buttons.setAlignment(Pos.CENTER);
-
-        StackPane confirm = createPopupButton(text("menu.common.confirm"), () -> {
-            pageLayer.getChildren().remove(box.getParent());
-
-            if (onConfirm != null) {
-                onConfirm.run();
-            }
-        }, exitButtonStyle());
-
-        StackPane cancel = createPopupButton(text("menu.common.cancel"), () -> {
-            pageLayer.getChildren().remove(box.getParent());
-        });
-
-        buttons.getChildren().addAll(confirm, cancel);
-        box.getChildren().addAll(text, buttons);
-
-        StackPane popup = new StackPane(bg, box);
-        popup.setAlignment(Pos.CENTER);
-
-        pageLayer.getChildren().add(popup);
-    }
-
-    private VBox createResetGamePanel() {
-        VBox box = createPanelBox();
-
-        box.getChildren().addAll(
-                createPageTitle(text("menu.settings.reset")),
-                createTextBlock(text("menu.settings.reset.description")),
-
-                createSubButton(text("menu.settings.reset.resetSettingsToDefault"), () -> {
-                    resetSettingsToDefault();
-                    showTextNotice(text("menu.settings.reset.resetSettingsToDefault.notification"));
-                }),
-
-                createSubButton(text("menu.settings.reset.clearAchievement"), () -> {
-                    achievementSystem.resetAll();
-                    showTextNotice(text("menu.settings.reset.clearAchievement.notification"));
-                }),
-
-                createSubButton(text("menu.settings.reset.deleteLocalData"), () -> {
-                    showConfirmNotice(
-                            text("menu.settings.reset.deleteLocalData.comfirmNotice"),
-                            () -> {
-                                deleteLocalData();
-                                text("menu.settings.reset.deleteLocalData.notification");
-                            }
-                    );
-                }, exitButtonStyle())
-        );
-
-        return box;
-    }
-
-    // 開發者模式
-    private StackPane createSunkenToggleButton(
-            String initialText,
-            boolean initiallyPressed,
-            TogglePressedAction action
-    ) {
-        double width = 260;
-        double height = 52;
-
-        StackPane button = new StackPane();
-        button.setPrefSize(width, height);
-        button.setMinSize(width, height);
-        button.setMaxSize(width, height);
-        button.setPickOnBounds(true);
-
-        Rectangle bg = new Rectangle(width, height);
-        bg.setArcWidth(10);
-        bg.setArcHeight(10);
-
-        Text label = new Text(initialText);
-        label.setStyle("""
-            -fx-font-size: 22px;
-            -fx-fill: white;
-            -fx-font-weight: bold;
-            """);
-
-        button.getChildren().addAll(bg, label);
-
-        SunkenButtonState state = new SunkenButtonState(bg, label, initiallyPressed);
-        button.setUserData(state);
-
-        applySunkenButtonState(button, initiallyPressed);
-
-        button.setOnMouseClicked(e -> {
-            SunkenButtonState currentState = (SunkenButtonState) button.getUserData();
-
-            boolean newPressed = !currentState.pressed();
-
-            button.setUserData(new SunkenButtonState(bg, label, newPressed));
-
-            label.setText(
-                    newPressed
-                            ? text("menu.settings.dev_mode.toggleOn")
-                            : text("menu.settings.dev_mode.toggleOff")
-            );
-
-            applySunkenButtonState(button, newPressed);
-
-            audioSystem.playButtonSFX(SoundId.BUTTON_PRESSED);
-
-            if (action != null) {
-                action.onChanged(newPressed);
-            }
-        });
-
-        button.setOnMouseEntered(e -> {
-            SunkenButtonState currentState = (SunkenButtonState) button.getUserData();
-
-            if (!currentState.pressed()) {
-                bg.setFill(Color.rgb(255, 255, 255, 0.18));
-                label.setFill(Color.BLACK);
-            }
-
-            audioSystem.playButtonSFX(SoundId.BUTTON_HOVER);
-        });
-
-        button.setOnMouseExited(e -> {
-            SunkenButtonState currentState = (SunkenButtonState) button.getUserData();
-            applySunkenButtonState(button, currentState.pressed());
-        });
-
-        return button;
-    }
-
-    private void applySunkenButtonState(StackPane button, boolean pressed) {
-        Object data = button.getUserData();
-
-        if (!(data instanceof SunkenButtonState state)) {
-            return;
-        }
-
-        Rectangle bg = state.background();
-        Text label = state.label();
-
-        if (pressed) {
-            /*
-             * 下沉狀態。
-             */
-            bg.setFill(Color.rgb(0, 0, 0, 0.78));
-            bg.setStroke(Color.rgb(255, 255, 255, 0.95));
-            bg.setStrokeWidth(2.2);
-
-            label.setFill(Color.WHITE);
-
-            button.setTranslateY(4);
-            button.setScaleX(0.98);
-            button.setScaleY(0.96);
-
-            button.setEffect(new DropShadow(4, Color.rgb(0, 0, 0, 0.85)));
-
-        } else {
-            /*
-             * 彈起狀態。
-             */
-            bg.setFill(Color.rgb(0, 0, 0, 0.58));
-            bg.setStroke(Color.rgb(255, 255, 255, 0.72));
-            bg.setStrokeWidth(1.4);
-
-            label.setFill(Color.WHITE);
-
-            button.setTranslateY(0);
-            button.setScaleX(1.0);
-            button.setScaleY(1.0);
-
-            button.setEffect(null);
-        }
+    @FunctionalInterface
+    private interface TogglePressedAction {
+        void onChanged(boolean pressed);
     }
 
     private record SunkenButtonState(
@@ -1825,11 +2074,6 @@ public class MainMenu extends FXGLMenu {
             Text label,
             boolean pressed
     ) {
-    }
-
-    @FunctionalInterface
-    private interface TogglePressedAction {
-        void onChanged(boolean pressed);
     }
 
     private VBox createDeveloperModePanel() {
@@ -1863,191 +2107,131 @@ public class MainMenu extends FXGLMenu {
         return box;
     }
 
-    // 沒用的資訊
-    private StackPane createInfoCard(String title, String content) {
-        VBox textBox = new VBox(8);
-        textBox.setPadding(new Insets(16, 20, 16, 20));
-        textBox.setAlignment(Pos.TOP_LEFT);
+    private StackPane createSunkenToggleButton(
+            String initialText,
+            boolean initiallyPressed,
+            TogglePressedAction action
+    ) {
+        double width = 260;
+        double height = 52;
 
-        Text titleText = new Text(title);
-        titleText.setStyle("""
-            -fx-font-size: 22px;
-            -fx-fill: white;
-            -fx-font-weight: bold;
-            """);
+        StackPane button = new StackPane();
+        button.setPrefSize(width, height);
+        button.setMinSize(width, height);
+        button.setMaxSize(width, height);
+        button.setPickOnBounds(true);
 
-        Text contentText = new Text(content);
-        contentText.setWrappingWidth(620);
-        contentText.setStyle("""
-            -fx-font-size: 18px;
-            -fx-fill: rgba(255,255,255,0.84);
-            """);
+        Rectangle background = new Rectangle(width, height);
+        background.setArcWidth(10);
+        background.setArcHeight(10);
 
-        textBox.getChildren().addAll(titleText, contentText);
+        Text label = new Text(initialText);
+        label.setStyle("""
+                -fx-font-size: 22px;
+                -fx-fill: white;
+                -fx-font-weight: bold;
+                """);
 
-        Rectangle bg = new Rectangle(700, 120);
-        bg.setArcWidth(18);
-        bg.setArcHeight(18);
-        bg.setFill(Color.rgb(0, 0, 0, 0.35));
-        bg.setStroke(Color.rgb(255, 255, 255, 0.22));
-        bg.setStrokeWidth(1.2);
+        button.getChildren().addAll(background, label);
+        button.setUserData(new SunkenButtonState(
+                background,
+                label,
+                initiallyPressed
+        ));
 
-        StackPane card = new StackPane(bg, textBox);
-        card.setAlignment(Pos.CENTER_LEFT);
-        card.setMaxWidth(700);
+        applySunkenButtonState(button, initiallyPressed);
 
-        return card;
+        button.setOnMouseClicked(event -> {
+            SunkenButtonState state =
+                    (SunkenButtonState) button.getUserData();
+
+            boolean newPressed = !state.pressed();
+
+            button.setUserData(new SunkenButtonState(
+                    background,
+                    label,
+                    newPressed
+            ));
+
+            label.setText(
+                    newPressed
+                            ? text("menu.settings.dev_mode.toggleOn")
+                            : text("menu.settings.dev_mode.toggleOff")
+            );
+
+            applySunkenButtonState(button, newPressed);
+            audioSystem.playButtonSFX(SoundId.BUTTON_PRESSED);
+
+            if (action != null) {
+                action.onChanged(newPressed);
+            }
+        });
+
+        button.setOnMouseEntered(event -> {
+            SunkenButtonState state =
+                    (SunkenButtonState) button.getUserData();
+
+            if (!state.pressed()) {
+                background.setFill(Color.rgb(255, 255, 255, 0.18));
+                label.setFill(Color.BLACK);
+            }
+
+            audioSystem.playButtonSFX(SoundId.BUTTON_HOVER);
+        });
+
+        button.setOnMouseExited(event -> {
+            SunkenButtonState state =
+                    (SunkenButtonState) button.getUserData();
+
+            applySunkenButtonState(button, state.pressed());
+        });
+
+        return button;
     }
 
-    private Text createCreditSectionTitle(String text) {
-        Text title = new Text(text);
-        title.setStyle("""
-            -fx-font-size: 24px;
-            -fx-fill: white;
-            -fx-font-weight: bold;
-            """);
-        title.setEffect(new DropShadow(6, Color.BLACK));
-        return title;
-    }
+    private void applySunkenButtonState(
+            StackPane button,
+            boolean pressed
+    ) {
+        Object data = button.getUserData();
 
-    private HBox createCreditRow(String role, String name) {
-        HBox row = new HBox(18);
-        row.setAlignment(Pos.CENTER_LEFT);
-
-        Text roleText = new Text(role);
-        roleText.setWrappingWidth(150);
-        roleText.setStyle("""
-            -fx-font-size: 18px;
-            -fx-fill: rgba(255,255,255,0.7);
-            -fx-font-weight: bold;
-            """);
-
-        Text nameText = new Text(name);
-        nameText.setWrappingWidth(430);
-        nameText.setStyle("""
-            -fx-font-size: 18px;
-            -fx-fill: white;
-            """);
-
-        row.getChildren().addAll(roleText, nameText);
-
-        return row;
-    }
-
-    private Rectangle createCreditDivider() {
-        Rectangle line = new Rectangle(640, 1);
-        line.setFill(Color.rgb(255, 255, 255, 0.18));
-        return line;
-    }
-
-    private ScrollPane createCreditsScroll() {
-        VBox credits = new VBox(14);
-        credits.setPadding(new Insets(18, 22, 18, 22));
-        credits.setAlignment(Pos.TOP_LEFT);
-
-        credits.getChildren().addAll(
-                createCreditSectionTitle(text("menu.settings.about.credits")),
-
-                createCreditRow(
-                        text("menu.settings.about.credits.game_design"),
-                        "Tiro"
-                ),
-                createCreditRow(
-                        text("menu.settings.about.credits.level_design"),
-                        "Tiro"
-                ),
-                createCreditRow(
-                        text("menu.settings.about.credits.narrative_design"),
-                        "Tiro"
-                ),
-
-                createCreditDivider(),
-
-                createCreditRow(
-                        text("menu.settings.about.credits.game_programming"),
-                        "Tiro"
-                ),
-                createCreditRow(
-                        text("menu.settings.about.credits.system_logic"),
-                        "Tiro"
-                ),
-                createCreditRow(
-                        text("menu.settings.about.credits.ui_programming"),
-                        "Tiro"
-                ),
-
-                createCreditDivider(),
-
-                createCreditRow(
-                        text("menu.settings.about.credits.art_2d"),
-                        "Tiro" + text("menu.settings.about.credits.comma") + text("menu.settings.about.credits.online_assets")
-                ),
-                createCreditRow(
-                        text("menu.settings.about.credits.character_design"),
-                        "Tiro" + text("menu.settings.about.credits.comma") + text("menu.settings.about.credits.online_assets")
-                ),
-                createCreditRow(
-                        text("menu.settings.about.credits.animation"),
-                        "Tiro"
-                ),
-
-                createCreditDivider(),
-
-                createCreditRow(
-                        text("menu.settings.about.credits.sound_design"),
-                        text("menu.settings.about.credits.online_assets")
-                ),
-                createCreditRow(
-                        text("menu.settings.about.credits.music"),
-                        text("menu.settings.about.credits.online_assets")
-                ),
-
-                createCreditDivider(),
-
-                createCreditRow(
-                        text("menu.settings.about.credits.translation.en"),
-                        "Tiro"
-                ),
-
-                createCreditDivider(),
-
-                createCreditRow(
-                        text("menu.settings.about.credits.testing"),
-                        "Tiro"
-                )
-        );
-
-        ScrollPane scroll = new ScrollPane(credits);
-        scroll.setPrefSize(720, 270);
-        scroll.setMaxSize(720, 270);
-        scroll.setFitToWidth(true);
-        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        scroll.setPannable(true);
-
-        scroll.setStyle("""
-            -fx-background: transparent;
-            -fx-background-color: rgba(0,0,0,0.35);
-            -fx-background-radius: 18;
-            -fx-border-color: rgba(255,255,255,0.22);
-            -fx-border-width: 1.2;
-            -fx-border-radius: 18;
-            -fx-padding: 4;
-            """);
-
-        scroll.getStyleClass().add("settings-scroll");
-
-        var css = getClass().getResource("/style.css");
-        if (css != null) {
-            scroll.getStylesheets().add(css.toExternalForm());
+        if (!(data instanceof SunkenButtonState state)) {
+            return;
         }
 
-        credits.setStyle("""
-            -fx-background-color: transparent;
-            """);
+        Rectangle background = state.background();
+        Text label = state.label();
 
-        return scroll;
+        if (pressed) {
+            background.setFill(Color.rgb(0, 0, 0, 0.78));
+            background.setStroke(Color.rgb(255, 255, 255, 0.95));
+            background.setStrokeWidth(2.2);
+
+            label.setFill(Color.WHITE);
+
+            button.setTranslateY(4);
+            button.setScaleX(0.98);
+            button.setScaleY(0.96);
+            button.setEffect(new DropShadow(4, Color.rgb(0, 0, 0, 0.85)));
+            return;
+        }
+
+        background.setFill(Color.rgb(0, 0, 0, 0.58));
+        background.setStroke(Color.rgb(255, 255, 255, 0.72));
+        background.setStrokeWidth(1.4);
+
+        label.setFill(Color.WHITE);
+
+        button.setTranslateY(0);
+        button.setScaleX(1.0);
+        button.setScaleY(1.0);
+        button.setEffect(null);
     }
+
+
+    // =========================================================
+    // About Page
+    // =========================================================
 
     private VBox createAboutGamePanel() {
         VBox box = createPanelBox();
@@ -2075,57 +2259,191 @@ public class MainMenu extends FXGLMenu {
         return box;
     }
 
-    private void showTextNotice(String text) {
-        Label notice = new Label(text);
-        notice.setStyle("""
+    private StackPane createInfoCard(
+            String title,
+            String content
+    ) {
+        VBox textBox = new VBox(8);
+        textBox.setPadding(new Insets(16, 20, 16, 20));
+        textBox.setAlignment(Pos.TOP_LEFT);
+
+        Text titleText = new Text(title);
+        titleText.setStyle("""
                 -fx-font-size: 22px;
-                -fx-text-fill: white;
-                -fx-background-color: rgba(0,0,0,0.8);
-                -fx-padding: 20;
+                -fx-fill: white;
+                -fx-font-weight: bold;
                 """);
 
-        StackPane popup = new StackPane(notice);
-        popup.setAlignment(Pos.CENTER);
+        Text contentText = new Text(content);
+        contentText.setWrappingWidth(620);
+        contentText.setStyle("""
+                -fx-font-size: 18px;
+                -fx-fill: rgba(255,255,255,0.84);
+                """);
 
-        pageLayer.getChildren().add(popup);
+        textBox.getChildren().addAll(titleText, contentText);
 
-        PauseTransition wait = new PauseTransition(Duration.seconds(1.2));
-        wait.setOnFinished(e -> pageLayer.getChildren().remove(popup));
-        wait.play();
+        Rectangle background = new Rectangle(700, 120);
+        background.setArcWidth(18);
+        background.setArcHeight(18);
+        background.setFill(Color.rgb(0, 0, 0, 0.35));
+        background.setStroke(Color.rgb(255, 255, 255, 0.22));
+        background.setStrokeWidth(1.2);
+
+        StackPane card = new StackPane(background, textBox);
+        card.setAlignment(Pos.CENTER_LEFT);
+        card.setMaxWidth(700);
+
+        return card;
     }
 
-    // =========================
-    // 共用 UI
-    // =========================
+    private ScrollPane createCreditsScroll() {
+        VBox credits = new VBox(14);
+        credits.setPadding(new Insets(18, 22, 18, 22));
+        credits.setAlignment(Pos.TOP_LEFT);
 
-    private void createDarkOverlay() {
-        darkOverlay = new Rectangle(SCREEN_WIDTH, SCREEN_HEIGHT);
-        darkOverlay.setFill(Color.rgb(0, 0, 0, 0.5));
-        darkOverlay.setOpacity(0);
-        darkOverlay.setMouseTransparent(true);
+        credits.getChildren().addAll(
+                createCreditSectionTitle(text("menu.settings.about.credits")),
 
-        root.getChildren().add(darkOverlay);
+                createCreditRow(text("menu.settings.about.credits.game_design"), "Tiro"),
+                createCreditRow(text("menu.settings.about.credits.level_design"), "Tiro"),
+                createCreditRow(text("menu.settings.about.credits.narrative_design"), "Tiro"),
+
+                createCreditDivider(),
+
+                createCreditRow(text("menu.settings.about.credits.game_programming"), "Tiro"),
+                createCreditRow(text("menu.settings.about.credits.system_logic"), "Tiro"),
+                createCreditRow(text("menu.settings.about.credits.ui_programming"), "Tiro"),
+
+                createCreditDivider(),
+
+                createCreditRow(
+                        text("menu.settings.about.credits.art_2d"),
+                        "Tiro" +
+                                text("menu.settings.about.credits.comma") +
+                                text("menu.settings.about.credits.online_assets")
+                ),
+                createCreditRow(
+                        text("menu.settings.about.credits.character_design"),
+                        "Tiro" +
+                                text("menu.settings.about.credits.comma") +
+                                text("menu.settings.about.credits.online_assets")
+                ),
+                createCreditRow(text("menu.settings.about.credits.animation"), "Tiro"),
+
+                createCreditDivider(),
+
+                createCreditRow(
+                        text("menu.settings.about.credits.sound_design"),
+                        text("menu.settings.about.credits.online_assets")
+                ),
+                createCreditRow(
+                        text("menu.settings.about.credits.music"),
+                        text("menu.settings.about.credits.online_assets")
+                ),
+
+                createCreditDivider(),
+
+                createCreditRow(text("menu.settings.about.credits.translation.en"), "Tiro"),
+
+                createCreditDivider(),
+
+                createCreditRow(text("menu.settings.about.credits.testing"), "Tiro")
+        );
+
+        ScrollPane scroll = new ScrollPane(credits);
+        scroll.setPrefSize(720, 270);
+        scroll.setMaxSize(720, 270);
+        scroll.setFitToWidth(true);
+        scroll.setPannable(true);
+        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+
+        scroll.setStyle("""
+                -fx-background: transparent;
+                -fx-background-color: rgba(0,0,0,0.35);
+                -fx-background-radius: 18;
+                -fx-border-color: rgba(255,255,255,0.22);
+                -fx-border-width: 1.2;
+                -fx-border-radius: 18;
+                -fx-padding: 4;
+                """);
+
+        scroll.getStyleClass().add("settings-scroll");
+        applyStyleSheet(scroll);
+
+        credits.setStyle("-fx-background-color: transparent;");
+
+        return scroll;
     }
+
+    private Text createCreditSectionTitle(String value) {
+        Text title = new Text(value);
+
+        title.setStyle("""
+                -fx-font-size: 24px;
+                -fx-fill: white;
+                -fx-font-weight: bold;
+                """);
+
+        title.setEffect(new DropShadow(6, Color.BLACK));
+
+        return title;
+    }
+
+    private HBox createCreditRow(
+            String role,
+            String name
+    ) {
+        HBox row = new HBox(18);
+        row.setAlignment(Pos.CENTER_LEFT);
+
+        Text roleText = new Text(role);
+        roleText.setWrappingWidth(150);
+        roleText.setStyle("""
+                -fx-font-size: 18px;
+                -fx-fill: rgba(255,255,255,0.7);
+                -fx-font-weight: bold;
+                """);
+
+        Text nameText = new Text(name);
+        nameText.setWrappingWidth(430);
+        nameText.setStyle("""
+                -fx-font-size: 18px;
+                -fx-fill: white;
+                """);
+
+        row.getChildren().addAll(roleText, nameText);
+
+        return row;
+    }
+
+    private Rectangle createCreditDivider() {
+        Rectangle line = new Rectangle(640, 1);
+        line.setFill(Color.rgb(255, 255, 255, 0.18));
+        return line;
+    }
+
+
+    // =========================================================
+    // Common Page UI
+    // =========================================================
 
     private BorderPane createSubPageBase() {
         BorderPane page = new BorderPane();
         page.setPrefSize(SCREEN_WIDTH, SCREEN_HEIGHT);
         page.setPickOnBounds(false);
-
         return page;
     }
 
     private VBox createLeftMenu(Node... buttons) {
         VBox box = new VBox();
         box.setAlignment(Pos.TOP_LEFT);
-
         box.setPrefWidth(360);
         box.setMinWidth(360);
         box.setMaxWidth(360);
-
         box.setPrefHeight(SCREEN_HEIGHT);
         box.setMinHeight(SCREEN_HEIGHT);
-
         box.setPadding(new Insets(50, 0, 42, 57));
 
         box.setBackground(new Background(new BackgroundFill(
@@ -2154,9 +2472,7 @@ public class MainMenu extends FXGLMenu {
         for (int i = 0; i < buttons.length; i++) {
             Node button = buttons[i];
 
-            boolean isLastButton = i == buttons.length - 1;
-
-            if (isLastButton) {
+            if (i == buttons.length - 1) {
                 box.getChildren().addAll(topButtons, spacer, button);
             } else {
                 topButtons.getChildren().add(button);
@@ -2173,153 +2489,234 @@ public class MainMenu extends FXGLMenu {
         return box;
     }
 
-    private void showRightContent(BorderPane page, Node content) {
-        page.setCenter(content);
-    }
-
-    private VBox createInfoPanel(String title, String body) {
+    private VBox createInfoPanel(
+            String title,
+            String body
+    ) {
         VBox box = createPanelBox();
+
         box.getChildren().addAll(
                 createPageTitle(title),
                 createTextBlock(body)
         );
+
         return box;
     }
 
-    private Text createPageTitle(String text) {
-        Text title = new Text(text);
+    private Text createPageTitle(String value) {
+        Text title = new Text(value);
+
         title.setStyle("""
                 -fx-font-size: 34px;
                 -fx-fill: white;
                 -fx-font-weight: bold;
                 """);
+
         title.setEffect(new DropShadow(8, Color.BLACK));
+
         return title;
     }
 
-    private Text createTextBlock(String text) {
-        Text t = new Text(text);
-        t.setWrappingWidth(620);
-        t.setStyle("""
+    private Text createTextBlock(String value) {
+        Text text = new Text(value);
+
+        text.setWrappingWidth(620);
+        text.setStyle("""
                 -fx-font-size: 22px;
                 -fx-fill: rgba(255,255,255,0.86);
                 """);
-        return t;
+
+        return text;
     }
 
-    private StackPane createMenuButton(String text, Runnable action) {
-        return createMenuButton(text, action, defaultButtonStyle());
+
+    // =========================================================
+    // Common Buttons
+    // =========================================================
+
+    private StackPane createMenuButton(
+            String value,
+            Runnable action
+    ) {
+        return createMenuButton(value, action, defaultButtonStyle());
     }
 
-    private StackPane createMenuButton(String text, Runnable action, ButtonStyle style) {
-        StackPane button = createButtonBase(text, 280, 58, style);
+    private StackPane createMenuButton(
+            String value,
+            Runnable action,
+            ButtonStyle style
+    ) {
+        StackPane button = createButtonBase(
+                value,
+                MAIN_BUTTON_WIDTH,
+                MAIN_BUTTON_HEIGHT,
+                style
+        );
 
-        button.setOnMouseClicked(e -> {
-            if (!cutscene) {
-                audioSystem.playButtonSFX(SoundId.BUTTON_PRESSED);
-
-                if (action != null) {
-                    action.run();
-                }
+        button.setOnMouseClicked(event -> {
+            if (cutscene) {
+                return;
             }
+
+            audioSystem.playButtonSFX(SoundId.BUTTON_PRESSED);
+            run(action);
         });
 
         return button;
     }
 
-    private StackPane createSubButton(String text, Runnable action) {
-        return createSubButton(text, action, defaultButtonStyle());
+    private StackPane createSubButton(
+            String value,
+            Runnable action
+    ) {
+        return createSubButton(value, action, defaultButtonStyle());
     }
 
-    private StackPane createSubButton(String text, Runnable action, ButtonStyle style) {
-        StackPane button = createButtonBase(text, 240, 46, style);
+    private StackPane createSubButton(
+            String value,
+            Runnable action,
+            ButtonStyle style
+    ) {
+        StackPane button = createButtonBase(
+                value,
+                SUB_BUTTON_WIDTH,
+                SUB_BUTTON_HEIGHT,
+                style
+        );
 
-        button.setOnMouseClicked(e -> {
+        button.setOnMouseClicked(event -> {
+            if (cutscene) {
+                return;
+            }
+
+            audioSystem.playButtonSFX(SoundId.BUTTON_PRESSED);
+            run(action);
+        });
+
+        return button;
+    }
+
+    private StackPane createPopupButton(
+            String value,
+            Runnable action
+    ) {
+        return createPopupButton(value, action, defaultButtonStyle());
+    }
+
+    private StackPane createPopupButton(
+            String value,
+            Runnable action,
+            ButtonStyle style
+    ) {
+        StackPane button = createButtonBase(value, 120, 42, style);
+
+        button.setOnMouseClicked(event -> {
             if (!cutscene) {
                 audioSystem.playButtonSFX(SoundId.BUTTON_PRESSED);
-
-                if (action != null) {
-                    action.run();
-                }
             }
+
+            run(action);
         });
 
         return button;
     }
 
     private StackPane createButtonBase(
-            String text,
+            String value,
             double width,
             double height,
             ButtonStyle style
     ) {
         StackPane button = new StackPane();
+
         button.setPrefSize(width, height);
         button.setMinSize(width, height);
         button.setMaxSize(width, height);
         button.setPickOnBounds(true);
 
-        Rectangle bg = new Rectangle(width, height);
-        bg.setArcWidth(style.arc());
-        bg.setArcHeight(style.arc());
-        bg.setFill(style.normalFill());
-        bg.setStroke(style.normalStroke());
-        bg.setStrokeWidth(style.strokeWidth());
+        Rectangle background = new Rectangle(width, height);
+        background.setArcWidth(style.arc());
+        background.setArcHeight(style.arc());
+        background.setFill(style.normalFill());
+        background.setStroke(style.normalStroke());
+        background.setStrokeWidth(style.strokeWidth());
 
-        Text label = new Text(text);
+        Text label = new Text(value);
         label.setStyle("""
-            -fx-font-size: 22px;
-            -fx-font-weight: bold;
-            """);
+                -fx-font-size: 22px;
+                -fx-font-weight: bold;
+                """);
         label.setFill(style.normalText());
 
-        button.getChildren().addAll(bg, label);
+        button.getChildren().addAll(background, label);
 
-        button.setOnMouseEntered(e -> {
+        setupButtonHoverAndPressEffects(
+                button,
+                background,
+                label,
+                style
+        );
+
+        return button;
+    }
+
+    private void setupButtonHoverAndPressEffects(
+            StackPane button,
+            Rectangle background,
+            Text label,
+            ButtonStyle style
+    ) {
+        button.setOnMouseEntered(event -> {
             if (!cutscene) {
                 audioSystem.playButtonSFX(SoundId.BUTTON_HOVER);
             }
 
-            bg.setFill(style.hoverFill());
-            bg.setStroke(style.hoverStroke());
+            background.setFill(style.hoverFill());
+            background.setStroke(style.hoverStroke());
             label.setFill(style.hoverText());
 
-            ScaleTransition st = new ScaleTransition(Duration.seconds(0.08), button);
-            st.setToX(style.hoverScale());
-            st.setToY(style.hoverScale());
-            st.play();
+            playScale(button, style.hoverScale());
         });
 
-        button.setOnMouseExited(e -> {
-            bg.setFill(style.normalFill());
-            bg.setStroke(style.normalStroke());
+        button.setOnMouseExited(event -> {
+            background.setFill(style.normalFill());
+            background.setStroke(style.normalStroke());
             label.setFill(style.normalText());
 
-            ScaleTransition st = new ScaleTransition(Duration.seconds(0.08), button);
-            st.setToX(1.0);
-            st.setToY(1.0);
-            st.play();
+            playScale(button, 1.0);
         });
 
-        button.setOnMousePressed(e -> {
-            bg.setFill(style.pressedFill());
-            bg.setStroke(style.pressedStroke());
+        button.setOnMousePressed(event -> {
+            background.setFill(style.pressedFill());
+            background.setStroke(style.pressedStroke());
             label.setFill(style.pressedText());
 
             button.setScaleX(0.97);
             button.setScaleY(0.97);
         });
 
-        button.setOnMouseReleased(e -> {
-            bg.setFill(style.hoverFill());
-            bg.setStroke(style.hoverStroke());
+        button.setOnMouseReleased(event -> {
+            background.setFill(style.hoverFill());
+            background.setStroke(style.hoverStroke());
             label.setFill(style.hoverText());
 
             button.setScaleX(style.hoverScale());
             button.setScaleY(style.hoverScale());
         });
+    }
 
-        return button;
+    private void playScale(
+            Node node,
+            double scale
+    ) {
+        ScaleTransition transition = new ScaleTransition(
+                Duration.seconds(0.08),
+                node
+        );
+
+        transition.setToX(scale);
+        transition.setToY(scale);
+        transition.play();
     }
 
     private record ButtonStyle(
@@ -2381,40 +2778,103 @@ public class MainMenu extends FXGLMenu {
         );
     }
 
-    private ImageView loadImageView(String path, double width, double height) {
-        try {
-            URL url = getClass().getResource(path);
 
-            if (url != null) {
-                Image image = new Image(url.toExternalForm());
-                ImageView view = new ImageView(image);
-                view.setFitWidth(width);
-                view.setFitHeight(height);
-                view.setPreserveRatio(false);
-                return view;
-            }
+    // =========================================================
+    // Popup / Notice
+    // =========================================================
 
-        } catch (Exception ignored) {
-        }
+    private void showTextNotice(String value) {
+        Label notice = new Label(value);
 
-        Rectangle fallback = new Rectangle(width, height);
-        fallback.setFill(Color.rgb(20, 20, 20));
+        notice.setStyle("""
+                -fx-font-size: 22px;
+                -fx-text-fill: white;
+                -fx-background-color: rgba(0,0,0,0.8);
+                -fx-padding: 20;
+                """);
 
-        ImageView empty = new ImageView();
-        empty.setFitWidth(width);
-        empty.setFitHeight(height);
+        StackPane popup = new StackPane(notice);
+        popup.setAlignment(Pos.CENTER);
+        popup.setMouseTransparent(true);
 
-        return empty;
+        pageLayer.getChildren().add(popup);
+
+        PauseTransition wait = new PauseTransition(Duration.seconds(1.2));
+        wait.setOnFinished(event -> pageLayer.getChildren().remove(popup));
+        wait.play();
     }
 
-    private void resetToMainMenuFirst() {
-        pageLayer.getChildren().clear();
-        pageLayer.setVisible(false);
-        pageLayer.setOpacity(0);
+    private void showConfirmPopup(
+            String message,
+            Runnable onConfirm
+    ) {
+        pageLayer.setVisible(true);
+        pageLayer.setOpacity(1);
+        pageLayer.setPickOnBounds(true);
+        pageLayer.toFront();
 
-        if (darkOverlay != null) {
-            darkOverlay.setOpacity(0);
-        }
+        VBox box = new VBox(18);
+        box.setAlignment(Pos.CENTER);
+        box.setPadding(new Insets(24));
+        box.setMaxSize(460, 180);
+
+        Rectangle background = new Rectangle(460, 180);
+        background.setArcWidth(18);
+        background.setArcHeight(18);
+        background.setFill(Color.rgb(0, 0, 0, 0.88));
+        background.setStroke(Color.rgb(255, 255, 255, 0.95));
+        background.setStrokeWidth(1.8);
+        background.setEffect(new DropShadow(18, Color.rgb(0, 0, 0, 0.9)));
+
+        Text textNode = createTextBlock(message);
+        textNode.setWrappingWidth(380);
+        textNode.setTextAlignment(TextAlignment.CENTER);
+
+        HBox buttons = new HBox(16);
+        buttons.setAlignment(Pos.CENTER);
+
+        StackPane popup = new StackPane(background, box);
+        popup.setAlignment(Pos.CENTER);
+
+        StackPane confirm = createPopupButton(
+                text("menu.common.confirm"),
+                () -> {
+                    pageLayer.getChildren().remove(popup);
+                    run(onConfirm);
+                },
+                exitButtonStyle()
+        );
+
+        StackPane cancel = createPopupButton(
+                text("menu.common.cancel"),
+                () -> {
+                    pageLayer.getChildren().remove(popup);
+
+                    if (pageLayer.getChildren().isEmpty()) {
+                        pageLayer.setVisible(false);
+                        pageLayer.setOpacity(0);
+                        pageLayer.setPickOnBounds(false);
+                    }
+                }
+        );
+
+        buttons.getChildren().addAll(confirm, cancel);
+        box.getChildren().addAll(textNode, buttons);
+
+        pageLayer.getChildren().add(popup);
+    }
+
+
+    // =========================================================
+    // Main Menu Reset / Exit
+    // =========================================================
+
+    private void resetToMainMenuFirst() {
+        cutscene = true;
+
+        clearPageLayer();
+
+        darkOverlay.setOpacity(0);
 
         backgroundView.setOpacity(0);
 
@@ -2430,23 +2890,16 @@ public class MainMenu extends FXGLMenu {
         mainButtonBox.setTranslateX(0);
         mainButtonBox.setTranslateY(80);
 
-        if (devModeLabel != null) {
-            devModeLabel.setVisible(Main.devMode);
-        }
+        updateDeveloperLabel();
     }
 
     private void resetToMainMenuSecondary() {
-        // 關閉所有子頁面
-        pageLayer.getChildren().clear();
-        pageLayer.setVisible(false);
-        pageLayer.setOpacity(0);
+        cutscene = false;
 
-        // 背景變暗遮罩還原
-        if (darkOverlay != null) {
-            darkOverlay.setOpacity(0);
-        }
+        clearPageLayer();
 
-        // Logo 和主選單按鈕恢復
+        darkOverlay.setOpacity(0);
+
         logoView.setVisible(true);
         logoView.setOpacity(1);
         logoView.setScaleX(1);
@@ -2459,77 +2912,122 @@ public class MainMenu extends FXGLMenu {
         mainButtonBox.setTranslateX(0);
         mainButtonBox.setTranslateY(0);
 
-        // 開發者模式提示
+        updateDeveloperLabel();
+    }
+
+    private void clearPageLayer() {
+        pageLayer.getChildren().clear();
+        pageLayer.setVisible(false);
+        pageLayer.setPickOnBounds(false);
+        pageLayer.setOpacity(0);
+    }
+
+    private void updateDeveloperLabel() {
         if (devModeLabel != null) {
             devModeLabel.setVisible(Main.devMode);
         }
     }
 
-    private void showConfirmNoticeOnMainMenu(String message, Runnable onConfirm) {
-        pageLayer.getChildren().clear();
-        pageLayer.setVisible(true);
-        pageLayer.setOpacity(1);
-        pageLayer.setPickOnBounds(true);
-        pageLayer.toFront();
-
-        VBox box = new VBox(18);
-        box.setAlignment(Pos.CENTER);
-        box.setPadding(new Insets(24));
-        box.setMaxSize(460, 180);
-
-        Rectangle bg = new Rectangle(460, 180);
-        bg.setArcWidth(18);
-        bg.setArcHeight(18);
-        bg.setFill(Color.rgb(0, 0, 0, 0.88));
-        bg.setStroke(Color.rgb(255, 255, 255, 0.95));
-        bg.setStrokeWidth(1.8);
-        bg.setEffect(new DropShadow(18, Color.rgb(0, 0, 0, 0.9)));
-
-        Text textNode = createTextBlock(message);
-        textNode.setWrappingWidth(380);
-        textNode.setTextAlignment(TextAlignment.CENTER);
-
-        HBox buttons = new HBox(16);
-        buttons.setAlignment(Pos.CENTER);
-
-        StackPane popup = new StackPane(bg, box);
-        popup.setAlignment(Pos.CENTER);
-
-        StackPane confirm = createPopupButton(
-                text("menu.common.confirm"),
-                () -> {
-                    pageLayer.getChildren().remove(popup);
-
-                    if (onConfirm != null) {
-                        onConfirm.run();
-                    }
-                },
-                exitButtonStyle()
-        );
-
-        StackPane cancel = createPopupButton(
-                text("menu.common.cancel"),
-                () -> {
-                    pageLayer.getChildren().remove(popup);
-                    pageLayer.setVisible(false);
-                    pageLayer.setOpacity(0);
-                    pageLayer.setPickOnBounds(false);
-                }
-        );
-
-        buttons.getChildren().addAll(confirm, cancel);
-        box.getChildren().addAll(textNode, buttons);
-
-        pageLayer.getChildren().add(popup);
-    }
-
     private void requestExitGame() {
-        showConfirmNoticeOnMainMenu(
+        showConfirmPopup(
                 text("menu.exit.confirm"),
                 () -> {
                     musicSystem.stopBGM();
                     getGameController().exit();
                 }
         );
+    }
+
+
+    // =========================================================
+    // Utility
+    // =========================================================
+
+    private FadeTransition createFadeTransition(
+            Node node,
+            double from,
+            double to,
+            double seconds
+    ) {
+        FadeTransition transition = new FadeTransition(
+                Duration.seconds(seconds),
+                node
+        );
+
+        transition.setFromValue(from);
+        transition.setToValue(to);
+
+        return transition;
+    }
+
+    private ImageView loadImageView(
+            String path,
+            double width,
+            double height
+    ) {
+        try {
+            URL url = getClass().getResource(path);
+
+            if (url != null) {
+                Image image = new Image(url.toExternalForm());
+
+                ImageView view = new ImageView(image);
+                view.setFitWidth(width);
+                view.setFitHeight(height);
+                view.setPreserveRatio(false);
+
+                return view;
+            }
+
+        } catch (Exception ignored) {
+        }
+
+        ImageView empty = new ImageView();
+        empty.setFitWidth(width);
+        empty.setFitHeight(height);
+        return empty;
+    }
+
+    private Image loadImageOrNull(String path) {
+        try {
+            var url = getClass().getResource(path);
+
+            if (url == null) {
+                System.out.println("Image not found: " + path);
+                return null;
+            }
+
+            return new Image(url.toExternalForm());
+
+        } catch (Exception exception) {
+            System.out.println("Image load failed: " + path);
+            return null;
+        }
+    }
+
+    private void applyStyleSheet(Node node) {
+        if (!(node instanceof Parent parent)) {
+            return;
+        }
+
+        var css = getClass().getResource("/style.css");
+
+        if (css != null) {
+            String cssPath = css.toExternalForm();
+
+            if (!parent.getStylesheets().contains(cssPath)) {
+                parent.getStylesheets().add(cssPath);
+            }
+        }
+    }
+
+    private String text(String key) {
+        return languageSystem.text(key);
+    }
+
+    private void run(Runnable action) {
+        if (action != null) {
+            action.run();
+        }
     }
 }

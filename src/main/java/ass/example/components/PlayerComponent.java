@@ -682,6 +682,7 @@ public class PlayerComponent extends Component {
         jumping = true;
         jumpHoldTimer = 0;
 
+        groundContacts = 0;
         onOneWayPlatform = false;
 
         physics.setVelocityY(-JUMP_SPEED);
@@ -1536,6 +1537,7 @@ public class PlayerComponent extends Component {
             resetGroundState();
             updateGroundSensorPosition();
             refreshGroundContacts();
+            System.out.println("Ground contacts refreshed(Player)");
         }, Duration.seconds(0.02));
 
         controlEnabled = true;

@@ -1,16 +1,13 @@
 package ass.example.scenes;
 
-import ass.example.components.LoadSaveComponent;
 import ass.example.core.DeathReason;
 import ass.example.core.StreetScene.FallingObjectVariant;
 import ass.example.core.StreetScene.StreetApartmentStyle;
-import ass.example.system.AudioSystem;
-import ass.example.system.DeathSystem;
+import ass.example.scenes.system.SceneConfig;
+import ass.example.scenes.system.SceneManager;
 import ass.example.system.InteractionSystem;
-import ass.example.system.StreetEndlessRecordSystem;
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.SpawnData;
-import com.almasb.fxgl.entity.component.Component;
 import com.almasb.fxgl.physics.PhysicsComponent;
 import javafx.animation.FadeTransition;
 import javafx.scene.effect.DropShadow;
@@ -18,7 +15,6 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
-import javafx.scene.text.Text;
 import javafx.util.Duration;
 import java.util.ArrayList;
 import java.util.List;

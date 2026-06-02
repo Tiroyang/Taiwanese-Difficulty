@@ -2,119 +2,155 @@ package ass.example.system.dialogue;
 
 import ass.example.components.PlayerComponent;
 import ass.example.core.DeathReason;
-import ass.example.core.QuestType;
 import ass.example.core.SoundId;
 import ass.example.system.AudioSystem;
 import ass.example.system.DeathSystem;
 import ass.example.system.MusicSystem;
-import ass.example.system.quest.QuestSystem;
 import ass.example.ui.DialogueUI;
 import ass.example.ui.MomBattleMiniGame;
 import com.almasb.fxgl.entity.Entity;
 import javafx.animation.PauseTransition;
 import javafx.util.Duration;
 
-import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 import static ass.example.core.DeathReason.MOM_DANCE_OFF;
-import static com.almasb.fxgl.dsl.FXGL.*;
+import static com.almasb.fxgl.dsl.FXGL.addUINode;
+import static com.almasb.fxgl.dsl.FXGL.removeUINode;
 
+/**
+ * DialogueSystem
+ *
+ * 對話系統。
+ *
+ * 功能：
+ * 1. 管理目前是否正在對話。
+ * 2. 開始對話。
+ * 3. 切換對話行。
+ * 4. 處理下一句對話。
+ * 5. 結束對話。
+ * 6. 控制玩家在對話期間不能移動。
+ * 7. 控制對話 BGM 與場景 BGM。
+ * 8. 處理特殊對話事件，例如媽媽 Boss 戰、媽媽跳舞制裁。
+ *
+ * 單例設計：
+ * DialogueSystem 適合使用單例，因為整個遊戲同一時間只需要一個對話系統。
+ */
 public class DialogueSystem {
 
+    // =========================================================
+    // Singleton
+    // =========================================================
+
+    /**
+     * DialogueSystem 單例。
+     */
     private static final DialogueSystem INSTANCE = new DialogueSystem();
 
+    /**
+     * 取得 DialogueSystem 單例。
+     *
+     * @return DialogueSystem
+     */
     public static DialogueSystem getInstance() {
         return INSTANCE;
     }
 
-    private final Map<String, DialogueLine> lines = new HashMap<>();
 
+    // =========================================================
+    // Dialogue Data
+    // =========================================================
+
+    /**
+     * 所有對話資料。
+     *
+     * key：
+     * - DialogueLine id
+     *
+     * value：
+     * - DialogueLine
+     */
+    private final Map<String, DialogueLine> lines;
+
+
+    // =========================================================
+    // Runtime References
+    // =========================================================
+
+    /**
+     * 目前顯示中的 DialogueUI。
+     */
     private DialogueUI dialogueUI;
 
+    /**
+     * 目前參與對話的玩家。
+     */
     private Entity player;
+
+    /**
+     * 對話結束後要恢復的場景 BGM。
+     */
     private String sceneBgmPath;
 
+
+    // =========================================================
+    // Runtime State
+    // =========================================================
+
+    /**
+     * 目前是否正在對話。
+     */
     private boolean active = false;
 
+
+    // =========================================================
+    // Dependencies
+    // =========================================================
+
+    /**
+     * 音效系統。
+     *
+     * AudioSystem 是全域服務，適合單例。
+     */
     private final AudioSystem audioSystem = AudioSystem.getInstance();
-    private final DeathSystem deathSystem = DeathSystem.getInstance();
 
+
+    // =========================================================
+    // Constructor
+    // =========================================================
+
+    /**
+     * 建立對話系統。
+     *
+     * private：
+     * - 確保只能透過 getInstance() 取得。
+     */
     private DialogueSystem() {
-        registerDialogues();
+        this.lines = DialogueDatabase.create(this);
     }
 
-    private void registerDialogues() {
-        /*
-         * 之後拆到 DialogueDatabase 。
-         */
-        lines.put("mom_001", new DialogueLine(
-                "mom_001",
-                "/assets/textures/characters/mom/mom_chat.png",
-                "/assets/textures/characters/mom/mom_chat_speak.png",
-                "dialog.character.mom",
-                "dialog.mom.001",
-                true,
-                "mom_002",
-                false
-        ));
 
-        DialogueLine mom_002 = new DialogueLine(
-                "mom_002",
-                "/assets/textures/characters/mom/mom_chat.png",
-                "/assets/textures/characters/mom/mom_chat_speak.png",
-                "dialog.character.mom",
-                "dialog.mom.002",
-                false,
-                null,
-                false
-        );
-        mom_002.addButton(new DialogueButton("dialog.mom.option.1.1", () -> goToLine("mom_003_1")));
-        mom_002.addButton(new DialogueButton("dialog.mom.option.1.2", () -> goToLine("mom_003_2")));
-        lines.put("mom_002", mom_002);
+    // =========================================================
+    // Start Dialogue
+    // =========================================================
 
-        lines.put("mom_003_1", new DialogueLine(
-                "mom_003_1",
-                "/assets/textures/characters/mom/mom_chat.png",
-                "/assets/textures/characters/mom/mom_chat_speak.png",
-                "dialog.character.mom",
-                "dialog.mom.003.1",
-                true,
-                null,
-                true
-        ).onFinish(() -> {
-            QuestSystem.getInstance().completeQuest(QuestType.TALK_TO_MOM);
-        }));
-
-        lines.put("mom_003_2", new DialogueLine(
-                "mom_003_2",
-                "/assets/textures/characters/mom/mom_chat_rage.png",
-                "/assets/textures/characters/mom/mom_chat_rage_speak.png",
-                "dialog.character.mom",
-                "dialog.mom.003.2",
-                true,
-                "mom_004_2",
-                false
-        ));
-
-        DialogueLine mom_004_2 = new DialogueLine(
-                "mom_004_2",
-                "/assets/textures/characters/mom/mom_chat_rage.png",
-                "/assets/textures/characters/mom/mom_chat_rage_speak.png",
-                null,
-                "dialog.mom.004.2",
-                false,
-                null,
-                false
-        );
-        mom_004_2.addButton(new DialogueButton("dialog.mom.option.2.1", this::startMomBattleMiniGame));
-        mom_004_2.addButton(new DialogueButton("dialog.mom.option.2.2", this::callMomDanceOff));
-        mom_004_2.addButton(new DialogueButton("dialog.mom.option.2.3", this::endDialogue));
-        lines.put("mom_004_2", mom_004_2);
-    }
-
+    /**
+     * 開始對話。
+     *
+     * 流程：
+     * 1. 若目前已經有對話，直接返回。
+     * 2. 查找起始對話。
+     * 3. 保存玩家與場景 BGM。
+     * 4. 禁用玩家控制。
+     * 5. 播放對話 BGM 或暫停目前 BGM。
+     * 6. 建立 DialogueUI。
+     * 7. 顯示第一句對話。
+     *
+     * @param startId 起始對話 ID
+     * @param player 玩家 Entity
+     * @param sceneBgmPath 對話結束後要恢復的場景 BGM
+     * @param dialogueBgmPath 對話期間播放的 BGM
+     */
     public void startDialogue(
             String startId,
             Entity player,
@@ -125,7 +161,7 @@ public class DialogueSystem {
             return;
         }
 
-        DialogueLine firstLine = lines.get(startId);
+        DialogueLine firstLine = getLine(startId);
 
         if (firstLine == null) {
             System.out.println("Dialogue not found: " + startId);
@@ -134,19 +170,11 @@ public class DialogueSystem {
 
         this.player = player;
         this.sceneBgmPath = sceneBgmPath;
-
-        active = true;
+        this.active = true;
 
         disablePlayerControl();
 
-        /*
-         * 對話開啟後，停止目前關卡 BGM，改播對話專屬 BGM。
-         */
-        if (dialogueBgmPath != null && !dialogueBgmPath.isBlank()) {
-            MusicSystem.getInstance().playBGM(dialogueBgmPath, true);
-        } else {
-            MusicSystem.getInstance().pauseBGM();
-        }
+        playDialogueBGM(dialogueBgmPath);
 
         dialogueUI = new DialogueUI(this);
         addUINode(dialogueUI, 0, 0);
@@ -154,12 +182,37 @@ public class DialogueSystem {
         dialogueUI.showLine(firstLine);
     }
 
+    /**
+     * 播放對話 BGM。
+     *
+     * 若 dialogueBgmPath 為空，則暫停目前 BGM。
+     *
+     * @param dialogueBgmPath 對話 BGM 路徑
+     */
+    private void playDialogueBGM(String dialogueBgmPath) {
+        if (dialogueBgmPath != null && !dialogueBgmPath.isBlank()) {
+            MusicSystem.getInstance().playBGM(dialogueBgmPath, true);
+        } else {
+            MusicSystem.getInstance().pauseBGM();
+        }
+    }
+
+
+    // =========================================================
+    // Dialogue Flow
+    // =========================================================
+
+    /**
+     * 切換到指定對話行。
+     *
+     * @param id 對話 ID
+     */
     public void goToLine(String id) {
         if (!active || dialogueUI == null) {
             return;
         }
 
-        DialogueLine line = lines.get(id);
+        DialogueLine line = getLine(id);
 
         if (line == null) {
             System.out.println("Dialogue line not found: " + id);
@@ -170,6 +223,13 @@ public class DialogueSystem {
         dialogueUI.showLine(line);
     }
 
+    /**
+     * 從目前對話行進入下一步。
+     *
+     * 由 DialogueUI 在玩家點擊下一句時呼叫。
+     *
+     * @param currentLine 目前對話行
+     */
     public void nextFrom(DialogueLine currentLine) {
         if (currentLine == null) {
             return;
@@ -189,37 +249,53 @@ public class DialogueSystem {
             return;
         }
 
+        currentLine.runOnFinish();
         goToLine(nextId);
     }
 
+    /**
+     * 取得指定對話行。
+     *
+     * @param id 對話 ID
+     * @return DialogueLine，若不存在則回傳 null
+     */
+    private DialogueLine getLine(String id) {
+        return lines.get(id);
+    }
+
+
+    // =========================================================
+    // End Dialogue
+    // =========================================================
+
+    /**
+     * 立即結束對話。
+     */
     public void endDialogue() {
         endDialogue(0, null);
     }
 
-    private void endDialogue(double delaySeconds, Runnable afterEnd) {
+    /**
+     * 延遲結束對話。
+     *
+     * @param delaySeconds 延遲秒數
+     * @param afterEnd 對話結束後執行的事件，可為 null
+     */
+    private void endDialogue(
+            double delaySeconds,
+            Runnable afterEnd
+    ) {
         if (!active) {
             return;
         }
 
         active = false;
 
-        if (dialogueUI != null) {
-            removeUINode(dialogueUI);
-            dialogueUI = null;
-        }
+        removeDialogueUI();
 
         Runnable finishEndDialogue = () -> {
             enablePlayerControl();
-
-            /*
-             * 對話結束後，播回場景 BGM。
-             * 如果你希望回到原本播放秒數，要再擴充 MusicSystem 記錄 current time。
-             */
-            if (sceneBgmPath != null && !sceneBgmPath.isBlank()) {
-                MusicSystem.getInstance().playBGM(sceneBgmPath, true);
-            } else {
-                MusicSystem.getInstance().resumeBGM();
-            }
+            restoreSceneBGM();
 
             player = null;
             sceneBgmPath = null;
@@ -234,44 +310,93 @@ public class DialogueSystem {
             return;
         }
 
-        PauseTransition wait = new PauseTransition(Duration.seconds(delaySeconds));
-        wait.setOnFinished(e -> finishEndDialogue.run());
+        PauseTransition wait =
+                new PauseTransition(Duration.seconds(delaySeconds));
+
+        wait.setOnFinished(event -> finishEndDialogue.run());
         wait.play();
     }
 
+    /**
+     * 移除 DialogueUI。
+     */
+    private void removeDialogueUI() {
+        if (dialogueUI != null) {
+            removeUINode(dialogueUI);
+            dialogueUI = null;
+        }
+    }
+
+    /**
+     * 恢復場景 BGM。
+     */
+    private void restoreSceneBGM() {
+        if (sceneBgmPath != null && !sceneBgmPath.isBlank()) {
+            MusicSystem.getInstance().playBGM(sceneBgmPath, true);
+        } else {
+            MusicSystem.getInstance().resumeBGM();
+        }
+    }
+
+
+    // =========================================================
+    // Player Control
+    // =========================================================
+
+    /**
+     * 禁用玩家控制。
+     */
     private void disablePlayerControl() {
-        if (player == null) {
+        PlayerComponent playerComponent = getPlayerComponent();
+
+        if (playerComponent == null) {
             return;
         }
 
-        try {
-            PlayerComponent pc = player.getComponent(PlayerComponent.class);
-            pc.stopAllMovement();
-            pc.setControlEnabled(false);
-        } catch (Exception ignored) {
-        }
+        playerComponent.stopAllMovement();
+        playerComponent.setControlEnabled(false);
     }
 
+    /**
+     * 恢復玩家控制。
+     */
     private void enablePlayerControl() {
-        if (player == null) {
+        PlayerComponent playerComponent = getPlayerComponent();
+
+        if (playerComponent == null) {
             return;
         }
 
-        try {
-            PlayerComponent pc = player.getComponent(PlayerComponent.class);
-            pc.stopAllMovement();
-            pc.setControlEnabled(true);
-        } catch (Exception ignored) {
+        playerComponent.stopAllMovement();
+        playerComponent.setControlEnabled(true);
+    }
+
+    /**
+     * 取得目前玩家的 PlayerComponent。
+     *
+     * @return PlayerComponent，若不存在則回傳 null
+     */
+    private PlayerComponent getPlayerComponent() {
+        if (player == null || !player.hasComponent(PlayerComponent.class)) {
+            return null;
         }
+
+        return player.getComponent(PlayerComponent.class);
     }
 
-    public boolean isActive() {
-        return active;
-    }
 
-    private void startMomBattleMiniGame() {
+    // =========================================================
+    // Special Dialogue Events
+    // =========================================================
+
+    /**
+     * 開始媽媽 Boss 戰小遊戲。
+     *
+     * package-private：
+     * - 讓 DialogueDatabase 可以使用 method reference。
+     */
+    void startMomBattleMiniGame() {
         MomBattleMiniGame layer = new MomBattleMiniGame(
-                this,
                 DeathReason.MOM_BATTLE_LOSE_A,
                 DeathReason.MOM_BATTLE_LOSE_B,
                 DeathReason.MOM_BATTLE_LOSE_C
@@ -281,20 +406,43 @@ public class DialogueSystem {
         layer.start();
     }
 
-    private void callMomDanceOff() {
+    /**
+     * 呼叫媽媽跳舞制裁。
+     *
+     * 流程：
+     * 1. 播放媽媽跳舞音效。
+     * 2. 強制玩家播放跳舞制裁動畫。
+     * 3. 延遲結束對話。
+     * 4. 對話結束後觸發 MOM_DANCE_OFF 死亡。
+     *
+     * package-private：
+     * - 讓 DialogueDatabase 可以使用 method reference。
+     */
+    void callMomDanceOff() {
         audioSystem.playSFX(SoundId.MOM_DANCE_OFF);
 
-        if (player != null) {
-            try {
-                PlayerComponent pc = player.getComponent(PlayerComponent.class);
-                pc.playMomDanceOffAnimation(1.2);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        PlayerComponent playerComponent = getPlayerComponent();
+
+        if (playerComponent != null) {
+            playerComponent.playMomDanceOffAnimation(1.2);
         }
 
-        endDialogue(3.0, () -> {
-            deathSystem.die(MOM_DANCE_OFF);
-        });
+        endDialogue(3.0, () ->
+                DeathSystem.getInstance().die(MOM_DANCE_OFF)
+        );
+    }
+
+
+    // =========================================================
+    // State Getter
+    // =========================================================
+
+    /**
+     * 取得目前是否正在對話。
+     *
+     * @return true 表示對話中
+     */
+    public boolean isActive() {
+        return active;
     }
 }

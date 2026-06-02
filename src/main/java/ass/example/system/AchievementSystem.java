@@ -8,18 +8,110 @@ import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
 
-import static com.almasb.fxgl.dsl.FXGLForKtKt.getb;
+/**
+ * AchievementSystem
+ *
+ * 成就系統。
+ *
+ * 功能：
+ * 1. 記錄已解鎖的死亡成就。
+ * 2. 判斷指定死亡原因是否已解鎖。
+ * 3. 第一次觸發死亡原因時解鎖成就。
+ * 4. 將成就資料儲存在使用者資料夾。
+ * 5. 啟動遊戲時讀取已解鎖成就。
+ * 6. 提供成就數量統計。
+ * 7. 支援重置全部成就。
+ *
+ * 單例判斷：
+ * AchievementSystem 適合做成單例。
+ *
+ * 原因：
+ * - 成就是全遊戲共用資料。
+ * - 成就不是跟某個場景綁定。
+ * - DeathSystem、AchievementUI、MainMenu 都可能需要讀取同一份成就資料。
+ * - 如果建立多份 AchievementSystem，可能造成解鎖狀態不同步。
+ */
+public final class AchievementSystem {
 
-public class AchievementSystem {
+    // =========================================================
+    // Singleton
+    // =========================================================
 
+    /**
+     * AchievementSystem 單例。
+     *
+     * 使用 static final 的原因：
+     * - AchievementSystem 沒有外部依賴。
+     * - 可以在類別載入時安全建立。
+     * - 不需要像 DeathSystem 那樣等待 init(...)。
+     */
+    private static final AchievementSystem INSTANCE = new AchievementSystem();
+
+    /**
+     * 取得 AchievementSystem 單例。
+     *
+     * @return AchievementSystem
+     */
+    public static AchievementSystem getInstance() {
+        return INSTANCE;
+    }
+
+
+    // =========================================================
+    // Save File Constants
+    // =========================================================
+
+    /**
+     * 遊戲資料資料夾名稱。
+     *
+     * 位置：
+     * 使用者家目錄 / .taiwanese_difficulty
+     */
     private static final String SAVE_FOLDER_NAME = ".taiwanese_difficulty";
+
+    /**
+     * 成就存檔檔名。
+     */
     private static final String SAVE_FILE_NAME = "achievements.txt";
 
+
+    // =========================================================
+    // Runtime State
+    // =========================================================
+
+    /**
+     * 已解鎖死亡成就 ID 集合。
+     *
+     * 使用 DeathReason.getId() 作為儲存內容。
+     *
+     * 例如：
+     * - HIT_CEILING
+     * - JUMPING_ON_BED
+     * - DRINK_WATER
+     */
     private final Set<String> unlockedDeathIds = new HashSet<>();
+
+    /**
+     * 成就存檔完整路徑。
+     */
     private final Path saveFilePath;
 
-    public AchievementSystem() {
-        saveFilePath = Path.of(
+
+    // =========================================================
+    // Constructor
+    // =========================================================
+
+    /**
+     * 建立成就系統。
+     *
+     * private：
+     * - 避免外部 new AchievementSystem()
+     * - 確保全遊戲只使用同一份 AchievementSystem
+     *
+     * 建立時會自動讀取成就檔案。
+     */
+    private AchievementSystem() {
+        this.saveFilePath = Path.of(
                 System.getProperty("user.home"),
                 SAVE_FOLDER_NAME,
                 SAVE_FILE_NAME
@@ -28,12 +120,57 @@ public class AchievementSystem {
         load();
     }
 
+
+    // =========================================================
+    // Query
+    // =========================================================
+
+    /**
+     * 判斷指定死亡原因是否已解鎖。
+     *
+     * @param reason 死亡原因
+     * @return true 表示已解鎖
+     */
     public boolean isUnlocked(DeathReason reason) {
+        if (reason == null) {
+            return false;
+        }
+
         return unlockedDeathIds.contains(reason.getId());
     }
 
     /**
-     * @return true = 第一次解鎖；false = 已經解鎖過
+     * 取得目前已解鎖成就數。
+     *
+     * @return 已解鎖數量
+     */
+    public int getUnlockedCount() {
+        return unlockedDeathIds.size();
+    }
+
+    /**
+     * 取得全部死亡成就數。
+     *
+     * 目前每一個 DeathReason 都對應一個死亡成就。
+     *
+     * @return 成就總數
+     */
+    public int getTotalCount() {
+        return DeathReason.values().length;
+    }
+
+
+    // =========================================================
+    // Unlock
+    // =========================================================
+
+    /**
+     * 解鎖指定死亡原因成就。
+     *
+     * 若該死亡原因已經解鎖，不會重複存檔。
+     *
+     * @param reason 死亡原因
+     * @return true 表示本次是第一次解鎖；false 表示已解鎖過或 reason 為 null
      */
     public boolean unlockDeathReason(DeathReason reason) {
         if (reason == null) {
@@ -49,22 +186,41 @@ public class AchievementSystem {
         return newlyUnlocked;
     }
 
-    public int getUnlockedCount() {
-        return unlockedDeathIds.size();
-    }
 
-    public int getTotalCount() {
-        return DeathReason.values().length;
-    }
+    // =========================================================
+    // Reset
+    // =========================================================
 
+    /**
+     * 重置全部成就。
+     *
+     * 用途：
+     * - Debug
+     * - 設定選單中的清除成就資料
+     */
     public void resetAll() {
         unlockedDeathIds.clear();
         save();
     }
 
+
+    // =========================================================
+    // Load / Save
+    // =========================================================
+
+    /**
+     * 從檔案讀取成就資料。
+     *
+     * 檔案格式：
+     * 每一行是一個 DeathReason id。
+     *
+     * 例如：
+     * HIT_CEILING
+     * JUMPING_ON_BED
+     */
     private void load() {
         try {
-            Files.createDirectories(saveFilePath.getParent());
+            createSaveFolderIfNeeded();
 
             if (!Files.exists(saveFilePath)) {
                 return;
@@ -80,20 +236,34 @@ public class AchievementSystem {
                 }
             }
 
-        } catch (IOException e) {
+        } catch (IOException exception) {
             System.out.println("Achievement load failed.");
-            e.printStackTrace();
+            exception.printStackTrace();
         }
     }
 
+    /**
+     * 將目前成就資料存入檔案。
+     */
     private void save() {
         try {
-            Files.createDirectories(saveFilePath.getParent());
-            Files.write(saveFilePath, unlockedDeathIds);
+            createSaveFolderIfNeeded();
 
-        } catch (IOException e) {
+            Files.write(
+                    saveFilePath,
+                    unlockedDeathIds
+            );
+
+        } catch (IOException exception) {
             System.out.println("Achievement save failed.");
-            e.printStackTrace();
+            exception.printStackTrace();
         }
+    }
+
+    /**
+     * 確保存檔資料夾存在。
+     */
+    private void createSaveFolderIfNeeded() throws IOException {
+        Files.createDirectories(saveFilePath.getParent());
     }
 }

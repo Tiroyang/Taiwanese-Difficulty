@@ -59,7 +59,7 @@ public enum SoundId {
      */
     FOOTSTEP(
             "characters/player/footstep.wav",
-            0.2
+            0.05
     ),
 
     /**

@@ -9,7 +9,7 @@ import ass.example.core.StreetScene.FallingObjectVariant;
 import ass.example.core.StreetScene.StreetApartmentStyle;
 import ass.example.core.physics.CollisionCategory;
 import ass.example.core.physics.FixtureFilterUtil;
-import ass.example.scenes.SceneManager;
+import ass.example.scenes.system.SceneManager;
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.EntityFactory;
 import com.almasb.fxgl.entity.SpawnData;

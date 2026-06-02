@@ -5,8 +5,9 @@ import ass.example.components.PlayerComponent;
 import ass.example.core.DeathReason;
 import ass.example.core.HouseScene.RoomType;
 import ass.example.core.SoundId;
+import ass.example.scenes.system.SceneConfig;
+import ass.example.scenes.system.SceneManager;
 import ass.example.system.AudioSystem;
-import ass.example.system.DeathSystem;
 import ass.example.system.InteractionSystem;
 import ass.example.system.MusicSystem;
 import ass.example.system.OneWayPlatformSystem;
@@ -248,6 +249,36 @@ public class HouseScene {
      */
     private QuestHUD questHUD;
 
+    /**
+     * 隱藏任務 HUD。
+     *
+     * 用於：
+     * - HouseScene 起床 Intro 播放期間
+     * - 其他需要暫時不顯示 HUD 的過場
+     */
+    private void hideQuestHUD() {
+        if (questHUD == null) {
+            return;
+        }
+
+        questHUD.setVisible(false);
+        questHUD.setMouseTransparent(true);
+    }
+
+    /**
+     * 顯示任務 HUD。
+     *
+     * Intro 結束後呼叫。
+     */
+    private void showQuestHUD() {
+        if (questHUD == null) {
+            return;
+        }
+
+        questHUD.setVisible(true);
+        questHUD.setMouseTransparent(false);
+    }
+
 
     // =========================================================
     // Wake Up Intro State
@@ -340,7 +371,10 @@ public class HouseScene {
         setupCamera();
 
         if (playWakeUpIntro) {
+            hideQuestHUD();
             playWakeUpIntroAnimation();
+        } else {
+            showQuestHUD();
         }
 
         return player;
@@ -1231,9 +1265,9 @@ public class HouseScene {
      * 7. 畫面淡黑。
      * 8. 黑畫面期間播放起床音效並瞬移玩家到正式起始點。
      * 9. 恢復玩家正常外觀。
-     * 10. 從黑畫面淡回遊戲。
-     * 11. 移除黑幕。
-     * 12. 解鎖玩家控制。
+     * 10. 解鎖玩家控制。
+     * 11. 從黑畫面淡回遊戲。
+     * 12. 移除黑幕。
      * 13. 開啟攝影機 lazy。
      * 14. 切回正式 HouseScene BGM。
      */
@@ -1286,6 +1320,8 @@ public class HouseScene {
                 fadeBackIn
         );
 
+        blackPause.setOnFinished(event -> prepareGameplayBeforeFadeBackIn(playerComponent));
+
         sequence.setOnFinished(event -> finishWakeUpIntro(playerComponent));
         sequence.play();
     }
@@ -1331,6 +1367,24 @@ public class HouseScene {
     }
 
     /**
+     * 在 fadeBackIn 開始前準備正式遊玩狀態。
+     *
+     * 此時畫面仍是全黑，所以玩家恢復控制、
+     * QuestHUD 顯示、BGM 切換都不會被突兀看到。
+     */
+    private void prepareGameplayBeforeFadeBackIn(PlayerComponent playerComponent) {
+        playerComponent.setControlEnabled(true);
+
+        showQuestHUD();
+
+        if (questHUD != null) {
+            questHUD.update();
+        }
+
+        MusicSystem.getInstance().playBGM(BGM_HOUSE_SCENE, true);
+    }
+
+    /**
      * 結束起床動畫。
      *
      * 會移除黑幕、解鎖玩家控制並切換回正常 BGM。
@@ -1340,9 +1394,9 @@ public class HouseScene {
 
         wakeUpIntroPlaying = false;
 
-        playerComponent.setControlEnabled(true);
-
         getGameScene().getViewport().setLazy(true);
+
+        showQuestHUD();
 
         MusicSystem.getInstance().playBGM(BGM_HOUSE_SCENE, true);
     }

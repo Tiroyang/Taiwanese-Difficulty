@@ -1,4 +1,4 @@
-package ass.example.scenes;
+package ass.example.scenes.system;
 
 public class SceneConfig {
 
