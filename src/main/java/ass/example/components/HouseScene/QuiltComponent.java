@@ -72,7 +72,7 @@ public class QuiltComponent extends Component implements LoadSaveComponent {
      *
      * 用於玩家折棉被時播放音效。
      */
-    private final AudioSystem audioSystem;
+    private final AudioSystem audioSystem = AudioSystem.getInstance();
 
 
     // =========================================================
@@ -118,18 +118,15 @@ public class QuiltComponent extends Component implements LoadSaveComponent {
      * @param visualEntity 棉被視覺 Entity
      * @param messyTexture 未折棉被貼圖
      * @param foldedTexture 已折棉被貼圖
-     * @param audioSystem 音效系統
      */
     public QuiltComponent(
             Entity visualEntity,
             String messyTexture,
-            String foldedTexture,
-            AudioSystem audioSystem
+            String foldedTexture
     ) {
         this.visualEntity = visualEntity;
         this.messyTexture = messyTexture;
         this.foldedTexture = foldedTexture;
-        this.audioSystem = audioSystem;
     }
 
 

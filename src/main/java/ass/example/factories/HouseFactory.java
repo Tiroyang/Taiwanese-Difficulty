@@ -81,6 +81,14 @@ import static com.almasb.fxgl.dsl.FXGL.*;
 public class HouseFactory implements EntityFactory {
 
     // =========================================================
+    // System
+    // =========================================================
+
+    private final AudioSystem audioSystem = AudioSystem.getInstance();
+    private final LanguageSystem languageSystem = LanguageSystem.getInstance();
+    private final QuestSystem questSystem = QuestSystem.getInstance();
+
+    // =========================================================
     // Texture Paths - Map
     // =========================================================
 
@@ -263,8 +271,6 @@ public class HouseFactory implements EntityFactory {
         boolean promptOnEntity = getBoolean(data, "promptOnEntity", false);
         double promptOffsetY = getDouble(data, "promptOffsetY", 35.0);
 
-        AudioSystem audioSystem = getAudioSystem(data);
-
         DoorComponent doorComponent = new DoorComponent(
                 id,
                 closedTexture,
@@ -272,8 +278,7 @@ public class HouseFactory implements EntityFactory {
                 colliderOffsetX,
                 colliderOffsetY,
                 colliderWidth,
-                colliderHeight,
-                audioSystem
+                colliderHeight
         );
 
         return entityBuilder(data)
@@ -337,18 +342,13 @@ public class HouseFactory implements EntityFactory {
         boolean promptOnEntity = getBoolean(data, "promptOnEntity", false);
         double promptOffsetY = getDouble(data, "promptOffsetY", 35.0);
 
-        SceneManager sceneManager = data.get("sceneManager");
-
-        LanguageSystem languageSystem = LanguageSystem.getInstance();
-        QuestSystem questSystem = QuestSystem.getInstance();
-
         return entityBuilder(data)
                 .type(EntityType.INTERACTABLE)
                 .bbox(new HitBox(BoundingShape.box(width, height)))
                 .view(createInteractableDebugView(width, height))
                 .with(new InteractableComponent(
                         () -> "story.house.exit",
-                        () -> tryExitHouse(sceneManager, questSystem, languageSystem),
+                        () -> tryExitHouse(),
                         interactRange,
                         promptOnEntity,
                         promptOffsetY
@@ -363,11 +363,7 @@ public class HouseFactory implements EntityFactory {
      * 若條件不足，顯示提示。
      * 若條件足夠，播放轉場。
      */
-    private void tryExitHouse(
-            SceneManager sceneManager,
-            QuestSystem questSystem,
-            LanguageSystem languageSystem
-    ) {
+    private void tryExitHouse() {
         if (getb("playerDead")) {
             return;
         }
@@ -380,11 +376,11 @@ public class HouseFactory implements EntityFactory {
         boolean shoesWorn = getb("shoesWorn");
 
         if (!wearShoesQuestCompleted || !shoesWorn) {
-            showExitLockedNotice(languageSystem);
+            showExitLockedNotice();
             return;
         }
 
-        sceneManager.playHouseToStreetTransition(() ->
+        SceneManager.getInstance().playHouseToStreetTransition(() ->
                 questSystem.completeQuest(QuestType.EXIT_HOUSE)
         );
     }
@@ -426,13 +422,10 @@ public class HouseFactory implements EntityFactory {
         boolean promptOnEntity = getBoolean(data, "promptOnEntity", true);
         double promptOffsetY = getDouble(data, "promptOffsetY", 40.0);
 
-        AudioSystem audioSystem = getAudioSystem(data);
-
         QuiltComponent quiltComponent = new QuiltComponent(
                 quiltVisual,
                 TEXTURE_QUILT_DEFAULT,
-                TEXTURE_QUILT_FOLDED,
-                audioSystem
+                TEXTURE_QUILT_FOLDED
         );
 
         return entityBuilder(data)
@@ -621,7 +614,6 @@ public class HouseFactory implements EntityFactory {
     public Entity newWaterTrigger(SpawnData data) {
         Entity visual = data.get("visual");
         Entity player = data.get("player");
-        DeathSystem deathSystem = data.get("deathSystem");
 
         double width = data.get("width");
         double height = data.get("height");
@@ -630,13 +622,9 @@ public class HouseFactory implements EntityFactory {
         boolean promptOnEntity = getBoolean(data, "promptOnEntity", true);
         double promptOffsetY = getDouble(data, "promptOffsetY", 40.0);
 
-        AudioSystem audioSystem = getAudioSystemOrNull(data);
-
         WaterComponent waterComponent = new WaterComponent(
                 visual,
-                player,
-                deathSystem,
-                audioSystem
+                player
         );
 
         return entityBuilder(data)
@@ -667,7 +655,6 @@ public class HouseFactory implements EntityFactory {
         double height = data.get("height");
 
         Entity player = data.get("player");
-        DeathSystem deathSystem = data.get("deathSystem");
         DeathReason deathReason = data.get("deathReason");
 
         double deathSpeedThreshold = getDouble(
@@ -683,7 +670,6 @@ public class HouseFactory implements EntityFactory {
                 .with(new CollidableComponent(true))
                 .with(new BathtubComponent(
                         player,
-                        deathSystem,
                         deathReason,
                         deathSpeedThreshold
                 ))
@@ -706,15 +692,13 @@ public class HouseFactory implements EntityFactory {
         boolean promptOnEntity = getBoolean(data, "promptOnEntity", DEFAULT_PROMPT_ON_ENTITY);
         double promptOffsetY = getDouble(data, "promptOffsetY", 40.0);
 
-        AudioSystem audioSystem = getAudioSystem(data);
-
         return entityBuilder(data)
                 .type(EntityType.INTERACTABLE)
                 .bbox(new HitBox(BoundingShape.box(width, height)))
                 .view(createInteractableDebugView(width, height))
                 .with(new InteractableComponent(
                         () -> "story.house.brush_teeth",
-                        () -> brushTeeth(audioSystem),
+                        () -> brushTeeth(),
                         interactRange,
                         promptOnEntity,
                         promptOffsetY,
@@ -727,14 +711,13 @@ public class HouseFactory implements EntityFactory {
     /**
      * 執行刷牙互動。
      */
-    private void brushTeeth(AudioSystem audioSystem) {
+    private void brushTeeth() {
         audioSystem.playSFX(SoundId.BRUSHING_TEETH);
 
         set("teethBrushed", true);
 
         QuestSystem.getInstance().completeQuest(QuestType.BRUSH_TEETH);
     }
-
 
     // =========================================================
     // Spawn - Shoes
@@ -775,14 +758,11 @@ public class HouseFactory implements EntityFactory {
         boolean promptOnEntity = getBoolean(data, "promptOnEntity", DEFAULT_PROMPT_ON_ENTITY);
         double promptOffsetY = getDouble(data, "promptOffsetY", DEFAULT_PROMPT_OFFSET_Y);
 
-        AudioSystem audioSystem = getAudioSystem(data);
-
         ShoeComponent shoeComponent = new ShoeComponent(
                 shoeVisual,
                 player,
                 TEXTURE_SHOES_DEFAULT,
-                TEXTURE_SHOES_WORN,
-                audioSystem
+                TEXTURE_SHOES_WORN
         );
 
         return entityBuilder(data)
@@ -1025,32 +1005,6 @@ public class HouseFactory implements EntityFactory {
         return data.hasKey(key) ? data.get(key) : defaultValue;
     }
 
-    /**
-     * 從 SpawnData 讀取 AudioSystem。
-     *
-     * 若沒有提供 audioSystem，
-     * 使用 AudioSystem 單例作為預設值。
-     */
-    private AudioSystem getAudioSystem(SpawnData data) {
-        return data.hasKey("audioSystem")
-                ? data.get("audioSystem")
-                : AudioSystem.getInstance();
-    }
-
-    /**
-     * 從 SpawnData 讀取 AudioSystem。
-     *
-     * 若沒有提供 audioSystem，回傳 null。
-     *
-     * 用於某些 Component 本身允許 audioSystem 為 null 的情況。
-     */
-    private AudioSystem getAudioSystemOrNull(SpawnData data) {
-        return data.hasKey("audioSystem")
-                ? data.get("audioSystem")
-                : null;
-    }
-
-
     // =========================================================
     // Physics Helpers
     // =========================================================
@@ -1137,7 +1091,7 @@ public class HouseFactory implements EntityFactory {
     /**
      * 顯示出口尚未解鎖提示。
      */
-    private void showExitLockedNotice(LanguageSystem languageSystem) {
+    private void showExitLockedNotice() {
         getNotificationService().pushNotification(
                 languageSystem.text("story.house.exit.locked")
         );

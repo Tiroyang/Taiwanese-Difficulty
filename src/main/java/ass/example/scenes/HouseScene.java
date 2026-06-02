@@ -176,18 +176,11 @@ public class HouseScene {
     private final SceneConfig config;
 
     /**
-     * 死亡系統。
-     *
-     * 提供死亡觸發、死亡畫面、重生流程等功能。
-     */
-    private final DeathSystem deathSystem;
-
-    /**
      * 音效系統。
      *
      * 提供互動音效、門音效、起床音效等。
      */
-    private final AudioSystem audioSystem;
+    private final AudioSystem audioSystem = AudioSystem.getInstance();
 
     /**
      * 場景管理器。
@@ -284,19 +277,13 @@ public class HouseScene {
      * 建立 HouseScene。
      *
      * @param config 場景設定
-     * @param deathSystem 死亡系統
-     * @param audioSystem 音效系統
      * @param sceneManager 場景管理器
      */
     public HouseScene(
             SceneConfig config,
-            DeathSystem deathSystem,
-            AudioSystem audioSystem,
             SceneManager sceneManager
     ) {
         this.config = config;
-        this.deathSystem = deathSystem;
-        this.audioSystem = audioSystem;
         this.sceneManager = sceneManager;
     }
 
@@ -582,9 +569,9 @@ public class HouseScene {
      */
     private void initRuntimeSystems() {
         interactionSystem = new InteractionSystem(player);
-        roomSystem = new RoomSystem(player, deathSystem);
+        roomSystem = new RoomSystem(player);
         oneWayPlatformSystem = new OneWayPlatformSystem(player);
-        bedSystem = new BedSystem(player, deathSystem);
+        bedSystem = new BedSystem(player);
     }
 
     /**
@@ -922,8 +909,7 @@ public class HouseScene {
                 .put("colliderHeight", colliderHeight)
                 .put("interactRange", 120.0)
                 .put("promptOnEntity", false)
-                .put("promptOffsetY", 35.0)
-                .put("audioSystem", audioSystem));
+                .put("promptOffsetY", 35.0));
     }
 
     /**
@@ -940,8 +926,7 @@ public class HouseScene {
                 .put("height", 80.0)
                 .put("interactRange", 150.0)
                 .put("promptOnEntity", true)
-                .put("promptOffsetY", 40.0)
-                .put("audioSystem", audioSystem));
+                .put("promptOffsetY", 40.0));
     }
 
     /**
@@ -981,14 +966,12 @@ public class HouseScene {
         spawn("water_trigger", new SpawnData(2672, 528)
                 .put("visual", waterVisual)
                 .put("player", player)
-                .put("deathSystem", deathSystem)
                 .put("texture", "Scene1/props/Water.png")
                 .put("width", 16.0)
                 .put("height", 28.0)
                 .put("interactRange", 130.0)
                 .put("promptOnEntity", true)
-                .put("promptOffsetY", 40.0)
-                .put("audioSystem", audioSystem));
+                .put("promptOffsetY", 40.0));
     }
 
     /**
@@ -1000,8 +983,7 @@ public class HouseScene {
                 .put("height", 120.0)
                 .put("interactRange", 180.0)
                 .put("promptOnEntity", true)
-                .put("promptOffsetY", 50.0)
-                .put("audioSystem", audioSystem));
+                .put("promptOffsetY", 50.0));
     }
 
     /**
@@ -1017,8 +999,7 @@ public class HouseScene {
                 .put("player", player)
                 .put("interactRange", 180.0)
                 .put("promptOnEntity", true)
-                .put("promptOffsetY", 50.0)
-                .put("audioSystem", audioSystem));
+                .put("promptOffsetY", 50.0));
     }
 
     /**
@@ -1228,7 +1209,6 @@ public class HouseScene {
                 .put("width", sensorWidth)
                 .put("height", sensorHeight)
                 .put("player", player)
-                .put("deathSystem", deathSystem)
                 .put("deathReason", DeathReason.JUMPED_IN_BATHTUB)
                 .put("deathSpeedThreshold", BATHTUB_DEATH_SPEED_THRESHOLD));
     }

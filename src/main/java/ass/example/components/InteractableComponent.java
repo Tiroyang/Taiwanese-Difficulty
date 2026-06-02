@@ -2,7 +2,6 @@ package ass.example.components;
 
 import ass.example.system.LanguageSystem;
 import com.almasb.fxgl.entity.component.Component;
-
 import java.util.function.Supplier;
 
 /**

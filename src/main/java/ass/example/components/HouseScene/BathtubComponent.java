@@ -59,7 +59,7 @@ public class BathtubComponent extends Component {
     /**
      * 死亡系統。
      */
-    private final DeathSystem deathSystem;
+    private final DeathSystem deathSystem = DeathSystem.getInstance();
 
     /**
      * 浴缸造成的死亡原因。
@@ -104,41 +104,18 @@ public class BathtubComponent extends Component {
     // =========================================================
 
     /**
-     * 使用預設速度門檻建立浴缸元件。
-     *
-     * @param player 玩家 Entity
-     * @param deathSystem 死亡系統
-     * @param deathReason 浴缸死亡原因
-     */
-    public BathtubComponent(
-            Entity player,
-            DeathSystem deathSystem,
-            DeathReason deathReason
-    ) {
-        this(
-                player,
-                deathSystem,
-                deathReason,
-                DEFAULT_FALL_DEATH_SPEED_THRESHOLD
-        );
-    }
-
-    /**
      * 使用自訂速度門檻建立浴缸元件。
      *
      * @param player 玩家 Entity
-     * @param deathSystem 死亡系統
      * @param deathReason 浴缸死亡原因
      * @param fallDeathSpeedThreshold 垂直下墜死亡速度門檻
      */
     public BathtubComponent(
             Entity player,
-            DeathSystem deathSystem,
             DeathReason deathReason,
             double fallDeathSpeedThreshold
     ) {
         this.player = player;
-        this.deathSystem = deathSystem;
         this.deathReason = deathReason;
         this.fallDeathSpeedThreshold = fallDeathSpeedThreshold;
     }

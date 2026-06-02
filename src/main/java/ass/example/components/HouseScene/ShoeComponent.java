@@ -79,7 +79,7 @@ public class ShoeComponent extends Component implements LoadSaveComponent {
      *
      * 用於穿鞋與脫鞋時播放音效。
      */
-    private final AudioSystem audioSystem;
+    private final AudioSystem audioSystem = AudioSystem.getInstance();
 
 
     // =========================================================
@@ -132,20 +132,17 @@ public class ShoeComponent extends Component implements LoadSaveComponent {
      * @param player 玩家 Entity
      * @param defaultTexture 未穿鞋時的鞋櫃貼圖
      * @param wornTexture 穿鞋後的鞋櫃貼圖
-     * @param audioSystem 音效系統
      */
     public ShoeComponent(
             Entity shoeVisual,
             Entity player,
             String defaultTexture,
-            String wornTexture,
-            AudioSystem audioSystem
+            String wornTexture
     ) {
         this.shoeVisual = shoeVisual;
         this.player = player;
         this.defaultTexture = defaultTexture;
         this.wornTexture = wornTexture;
-        this.audioSystem = audioSystem;
     }
 
 

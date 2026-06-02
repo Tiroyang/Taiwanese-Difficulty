@@ -172,7 +172,7 @@ public class BedSystem {
      * 當玩家達成床上跳躍死亡條件時，
      * 透過 deathSystem.die(...) 觸發死亡。
      */
-    private final DeathSystem deathSystem;
+    private final DeathSystem deathSystem = DeathSystem.getInstance();
 
 
     // =========================================================
@@ -261,11 +261,9 @@ public class BedSystem {
      * 建立床系統。
      *
      * @param player 玩家 Entity
-     * @param deathSystem 死亡系統
      */
-    public BedSystem(Entity player, DeathSystem deathSystem) {
+    public BedSystem(Entity player) {
         this.player = player;
-        this.deathSystem = deathSystem;
         this.previousPlayerBottom = getPlayerBottom();
     }
 

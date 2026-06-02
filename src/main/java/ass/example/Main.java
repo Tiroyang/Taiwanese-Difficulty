@@ -81,7 +81,7 @@ public class Main extends GameApplication {
         audioSystem = AudioSystem.getInstance();
         achievementSystem = new AchievementSystem();
 
-        sceneManager = new SceneManager();
+        sceneManager = SceneManager.getInstance();
 
         deathSystem = new DeathSystem(
                 sceneManager,

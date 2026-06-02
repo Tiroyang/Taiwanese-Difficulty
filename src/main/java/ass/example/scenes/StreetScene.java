@@ -30,8 +30,6 @@ import static java.lang.Math.min;
 public class StreetScene {
 
     private final SceneConfig config;
-    private final DeathSystem deathSystem;
-    private final AudioSystem audioSystem;
     private InteractionSystem interactionSystem;
     private final SceneManager sceneManager;
 
@@ -229,13 +227,9 @@ public class StreetScene {
 
     public StreetScene(
             SceneConfig config,
-            DeathSystem deathSystem,
-            AudioSystem audioSystem,
             SceneManager sceneManager
     ) {
         this.config = config;
-        this.deathSystem = deathSystem;
-        this.audioSystem = audioSystem;
         this.sceneManager = sceneManager;
     }
 

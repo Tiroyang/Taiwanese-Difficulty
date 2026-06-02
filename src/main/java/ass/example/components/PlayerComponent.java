@@ -682,7 +682,6 @@ public class PlayerComponent extends Component {
         jumping = true;
         jumpHoldTimer = 0;
 
-        groundContacts = 0;
         onOneWayPlatform = false;
 
         physics.setVelocityY(-JUMP_SPEED);
@@ -1363,6 +1362,7 @@ public class PlayerComponent extends Component {
         Object type = entity.getType();
 
         return type == EntityType.WALL ||
+                type == EntityType.FLOOR ||
                 type == EntityType.ONE_WAY_PLATFORM_COLLIDER ||
                 type == EntityType.BED_ONE_WAY_PLATFORM_COLLIDER;
     }
@@ -1532,7 +1532,11 @@ public class PlayerComponent extends Component {
         visualState = PlayerVisualState.STAND;
         setPlayerImage(getStandImage());
 
-        refreshGroundContacts();
+        runOnce(() -> {
+            resetGroundState();
+            updateGroundSensorPosition();
+            refreshGroundContacts();
+        }, Duration.seconds(0.02));
 
         controlEnabled = true;
     }

@@ -22,7 +22,7 @@ import static com.almasb.fxgl.dsl.FXGL.*;
 public class RoomSystem {
 
     private final Entity player;
-    private final DeathSystem deathSystem;
+    private final DeathSystem deathSystem = DeathSystem.getInstance();
 
     private RoomType currentRoom = RoomType.NONE;
     private RoomType previousRoom = RoomType.NONE;
@@ -30,9 +30,8 @@ public class RoomSystem {
     private final Map<RoomType, Entity> roomCovers = new HashMap<>();
     private final Map<RoomType, Group> roomCoverViews = new HashMap<>();
 
-    public RoomSystem(Entity player, DeathSystem deathSystem) {
+    public RoomSystem(Entity player) {
         this.player = player;
-        this.deathSystem = deathSystem;
         this.currentRoom = getRoomByPlayerX();
         this.previousRoom = currentRoom;
     }

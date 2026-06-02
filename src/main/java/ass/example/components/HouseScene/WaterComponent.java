@@ -106,14 +106,14 @@ public class WaterComponent extends Component implements LoadSaveComponent {
      *
      * 延遲結束後，透過 deathSystem.die(...) 觸發死亡。
      */
-    private final DeathSystem deathSystem;
+    private final DeathSystem deathSystem = DeathSystem.getInstance();
 
     /**
      * 音效系統。
      *
      * 用於喝水時播放音效。
      */
-    private final AudioSystem audioSystem;
+    private final AudioSystem audioSystem = AudioSystem.getInstance();
 
 
     // =========================================================
@@ -144,19 +144,13 @@ public class WaterComponent extends Component implements LoadSaveComponent {
      *
      * @param visualEntity 水的視覺 Entity
      * @param player 玩家 Entity
-     * @param deathSystem 死亡系統
-     * @param audioSystem 音效系統，可為 null
      */
     public WaterComponent(
             Entity visualEntity,
-            Entity player,
-            DeathSystem deathSystem,
-            AudioSystem audioSystem
+            Entity player
     ) {
         this.visualEntity = visualEntity;
         this.player = player;
-        this.deathSystem = deathSystem;
-        this.audioSystem = audioSystem;
     }
 
 

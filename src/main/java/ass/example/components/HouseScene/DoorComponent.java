@@ -142,7 +142,7 @@ public class DoorComponent extends Component implements LoadSaveComponent {
      *
      * 用於播放開門與關門音效。
      */
-    private final AudioSystem audioSystem;
+    private final AudioSystem audioSystem = AudioSystem.getInstance();
 
 
     // =========================================================
@@ -198,7 +198,6 @@ public class DoorComponent extends Component implements LoadSaveComponent {
      * @param colliderOffsetY 碰撞箱 Y 偏移
      * @param colliderWidth 碰撞箱寬度
      * @param colliderHeight 碰撞箱高度
-     * @param audioSystem 音效系統
      */
     public DoorComponent(
             String id,
@@ -207,8 +206,7 @@ public class DoorComponent extends Component implements LoadSaveComponent {
             double colliderOffsetX,
             double colliderOffsetY,
             double colliderWidth,
-            double colliderHeight,
-            AudioSystem audioSystem
+            double colliderHeight
     ) {
         this.id = id;
         this.closedTexture = closedTexture;
@@ -217,7 +215,6 @@ public class DoorComponent extends Component implements LoadSaveComponent {
         this.colliderOffsetY = colliderOffsetY;
         this.colliderWidth = colliderWidth;
         this.colliderHeight = colliderHeight;
-        this.audioSystem = audioSystem;
     }
 
 
