@@ -2,9 +2,9 @@ package ass.example.factories;
 
 import ass.example.Main;
 import ass.example.components.PlayerComponent;
-import ass.example.core.CollisionCategory;
+import ass.example.core.physics.CollisionCategory;
 import ass.example.core.EntityType;
-import ass.example.core.FixtureFilterUtil;
+import ass.example.core.physics.FixtureFilterUtil;
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.EntityFactory;
 import com.almasb.fxgl.entity.SpawnData;
