@@ -7,274 +7,389 @@ import ass.example.system.DeathSystem;
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.SpawnData;
 import com.almasb.fxgl.physics.PhysicsComponent;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+
 import static com.almasb.fxgl.dsl.FXGL.*;
 
 /**
- * 專門處理「床」的平台邏輯。
+ * BedSystem
  *
- * 床分成三種 Entity：
+ * 專門處理 HouseScene 中「床」的一方通行平台邏輯。
+ *
+ * 這個系統本身不是 FXGL Component，
+ * 而是由 HouseScene 或其他場景系統每幀呼叫 update(tpf)。
+ *
+ * ------------------------------------------------------------
+ * 床的基本設計
+ * ------------------------------------------------------------
+ *
+ * 一張床主要分成兩種 Entity：
+ *
  * 1. BED_ONE_WAY_PLATFORM
- *    - 玩家從這個區域上方落下時，會觸發上床
- *    - 可以在這個區域上方按Shift下落
- * 2. BED_ONE_WAY_PLATFORM_COLLIDER1
- *    - 觸發上床才生成的實體床面
- *    - 支撐玩家站在床上
- *    - 觸發死亡邏輯
- * 3. BED_ONE_WAY_PLATFORM_COLLIDER2
- *    - 觸發上床才生成的實體床面
- *    - 支撐玩家站在床上
+ *    - 固定存在於場景中。
+ *    - 作為玩家「從上方落到床上」的偵測入口。
+ *    - 玩家真正踩上床後，才會生成實體 collider。
  *
- * 主要功能：
- * 1. 玩家從 BED_ONE_WAY_PLATFORM 上方落下時，生成床面 collider
- * 2. 玩家站在床上時，改變玩家 zIndex
- * 3. 玩家在床上按跳躍後，記錄 jumpedFromBed
- * 4. 玩家再次落回床面3次時，觸發死亡
- * 5. 玩家離開床 collider 上方時，恢復普通狀態
- * 6. 重生時清除所有暫時生成的床 collider 與床狀態
+ * 2. BED_ONE_WAY_PLATFORM_COLLIDER
+ *    - 玩家成功落到床後動態生成。
+ *    - 作為真正支撐玩家站在床上的實體碰撞區。
+ *    - 玩家離開床範圍、按 Shift 下落、死亡重生時會被移除。
+ *
+ * ------------------------------------------------------------
+ * 主要功能
+ * ------------------------------------------------------------
+ *
+ * 1. 玩家從床平台上方落下時，判定為上床。
+ * 2. 上床後，生成一個或多個床面 collider。
+ * 3. 玩家站在床上時，設定 PlayerComponent 為 one way platform 狀態。
+ * 4. 玩家站在床上時，切換玩家 zIndex。
+ * 5. 玩家在床上按跳躍後，記錄床上跳躍次數。
+ * 6. 玩家跳起後再次落回床上，依照次數觸發死亡。
+ * 7. 玩家按 Shift 時，可從床上往下落。
+ * 8. 玩家離開床 collider 範圍後，清除床狀態。
+ * 9. 玩家重生時，清除所有動態生成的床 collider 與狀態。
+ * 10. 讀檔時，如果玩家原本在床上，可以還原床 collider。
  */
 public class BedSystem {
 
-    private final Entity player;
-    private final DeathSystem deathSystem;
+    // =========================================================
+    // Game Var Keys
+    // =========================================================
 
     /**
-     * 玩家目前是從哪一個BED_ONE_WAY_PLATFORM上床的。
+     * 玩家是否死亡的全域變數名稱。
+     */
+    private static final String VAR_PLAYER_DEAD = "playerDead";
+
+    /**
+     * 玩家目前是否站在床 collider 上的全域變數名稱。
      *
-     * 若為 null，代表目前沒有站在床相關平台上。
+     * 這個值可被 SaveSystem 儲存，
+     * 讀檔後再由 applySavedState() 還原床狀態。
+     */
+    private static final String VAR_PLAYER_ON_BED_COLLIDER = "playerOnBedCollider";
+
+
+    // =========================================================
+    // Spawn Names
+    // =========================================================
+
+    /**
+     * 動態生成床 collider 時使用的 spawn name。
+     *
+     * 需要在 EntityFactory 裡有對應：
+     *
+     * @Spawns("bed_one_way_platform_collider")
+     */
+    private static final String SPAWN_BED_COLLIDER = "bed_one_way_platform_collider";
+
+
+    // =========================================================
+    // Tuning Constants
+    // =========================================================
+
+    /**
+     * 玩家按 Shift 往下落後，暫時忽略床平台吸附的時間。
+     *
+     * 用途：
+     * 避免玩家剛穿過床平台時，
+     * 下一幀又立刻被判定重新站回床上。
+     */
+    private static final double DROP_IGNORE_DURATION = 0.28;
+
+    /**
+     * 玩家按 Shift 往下落時給予的向下速度。
+     *
+     * 讓玩家能確實離開床 collider。
+     */
+    private static final double DROP_VELOCITY_Y = 260.0;
+
+    /**
+     * 玩家重生後，暫時忽略床落地判定的時間。
+     *
+     * 用途：
+     * 避免 previousPlayerBottom 還殘留死亡前的位置，
+     * 導致重生後第一幀誤判為落到床上。
+     */
+    private static final double RESET_IGNORE_DURATION = 0.25;
+
+    /**
+     * 落地判定容許誤差。
+     *
+     * 數值越大，越容易判定玩家落到床上。
+     * 數值太小時，可能因為每幀移動距離過大而錯過平台頂部。
+     */
+    private static final double LANDING_TOLERANCE = 2.0;
+
+    /**
+     * 水平判定內縮值。
+     *
+     * 用途：
+     * 避免玩家只是碰到床平台邊緣，
+     * 就被判定為站在床上。
+     */
+    private static final double SIDE_PADDING = 8.0;
+
+    /**
+     * 觸發死亡所需的床上跳躍次數。
+     *
+     * 目前設定為 2：
+     * - 第一次站到床上：安全。
+     * - 第一次在床上跳並落回來：安全或警告感。
+     * - 第二次在床上跳並落回來：觸發死亡。
+     *
+     * 如果你想要「第 3 次落回床上才死」，
+     * 可以改成 3。
+     */
+    private static final int REQUIRED_BED_JUMPS_BEFORE_DEATH = 2;
+
+    /**
+     * reset() 時使用的預設玩家 zIndex。
+     *
+     * 一般離開床時會使用 BedComponent 裡的 normalPlayerZIndex。
+     * 但 reset() 可能沒有 currentBedPlatform，
+     * 因此這裡保留一個安全預設值。
+     */
+    private static final int DEFAULT_PLAYER_Z_INDEX = 0;
+
+
+    // =========================================================
+    // Dependencies
+    // =========================================================
+
+    /**
+     * 玩家 Entity。
+     */
+    private final Entity player;
+
+    /**
+     * 死亡系統。
+     *
+     * 當玩家達成床上跳躍死亡條件時，
+     * 透過 deathSystem.die(...) 觸發死亡。
+     */
+    private final DeathSystem deathSystem;
+
+
+    // =========================================================
+    // Current Bed State
+    // =========================================================
+
+    /**
+     * 玩家目前所在的床入口平台。
+     *
+     * 此 Entity 類型通常是：
+     * EntityType.BED_ONE_WAY_PLATFORM
+     *
+     * 若為 null，代表玩家目前不在床系統管理中的床上。
      */
     private Entity currentBedPlatform;
+
     /**
-     * 玩家跳上床後動態生成的實體床面。
-     * 玩家只要還在第一個 collider 上方，就視為仍在床上。
+     * 目前由床平台動態生成出的實體床面 collider。
+     *
+     * 一張床可能有一個或兩個 collider，
+     * 所以使用 List 保存。
      */
     private final List<Entity> currentBedColliders = new ArrayList<>();
 
+
+    // =========================================================
+    // Runtime Detection State
+    // =========================================================
+
     /**
      * 上一幀玩家底部 Y 座標。
-     * 用來判斷玩家是否「從上方穿越平台頂部」。
+     *
+     * 用來判斷玩家是否從平台上方穿越平台頂部。
      */
     private double previousPlayerBottom;
 
     /**
-     * 按 Shift 下落後的暫時忽略時間。
+     * Shift 下落後的忽略計時器。
+     *
+     * 大於 0 時，不進行床平台落地判定。
      */
-    private double dropTimer = 0;
-    private final double dropDuration = 0.28;
+    private double dropIgnoreTimer = 0;
 
     /**
-     * 落到床上的誤差。
+     * 重生後的忽略計時器。
+     *
+     * 大於 0 時，不進行床平台落地判定。
      */
-    private final double landingTolerance = 2;
-    /**
-     * 水平判定內縮值。
-     * 避免玩家只是碰到平台邊緣，就被判定落到床上。
-     */
-    private final double sidePadding = 8;
+    private double resetIgnoreTimer = 0;
+
+
+    // =========================================================
+    // Bed Jump State
+    // =========================================================
 
     /**
-     * 是否已經曾經落到床上。
+     * 玩家是否已經確定落在床上。
+     *
+     * 只有這個值為 true 時，
+     * 玩家按跳躍鍵才會被視為「從床上跳起」。
      */
     private boolean hasLandedOnBed = false;
 
     /**
-     * 玩家在床上連續跳躍的次數。
+     * 玩家在床上跳躍的次數。
      *
-     * 每次「站在床上按跳躍」時計數 +1。
-     * 當玩家第 3 次跳起後再次落回床上，觸發死亡。
+     * 每次玩家站在床上按跳躍鍵時 +1。
      */
     private int bedJumpCount = 0;
 
     /**
-     * 是否正在等待「跳起後再次落回床上」。
+     * 是否正在等待玩家跳起後再次落回床上。
      *
-     * 避免玩家按跳躍後，在空中重複按鍵導致連續計數。
+     * 用途：
+     * 避免玩家在空中連續按跳躍鍵，
+     * 導致 bedJumpCount 被重複計算。
      */
-    private boolean waitingForBedLandingAfterJump = false;
+    private boolean waitingForLandingAfterBedJump = false;
 
-    /**
-     * 連續跳幾次後死亡。
-     */
-    private final int bedJumpDeathCount = 2;
 
-    /**
-     * 重生後短時間內不做床落地判定，避免previousPlayerBottom還殘留死亡前的位置導致誤判。
-     */
-    private double resetIgnoreTimer = 0;
-    private final double resetIgnoreDuration = 0.25;
-
-    /**
-     * 玩家的默認zIndex。
-     */
-    private final int normalPlayerZIndex = 0;
-
+    // =========================================================
     // Constructor
+    // =========================================================
+
+    /**
+     * 建立床系統。
+     *
+     * @param player 玩家 Entity
+     * @param deathSystem 死亡系統
+     */
     public BedSystem(Entity player, DeathSystem deathSystem) {
         this.player = player;
         this.deathSystem = deathSystem;
         this.previousPlayerBottom = getPlayerBottom();
     }
 
+
+    // =========================================================
+    // Public API
+    // =========================================================
+
     /**
-     * 隨時更新床系統。
+     * 每幀更新床系統。
      *
-     * 流程：
-     * 1. 玩家死亡時不更新
-     * 2. 重生後短時間內不偵測床
-     * 3. Shift下落期間不重新吸附床
-     * 4. 如果已經有床collider，更新床上狀態
-     * 5. 如果尚未上床，尋找是否可從BED_ONE_WAY_PLATFORM上床
+     * 建議由 HouseScene 的 onUpdate(tpf) 呼叫。
+     *
+     * 更新流程：
+     * 1. 玩家死亡時不更新床系統。
+     * 2. 重生後短時間內不偵測床，避免誤判。
+     * 3. Shift 下落期間不重新吸附床。
+     * 4. 如果玩家目前已在床 collider 上，更新床上狀態。
+     * 5. 如果玩家尚未在床上，尋找可落下的床平台。
+     * 6. 每幀最後更新 previousPlayerBottom。
+     *
+     * @param tpf time per frame
      */
     public void update(double tpf) {
-        if (getb("playerDead")) {
+        if (isPlayerDead()) {
             return;
         }
 
-        if (resetIgnoreTimer > 0) {
-            resetIgnoreTimer -= tpf;
-
-            if (resetIgnoreTimer < 0) {
-                resetIgnoreTimer = 0;
-            }
-
-            previousPlayerBottom = getPlayerBottom();
+        if (updateResetIgnoreTimer(tpf)) {
+            updatePreviousPlayerBottom();
             return;
         }
 
-        updateDropTimer(tpf);
+        updateDropIgnoreTimer(tpf);
 
-        if (isDroppingThrough()) {
-            previousPlayerBottom = getPlayerBottom();
+        if (isIgnoringPlatformBecauseDropping()) {
+            updatePreviousPlayerBottom();
             return;
         }
 
-        if (!currentBedColliders.isEmpty()) {
-            updateWhileOnBedCollider();
-            previousPlayerBottom = getPlayerBottom();
+        if (isPlayerOnGeneratedBedCollider()) {
+            updatePlayerOnBedCollider();
+            updatePreviousPlayerBottom();
             return;
         }
 
-        Optional<Entity> bedPlatform = findBedPlatformToLandOn();
+        findBedPlatformToLandOn().ifPresent(this::landOnBedPlatform);
 
-        bedPlatform.ifPresent(this::landOnBedPlatform);
-
-        previousPlayerBottom = getPlayerBottom();
+        updatePreviousPlayerBottom();
     }
 
+    /**
+     * 讀檔後套用床狀態。
+     *
+     * SaveSystem 若儲存了 playerOnBedCollider == true，
+     * 代表玩家存檔時站在床上。
+     *
+     * 讀檔後需要：
+     * 1. 找到離玩家最近且合理的 BED_ONE_WAY_PLATFORM。
+     * 2. 重新生成床 collider。
+     * 3. 恢復玩家 one way platform 狀態。
+     * 4. 恢復玩家床上 zIndex。
+     *
+     * 如果找不到可還原的床平台，
+     * 則清除 playerOnBedCollider 狀態。
+     */
     public void applySavedState() {
-        if (!getb("playerOnBedCollider")) {
+        if (!getb(VAR_PLAYER_ON_BED_COLLIDER)) {
             return;
         }
 
-        Optional<Entity> bedPlatform = findNearestBedPlatformForSavedPlayer();
+        Optional<Entity> bedPlatform = findNearestBedPlatformForRestore();
 
         if (bedPlatform.isEmpty()) {
-            set("playerOnBedCollider", false);
-            getPlayerComponent().setOnOneWayPlatform(false);
-            player.setZIndex(normalPlayerZIndex);
+            clearSavedBedState();
             return;
         }
 
         restorePlayerOnBed(bedPlatform.get());
     }
 
-    private Optional<Entity> findNearestBedPlatformForSavedPlayer() {
-        return getGameWorld()
-                .getEntitiesByType(EntityType.BED_ONE_WAY_PLATFORM)
-                .stream()
-                .filter(this::isPlayerNearBedPlatformForRestore)
-                .min(Comparator.comparingDouble(e -> e.distance(player)));
-    }
-
-    private boolean isPlayerNearBedPlatformForRestore(Entity bedPlatform) {
-        BedComponent bed = bedPlatform.getComponent(BedComponent.class);
-
-        double platformLeft = bedPlatform.getX();
-        double platformRight = bedPlatform.getX() + bed.getPlatformWidth();
-
-        double collider1Left = bedPlatform.getX() + bed.getCollider1OffsetX();
-        double collider1Right = collider1Left + bed.getCollider1Width();
-
-        double collider2Left = bedPlatform.getX() + bed.getCollider2OffsetX();
-        double collider2Right = collider2Left + bed.getCollider2Width();
-
-        double playerLeft = player.getBoundingBoxComponent().getMinXWorld();
-        double playerRight = player.getBoundingBoxComponent().getMaxXWorld();
-
-        boolean abovePlatform =
-                playerRight > platformLeft + sidePadding &&
-                        playerLeft < platformRight - sidePadding;
-
-        boolean aboveCollider1 =
-                playerRight > collider1Left + sidePadding &&
-                        playerLeft < collider1Right - sidePadding;
-
-        boolean aboveCollider2 =
-                bed.hasSecondCollider() &&
-                        playerRight > collider2Left + sidePadding &&
-                        playerLeft < collider2Right - sidePadding;
-
-        return abovePlatform || aboveCollider1 || aboveCollider2;
-    }
-
-    private void restorePlayerOnBed(Entity bedPlatform) {
-        BedComponent bed = bedPlatform.getComponent(BedComponent.class);
-
-        removeBedCollider();
-
-        currentBedPlatform = bedPlatform;
-
-        createBedCollider(bedPlatform, bed);
-
-        getPlayerComponent().setOnOneWayPlatform(true);
-
-        set("playerOnBedCollider", true);
-
-        player.setZIndex(bed.getPlayerZIndexOnBed());
-
-        hasLandedOnBed = true;
-
-        bedJumpCount = 0;
-        waitingForBedLandingAfterJump = false;
-
-        previousPlayerBottom = getPlayerBottom();
-    }
-
     /**
      * 玩家按下跳躍鍵時呼叫。
      *
-     * 如果玩家是在床上按跳，代表他從床上跳起。
-     * 之後再次落回床上就會死亡。
+     * 注意：
+     * 這個方法不應該自己判斷按鍵，
+     * 而是由 PlayerComponent 或輸入系統在玩家按跳時呼叫。
+     *
+     * 判定：
+     * 1. 玩家必須目前正在床 collider 上。
+     * 2. 玩家必須已經確實落在床上。
+     * 3. 滿足條件後，記錄一次床上跳躍。
      */
     public void onPlayerJumpPressed() {
-        if (currentBedPlatform == null || currentBedColliders.isEmpty()) {
+        if (!isPlayerOnGeneratedBedCollider()) {
             return;
         }
 
-        /*
-         * 只有「已經確定站在床上」時按跳躍，才算一次床上跳躍。
-         * 按下後立刻把 hasLandedOnBed 設回 false，
-         * 避免玩家在空中連按跳躍造成重複計數。
-         */
         if (!hasLandedOnBed) {
             return;
         }
 
         bedJumpCount++;
-
-        waitingForBedLandingAfterJump = true;
+        waitingForLandingAfterBedJump = true;
         hasLandedOnBed = false;
     }
 
     /**
-     * Shift 下落。
-     * 只有玩家還在BED_ONE_WAY_PLATFORM上方時，才允許下落。
+     * 玩家按 Shift 往下穿過床。
+     *
+     * 條件：
+     * 1. 玩家目前必須在床 collider 上。
+     * 2. 玩家仍位於目前床平台的水平範圍內。
+     *
+     * 成功下落後：
+     * 1. 移除動態生成的床 collider。
+     * 2. 清除玩家 one way platform 狀態。
+     * 3. 還原玩家 zIndex。
+     * 4. 清除床跳躍狀態。
+     * 5. 啟動 dropIgnoreTimer。
+     * 6. 給玩家一個向下速度。
      */
     public void dropThrough() {
-        if (currentBedPlatform == null || currentBedColliders.isEmpty()) {
+        if (!isPlayerOnGeneratedBedCollider()) {
             return;
         }
 
@@ -282,41 +397,236 @@ public class BedSystem {
             return;
         }
 
-        BedComponent bed = currentBedPlatform.getComponent(BedComponent.class);
+        BedComponent bed = getCurrentBedComponent();
 
-        removeBedCollider();
+        removeCurrentBedColliders();
 
-        PlayerComponent pc = getPlayerComponent();
-        PhysicsComponent physics = getPhysics();
-
-        pc.setOnOneWayPlatform(false);
-
+        getPlayerComponent().setOnOneWayPlatform(false);
         player.setZIndex(bed.getNormalPlayerZIndex());
 
-        currentBedPlatform = null;
-        bedJumpCount = 0;
-        waitingForBedLandingAfterJump = false;
-        hasLandedOnBed = false;
+        clearCurrentBedState();
+        set(VAR_PLAYER_ON_BED_COLLIDER, false);
 
-        set("playerOnBedCollider", false);
+        dropIgnoreTimer = DROP_IGNORE_DURATION;
 
-        dropTimer = dropDuration;
-
-        physics.setVelocityY(260);
+        getPhysics().setVelocityY(DROP_VELOCITY_Y);
     }
 
     /**
-     * 尋找符合玩家可落到的BED_ONE_WAY_PLATFORM。
+     * 重設床系統。
+     *
+     * 通常在玩家死亡重生、重新載入 HouseScene，
+     * 或離開場景時呼叫。
+     *
+     * 會清除：
+     * 1. 目前追蹤的床平台。
+     * 2. 目前動態生成的床 collider。
+     * 3. 世界中殘留的 BED_ONE_WAY_PLATFORM_COLLIDER。
+     * 4. Shift 下落與重生忽略計時器。
+     * 5. 床上跳躍狀態。
+     * 6. playerOnBedCollider game var。
+     * 7. PlayerComponent 的 one way platform 狀態。
+     * 8. 玩家 zIndex。
+     */
+    public void reset() {
+        removeCurrentBedColliders();
+        removeAllResidualBedCollidersFromWorld();
+
+        clearCurrentBedState();
+
+        dropIgnoreTimer = 0;
+        resetIgnoreTimer = RESET_IGNORE_DURATION;
+
+        updatePreviousPlayerBottom();
+
+        set(VAR_PLAYER_ON_BED_COLLIDER, false);
+
+        getPlayerComponent().setOnOneWayPlatform(false);
+        player.setZIndex(DEFAULT_PLAYER_Z_INDEX);
+    }
+
+
+    // =========================================================
+    // Update Helpers
+    // =========================================================
+
+    /**
+     * 判斷玩家是否死亡。
+     *
+     * @return true 表示玩家目前處於死亡狀態
+     */
+    private boolean isPlayerDead() {
+        return getb(VAR_PLAYER_DEAD);
+    }
+
+    /**
+     * 更新重生後忽略計時器。
+     *
+     * @param tpf time per frame
+     * @return true 表示目前仍在重生忽略期間
+     */
+    private boolean updateResetIgnoreTimer(double tpf) {
+        if (resetIgnoreTimer <= 0) {
+            return false;
+        }
+
+        resetIgnoreTimer -= tpf;
+
+        if (resetIgnoreTimer < 0) {
+            resetIgnoreTimer = 0;
+        }
+
+        return true;
+    }
+
+    /**
+     * 更新 Shift 下落忽略計時器。
+     *
+     * @param tpf time per frame
+     */
+    private void updateDropIgnoreTimer(double tpf) {
+        if (dropIgnoreTimer <= 0) {
+            return;
+        }
+
+        dropIgnoreTimer -= tpf;
+
+        if (dropIgnoreTimer < 0) {
+            dropIgnoreTimer = 0;
+        }
+    }
+
+    /**
+     * 判斷目前是否因為 Shift 下落而暫時忽略床平台吸附。
+     *
+     * @return true 表示暫時不應判定落到床上
+     */
+    private boolean isIgnoringPlatformBecauseDropping() {
+        return dropIgnoreTimer > 0;
+    }
+
+    /**
+     * 更新 previousPlayerBottom。
+     *
+     * 這個方法統一放在每幀流程最後呼叫，
+     * 避免各處直接設定 previousPlayerBottom 造成混亂。
+     */
+    private void updatePreviousPlayerBottom() {
+        previousPlayerBottom = getPlayerBottom();
+    }
+
+
+    // =========================================================
+    // Save / Restore
+    // =========================================================
+
+    /**
+     * 尋找讀檔後最適合還原玩家床狀態的床平台。
+     *
+     * 會從所有 BED_ONE_WAY_PLATFORM 中，
+     * 找出玩家水平位置最接近且合理重疊的床。
+     *
+     * @return 最適合還原的床平台
+     */
+    private Optional<Entity> findNearestBedPlatformForRestore() {
+        return getGameWorld()
+                .getEntitiesByType(EntityType.BED_ONE_WAY_PLATFORM)
+                .stream()
+                .filter(this::isPlayerNearBedPlatformForRestore)
+                .min(Comparator.comparingDouble(bedPlatform -> bedPlatform.distance(player)));
+    }
+
+    /**
+     * 判斷玩家目前位置是否接近指定床平台。
+     *
+     * 讀檔時玩家可能站在：
+     * 1. 原始平台範圍上方。
+     * 2. 第一個 collider 範圍上方。
+     * 3. 第二個 collider 範圍上方。
+     *
+     * 只要符合其中一種，就視為可用該床還原。
+     *
+     * @param bedPlatform 床平台 Entity
+     * @return true 表示玩家位置接近此床
+     */
+    private boolean isPlayerNearBedPlatformForRestore(Entity bedPlatform) {
+        BedComponent bed = bedPlatform.getComponent(BedComponent.class);
+
+        boolean abovePlatform = isPlayerHorizontallyOverArea(
+                bedPlatform.getX(),
+                bed.getPlatformWidth()
+        );
+
+        boolean aboveFirstCollider = isPlayerHorizontallyOverArea(
+                bedPlatform.getX() + bed.getFirstColliderArea().getOffsetX(),
+                bed.getFirstColliderArea().getWidth()
+        );
+
+        boolean aboveSecondCollider =
+                bed.hasSecondColliderArea() &&
+                        isPlayerHorizontallyOverArea(
+                                bedPlatform.getX() + bed.getSecondColliderArea().getOffsetX(),
+                                bed.getSecondColliderArea().getWidth()
+                        );
+
+        return abovePlatform || aboveFirstCollider || aboveSecondCollider;
+    }
+
+    /**
+     * 將玩家還原到床上狀態。
+     *
+     * @param bedPlatform 讀檔後找到的床平台
+     */
+    private void restorePlayerOnBed(Entity bedPlatform) {
+        BedComponent bed = bedPlatform.getComponent(BedComponent.class);
+
+        removeCurrentBedColliders();
+
+        currentBedPlatform = bedPlatform;
+        createCurrentBedColliders(bedPlatform, bed);
+
+        getPlayerComponent().setOnOneWayPlatform(true);
+
+        set(VAR_PLAYER_ON_BED_COLLIDER, true);
+
+        player.setZIndex(bed.getPlayerZIndexOnBed());
+
+        hasLandedOnBed = true;
+        bedJumpCount = 0;
+        waitingForLandingAfterBedJump = false;
+
+        updatePreviousPlayerBottom();
+    }
+
+    /**
+     * 找不到可還原床平台時，清除存檔床狀態。
+     */
+    private void clearSavedBedState() {
+        set(VAR_PLAYER_ON_BED_COLLIDER, false);
+
+        getPlayerComponent().setOnOneWayPlatform(false);
+        player.setZIndex(DEFAULT_PLAYER_Z_INDEX);
+
+        clearCurrentBedState();
+    }
+
+
+    // =========================================================
+    // Landing Detection
+    // =========================================================
+
+    /**
+     * 尋找玩家這一幀是否可以落到某個床平台。
      *
      * 條件：
-     * 1. 玩家不能正在往上跳
-     * 2. 玩家必須從平台上方落下
-     * 3. 玩家水平位置必須與平台重疊
+     * 1. 玩家不能正在向上跳。
+     * 2. 玩家必須與床平台水平重疊。
+     * 3. 玩家必須從床平台頂部上方穿越到頂部附近或下方。
+     *
+     * @return 可落下的床平台
      */
     private Optional<Entity> findBedPlatformToLandOn() {
-        PhysicsComponent physics = getPhysics();
-
-        if (physics.getVelocityY() < 0) {
+        if (getPhysics().getVelocityY() < 0) {
             return Optional.empty();
         }
 
@@ -328,230 +638,343 @@ public class BedSystem {
     }
 
     /**
-     * 判斷玩家是否可以落到指定BED_ONE_WAY_PLATFORM。
+     * 判斷玩家是否可落到指定床平台。
+     *
+     * @param bedPlatform 床平台 Entity
+     * @return true 表示玩家可落到此床平台
      */
     private boolean canLandOnBedPlatform(Entity bedPlatform) {
         BedComponent bed = bedPlatform.getComponent(BedComponent.class);
 
         double platformTop = bedPlatform.getY();
-        double platformLeft = bedPlatform.getX();
-        double platformRight = bedPlatform.getX() + bed.getPlatformWidth();
-
-        double playerLeft = player.getBoundingBoxComponent().getMinXWorld();
-        double playerRight = player.getBoundingBoxComponent().getMaxXWorld();
         double playerBottom = getPlayerBottom();
 
-        boolean xOverlap =
-                playerRight > platformLeft + sidePadding &&
-                        playerLeft < platformRight - sidePadding;
+        boolean horizontalOverlap = isPlayerHorizontallyOverArea(
+                bedPlatform.getX(),
+                bed.getPlatformWidth()
+        );
 
-        boolean crossedPlatformTop =
-                previousPlayerBottom <= platformTop + landingTolerance &&
-                        playerBottom >= platformTop - landingTolerance;
+        boolean crossedPlatformTop = hasPlayerCrossedTopSurface(
+                platformTop,
+                playerBottom
+        );
 
-        return xOverlap && crossedPlatformTop;
+        return horizontalOverlap && crossedPlatformTop;
     }
 
     /**
-     * 玩家成功落到 BED_ONE_WAY_PLATFORM。
+     * 玩家成功落到床平台。
      *
-     * 1. 記錄目前床入口平台
-     * 2. 生成床面collider
-     * 3. 設定玩家狀態在one way platform上
-     * 4. 改變玩家zIndex
-     * 5. 判斷是否觸發二次落床死亡
+     * 處理內容：
+     * 1. 記錄目前床平台。
+     * 2. 生成床 collider。
+     * 3. 設定玩家為 one way platform 狀態。
+     * 4. 設定 playerOnBedCollider game var。
+     * 5. 切換玩家 zIndex。
+     * 6. 標記玩家已落到床上。
+     *
+     * @param bedPlatform 玩家落到的床平台
      */
     private void landOnBedPlatform(Entity bedPlatform) {
         BedComponent bed = bedPlatform.getComponent(BedComponent.class);
 
         currentBedPlatform = bedPlatform;
 
-        createBedCollider(bedPlatform, bed);
+        createCurrentBedColliders(bedPlatform, bed);
 
         getPlayerComponent().setOnOneWayPlatform(true);
 
-        set("playerOnBedCollider", true);
+        set(VAR_PLAYER_ON_BED_COLLIDER, true);
         player.setZIndex(bed.getPlayerZIndexOnBed());
 
         hasLandedOnBed = true;
     }
 
-    /**
-     * 根據BedComponent的資料生成床面collider。
-     * 目前支援二組
-     * 若hasSecondCollider() == false，就只生成第一組。
-     */
-    private Entity spawnBedCollider(
-            Entity bedPlatform,
-            BedComponent bed,
-            String id,
-            double offsetX,
-            double offsetY,
-            double width,
-            double height
-    ) {
-        double colliderX = bedPlatform.getX() + offsetX;
-        double colliderY = bedPlatform.getY() + offsetY;
 
-        return spawn("bed_one_way_platform_collider", new SpawnData(colliderX, colliderY)
-                .put("id", id)
-                .put("width", width)
-                .put("height", height)
-                .put("playerZIndexOnBed", bed.getPlayerZIndexOnBed())
-                .put("normalPlayerZIndex", bed.getNormalPlayerZIndex())
-                .put("deathReason", bed.getDeathReasonOnSecondLanding()));
-    }
-
-    private void createBedCollider(Entity bedPlatform, BedComponent bed) {
-        removeBedCollider();
-
-        Entity collider1 = spawnBedCollider(
-                bedPlatform,
-                bed,
-                bed.getBedId() + "_collider_1",
-                bed.getCollider1OffsetX(),
-                bed.getCollider1OffsetY(),
-                bed.getCollider1Width(),
-                bed.getCollider1Height()
-        );
-
-        currentBedColliders.add(collider1);
-
-        if (bed.hasSecondCollider()) {
-            Entity collider2 = spawnBedCollider(
-                    bedPlatform,
-                    bed,
-                    bed.getBedId() + "_collider_2",
-                    bed.getCollider2OffsetX(),
-                    bed.getCollider2OffsetY(),
-                    bed.getCollider2Width(),
-                    bed.getCollider2Height()
-            );
-
-            currentBedColliders.add(collider2);
-        }
-    }
+    // =========================================================
+    // On Bed Update
+    // =========================================================
 
     /**
-     * 玩家已經在床collider上時，每幀更新床狀態。
+     * 玩家已經在床 collider 上時，每幀更新床狀態。
      *
-     * 如果玩家離開collider的上方：
-     * - 移除床collider
-     * - 恢復zIndex
-     * - 清除床狀態
-     *
-     * 如果玩家仍在床 collider 上方：
-     * - 持續維持床上zIndex
-     * - 若jumpedFromBed且再次落到床上，觸發死亡
+     * 流程：
+     * 1. 如果玩家已不在任何床 collider 上方，完整離開床。
+     * 2. 如果玩家仍在床上，維持 playerOnBedCollider 狀態。
+     * 3. 維持玩家床上 zIndex。
+     * 4. 判斷玩家是否剛剛落回床 collider。
+     * 5. 如果剛落回床，處理床上跳躍死亡邏輯。
      */
-    private void updateWhileOnBedCollider() {
-        BedComponent bed = currentBedPlatform.getComponent(BedComponent.class);
+    private void updatePlayerOnBedCollider() {
+        BedComponent bed = getCurrentBedComponent();
 
-        boolean stillAboveBedCollider = isPlayerAboveCurrentBedCollider();
-
-        if (!stillAboveBedCollider) {
-            leaveBedFully(bed);
+        if (!isPlayerAboveCurrentBedColliders()) {
+            leaveCurrentBed(bed);
             return;
         }
 
-        set("playerOnBedCollider", true);
+        set(VAR_PLAYER_ON_BED_COLLIDER, true);
         player.setZIndex(bed.getPlayerZIndexOnBed());
 
-        boolean justLandedOnBed = hasJustLandedOnCurrentBedCollider();
-
-        if (justLandedOnBed) {
+        if (hasJustLandedOnCurrentBedCollider()) {
             handleLandingBackOnBed(bed);
         }
     }
 
     /**
-     * 處理玩家從床上跳起後，再次落回床上的邏輯。
+     * 處理玩家從床上跳起後再次落回床上的邏輯。
      *
-     * 第 1、2 次落回床上不死亡。
-     * 第 3 次落回床上才觸發死亡。
+     * 若玩家不是從床上跳起，就只更新 hasLandedOnBed。
+     *
+     * 若玩家是從床上跳起並落回床上：
+     * 1. 關閉 waitingForLandingAfterBedJump。
+     * 2. 檢查床上跳躍次數。
+     * 3. 若達到 REQUIRED_BED_JUMPS_BEFORE_DEATH，觸發死亡。
+     *
+     * @param bed 目前床資料
      */
     private void handleLandingBackOnBed(BedComponent bed) {
         hasLandedOnBed = true;
 
-        if (!waitingForBedLandingAfterJump) {
+        if (!waitingForLandingAfterBedJump) {
             return;
         }
 
-        waitingForBedLandingAfterJump = false;
+        waitingForLandingAfterBedJump = false;
 
-        if (bedJumpCount >= bedJumpDeathCount) {
+        if (bedJumpCount >= REQUIRED_BED_JUMPS_BEFORE_DEATH) {
             deathSystem.die(bed.getDeathReasonOnSecondLanding());
         }
     }
 
-    private void leaveBedFully(BedComponent bed) {
-        removeBedCollider();
+    /**
+     * 玩家完整離開目前床。
+     *
+     * 會清除：
+     * 1. 動態床 collider。
+     * 2. PlayerComponent one way platform 狀態。
+     * 3. 玩家 zIndex。
+     * 4. 目前床狀態。
+     * 5. playerOnBedCollider game var。
+     *
+     * @param bed 目前床資料
+     */
+    private void leaveCurrentBed(BedComponent bed) {
+        removeCurrentBedColliders();
 
         getPlayerComponent().setOnOneWayPlatform(false);
-
         player.setZIndex(bed.getNormalPlayerZIndex());
 
-        currentBedPlatform = null;
-        hasLandedOnBed = false;
-        bedJumpCount = 0;
-        waitingForBedLandingAfterJump = false;
+        clearCurrentBedState();
 
-        set("playerOnBedCollider", false);
+        set(VAR_PLAYER_ON_BED_COLLIDER, false);
+    }
+
+
+    // =========================================================
+    // Bed Collider Creation / Removal
+    // =========================================================
+
+    /**
+     * 根據 BedComponent 建立目前床需要的 collider。
+     *
+     * 目前支援：
+     * 1. 第一組 collider。
+     * 2. 第二組 collider，可選。
+     *
+     * @param bedPlatform 床平台 Entity
+     * @param bed 床資料 Component
+     */
+    private void createCurrentBedColliders(Entity bedPlatform, BedComponent bed) {
+        removeCurrentBedColliders();
+
+        spawnBedColliderIfValid(
+                bedPlatform,
+                bed,
+                bed.getBedId() + "_collider_1",
+                bed.getFirstColliderArea()
+        );
+
+        if (bed.hasSecondColliderArea()) {
+            spawnBedColliderIfValid(
+                    bedPlatform,
+                    bed,
+                    bed.getBedId() + "_collider_2",
+                    bed.getSecondColliderArea()
+            );
+        }
     }
 
     /**
-     * 判斷玩家是否仍在BED_ONE_WAY_PLATFORM上方，給Shift下落使用。
+     * 如果 colliderArea 有效，生成床 collider。
+     *
+     * @param bedPlatform 床平台 Entity
+     * @param bed 床資料 Component
+     * @param colliderId collider ID
+     * @param colliderArea collider 位置與尺寸資料
+     */
+    private void spawnBedColliderIfValid(
+            Entity bedPlatform,
+            BedComponent bed,
+            String colliderId,
+            BedComponent.ColliderArea colliderArea
+    ) {
+        if (colliderArea == null || !colliderArea.isValid()) {
+            return;
+        }
+
+        Entity collider = spawnBedCollider(
+                bedPlatform,
+                bed,
+                colliderId,
+                colliderArea
+        );
+
+        currentBedColliders.add(collider);
+    }
+
+    /**
+     * 生成單一床 collider。
+     *
+     * @param bedPlatform 床平台 Entity
+     * @param bed 床資料 Component
+     * @param colliderId collider ID
+     * @param colliderArea collider 位置與尺寸資料
+     * @return 生成出的 collider Entity
+     */
+    private Entity spawnBedCollider(
+            Entity bedPlatform,
+            BedComponent bed,
+            String colliderId,
+            BedComponent.ColliderArea colliderArea
+    ) {
+        double colliderX = bedPlatform.getX() + colliderArea.getOffsetX();
+        double colliderY = bedPlatform.getY() + colliderArea.getOffsetY();
+
+        return spawn(SPAWN_BED_COLLIDER, new SpawnData(colliderX, colliderY)
+                .put("id", colliderId)
+                .put("width", colliderArea.getWidth())
+                .put("height", colliderArea.getHeight())
+                .put("playerZIndexOnBed", bed.getPlayerZIndexOnBed())
+                .put("normalPlayerZIndex", bed.getNormalPlayerZIndex())
+                .put("deathReason", bed.getDeathReasonOnSecondLanding()));
+    }
+
+    /**
+     * 移除目前床動態生成出的所有 collider。
+     */
+    private void removeCurrentBedColliders() {
+        currentBedColliders.forEach(Entity::removeFromWorld);
+        currentBedColliders.clear();
+    }
+
+    /**
+     * 移除世界中所有殘留的床 collider。
+     *
+     * 用途：
+     * reset() 時防止因為死亡、讀檔或場景切換，
+     * 造成動態生成的 collider 殘留在世界中。
+     */
+    private void removeAllResidualBedCollidersFromWorld() {
+        getGameWorld()
+                .getEntitiesByType(EntityType.BED_ONE_WAY_PLATFORM_COLLIDER)
+                .forEach(Entity::removeFromWorld);
+    }
+
+
+    // =========================================================
+    // State Helpers
+    // =========================================================
+
+    /**
+     * 判斷玩家目前是否在動態生成的床 collider 上。
+     *
+     * @return true 表示目前有床平台與床 collider 正在被追蹤
+     */
+    private boolean isPlayerOnGeneratedBedCollider() {
+        return currentBedPlatform != null && !currentBedColliders.isEmpty();
+    }
+
+    /**
+     * 清除目前床相關狀態。
+     *
+     * 注意：
+     * 這個方法只清除狀態，
+     * 不會移除 Entity。
+     *
+     * 若需要移除床 collider，
+     * 請先呼叫 removeCurrentBedColliders()。
+     */
+    private void clearCurrentBedState() {
+        currentBedPlatform = null;
+        currentBedColliders.clear();
+
+        hasLandedOnBed = false;
+        bedJumpCount = 0;
+        waitingForLandingAfterBedJump = false;
+    }
+
+    /**
+     * 取得目前床平台上的 BedComponent。
+     *
+     * 呼叫前應確保 currentBedPlatform 不為 null。
+     *
+     * @return 目前床資料 Component
+     */
+    private BedComponent getCurrentBedComponent() {
+        return currentBedPlatform.getComponent(BedComponent.class);
+    }
+
+
+    // =========================================================
+    // Geometry Checks
+    // =========================================================
+
+    /**
+     * 判斷玩家是否仍在目前床平台的水平範圍上方。
+     *
+     * 主要給 Shift 下落使用。
+     *
+     * @return true 表示玩家仍在目前床平台上方
      */
     private boolean isPlayerAboveCurrentBedPlatform() {
         if (currentBedPlatform == null) {
             return false;
         }
 
-        BedComponent bed = currentBedPlatform.getComponent(BedComponent.class);
+        BedComponent bed = getCurrentBedComponent();
 
-        double platformLeft = currentBedPlatform.getBoundingBoxComponent().getMinXWorld();
-        double platformRight = currentBedPlatform.getBoundingBoxComponent().getMinXWorld()
-                + bed.getPlatformWidth();
-
-        double playerLeft = player.getBoundingBoxComponent().getMinXWorld();
-        double playerRight = player.getBoundingBoxComponent().getMaxXWorld();
-
-        return playerRight > platformLeft + sidePadding &&
-                playerLeft < platformRight - sidePadding;
-    }
-
-    private void updateDropTimer(double tpf) {
-        if (dropTimer > 0) {
-            dropTimer -= tpf;
-
-            if (dropTimer < 0) {
-                dropTimer = 0;
-            }
-        }
+        return isPlayerHorizontallyOverArea(
+                currentBedPlatform.getX(),
+                bed.getPlatformWidth()
+        );
     }
 
     /**
-     * 判斷玩家是否仍在床collider上方。
+     * 判斷玩家是否仍在目前任一床 collider 的水平範圍上方。
+     *
+     * @return true 表示玩家仍在床 collider 上方
      */
-    private boolean isPlayerAboveCurrentBedCollider() {
+    private boolean isPlayerAboveCurrentBedColliders() {
         if (currentBedColliders.isEmpty()) {
             return false;
         }
 
-        double playerLeft = player.getBoundingBoxComponent().getMinXWorld();
-        double playerRight = player.getBoundingBoxComponent().getMaxXWorld();
-
-        return currentBedColliders.stream().anyMatch(collider -> {
-            double colliderLeft = collider.getBoundingBoxComponent().getMinXWorld();
-            double colliderRight = collider.getBoundingBoxComponent().getMaxXWorld();
-
-            return playerRight > colliderLeft + sidePadding &&
-                    playerLeft < colliderRight - sidePadding;
-        });
+        return currentBedColliders.stream()
+                .anyMatch(this::isPlayerHorizontallyOverEntity);
     }
 
     /**
-     * 判斷玩家是否剛剛從上方再次落到床collider，用於二次落床死亡判定。
+     * 判斷玩家是否剛剛從上方落回目前床 collider。
+     *
+     * 用於床上跳躍死亡判定。
+     *
+     * 注意：
+     * 目前以第一個 collider 的頂部作為床面高度。
+     * 如果未來床有不同高度的 collider，
+     * 可以改成逐一檢查所有 collider。
+     *
+     * @return true 表示玩家剛落回床面
      */
     private boolean hasJustLandedOnCurrentBedCollider() {
         if (currentBedColliders.isEmpty()) {
@@ -567,69 +990,100 @@ public class BedSystem {
         Entity firstCollider = currentBedColliders.get(0);
         double colliderTop = firstCollider.getY();
 
-        boolean result = previousPlayerBottom <= colliderTop + landingTolerance &&
-                playerBottom >= colliderTop - landingTolerance;
-
-        return result;
+        return hasPlayerCrossedTopSurface(colliderTop, playerBottom);
     }
 
     /**
-     * 移除由目前床生成出的所有collider。
-     */
-    private void removeBedCollider() {
-        currentBedColliders.forEach(Entity::removeFromWorld);
-        currentBedColliders.clear();
-    }
-
-    /**
-     * 重設床系統。
+     * 判斷玩家是否水平重疊某個 Entity。
      *
-     * 清除：
-     * 1. 目前追蹤的bed platform
-     * 2. 目前生成出的bed colliders
-     * 3. 世界中殘留的BED_ONE_WAY_PLATFORM_COLLIDER
-     * 4. jumpedFromBed / hasLandedOnBed 狀態
-     * 5. playerOnBedCollider game var
-     * 6. 玩家one way platform狀態與zIndex
+     * @param targetEntity 目標 Entity
+     * @return true 表示玩家水平範圍與目標 Entity 重疊
      */
-    public void reset() {
-        removeBedCollider();
+    private boolean isPlayerHorizontallyOverEntity(Entity targetEntity) {
+        double targetLeft = targetEntity.getBoundingBoxComponent().getMinXWorld();
+        double targetRight = targetEntity.getBoundingBoxComponent().getMaxXWorld();
 
-        getGameWorld()
-                .getEntitiesByType(EntityType.BED_ONE_WAY_PLATFORM_COLLIDER)
-                .forEach(Entity::removeFromWorld);
-
-        currentBedPlatform = null;
-        currentBedColliders.clear();
-
-        dropTimer = 0;
-        resetIgnoreTimer = resetIgnoreDuration;
-
-        previousPlayerBottom = getPlayerBottom();
-
-        hasLandedOnBed = false;
-        bedJumpCount = 0;
-        waitingForBedLandingAfterJump = false;
-
-        set("playerOnBedCollider", false);
-
-        getPlayerComponent().setOnOneWayPlatform(false);
-
-        player.setZIndex(normalPlayerZIndex);
+        return isPlayerHorizontallyOverRange(targetLeft, targetRight);
     }
 
-    private boolean isDroppingThrough() {
-        return dropTimer > 0;
+    /**
+     * 判斷玩家是否水平重疊某個區域。
+     *
+     * @param areaLeft 區域左側 X
+     * @param areaWidth 區域寬度
+     * @return true 表示玩家水平範圍與該區域重疊
+     */
+    private boolean isPlayerHorizontallyOverArea(double areaLeft, double areaWidth) {
+        double areaRight = areaLeft + areaWidth;
+
+        return isPlayerHorizontallyOverRange(areaLeft, areaRight);
     }
 
+    /**
+     * 判斷玩家是否水平重疊指定 X 範圍。
+     *
+     * 這裡會套用 SIDE_PADDING，
+     * 避免玩家只碰到邊緣就被判定為站在床上。
+     *
+     * @param rangeLeft 範圍左側 X
+     * @param rangeRight 範圍右側 X
+     * @return true 表示玩家水平範圍與該範圍重疊
+     */
+    private boolean isPlayerHorizontallyOverRange(double rangeLeft, double rangeRight) {
+        double playerLeft = player.getBoundingBoxComponent().getMinXWorld();
+        double playerRight = player.getBoundingBoxComponent().getMaxXWorld();
+
+        return playerRight > rangeLeft + SIDE_PADDING &&
+                playerLeft < rangeRight - SIDE_PADDING;
+    }
+
+    /**
+     * 判斷玩家底部是否從上一幀到這一幀穿越指定頂部表面。
+     *
+     * 用途：
+     * 1. 判斷玩家是否落到 BED_ONE_WAY_PLATFORM。
+     * 2. 判斷玩家是否再次落回床 collider。
+     *
+     * @param surfaceTop 目標表面的 Y 座標
+     * @param currentPlayerBottom 目前玩家底部 Y 座標
+     * @return true 表示玩家剛穿越該表面
+     */
+    private boolean hasPlayerCrossedTopSurface(
+            double surfaceTop,
+            double currentPlayerBottom
+    ) {
+        return previousPlayerBottom <= surfaceTop + LANDING_TOLERANCE &&
+                currentPlayerBottom >= surfaceTop - LANDING_TOLERANCE;
+    }
+
+
+    // =========================================================
+    // Component Getters
+    // =========================================================
+
+    /**
+     * 取得玩家底部世界座標。
+     *
+     * @return 玩家 bounding box 的最大 Y
+     */
     private double getPlayerBottom() {
         return player.getBoundingBoxComponent().getMaxYWorld();
     }
 
+    /**
+     * 取得玩家 PlayerComponent。
+     *
+     * @return PlayerComponent
+     */
     private PlayerComponent getPlayerComponent() {
         return player.getComponent(PlayerComponent.class);
     }
 
+    /**
+     * 取得玩家 PhysicsComponent。
+     *
+     * @return PhysicsComponent
+     */
     private PhysicsComponent getPhysics() {
         return player.getComponent(PhysicsComponent.class);
     }

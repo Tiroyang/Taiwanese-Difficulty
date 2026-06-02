@@ -3,34 +3,287 @@ package ass.example.components.HouseScene;
 import ass.example.core.DeathReason;
 import com.almasb.fxgl.entity.component.Component;
 
+/**
+ * BedComponent
+ *
+ * 床的資料型 Component。
+ *
+ * 這個 Component 本身不負責處理玩家跳床、死亡、ZIndex 切換等邏輯，
+ * 而是負責保存「床物件需要用到的設定資料」。
+ *
+ * 主要用途：
+ * 1. 標記目前 Entity 是床的平台區，還是床的碰撞區。
+ * 2. 保存床的 ID，方便同一張床的平台與碰撞區互相對應。
+ * 3. 保存平台尺寸。
+ * 4. 保存床額外碰撞區的位置與尺寸。
+ * 5. 保存玩家站在床上時的 ZIndex。
+ * 6. 保存玩家離開床後恢復的 ZIndex。
+ * 7. 保存第二次落在床上時要觸發的死亡原因。
+ *
+ * 常見結構：
+ *
+ * 一張床通常可能會拆成數個 Entity：
+ *
+ * 1. PLATFORM
+ *    - 玩家可以站上去的一方通行平台。
+ *
+ * 2. COLLIDER
+ *    - 床的側邊、床架、床頭等不能穿越的碰撞區。
+ *
+ * 這些 Entity 可以透過相同的 bedId 判定屬於同一張床。
+ */
 public class BedComponent extends Component {
 
+    // =========================================================
+    // Enums
+    // =========================================================
+
+    /**
+     * 床 Entity 的角色。
+     *
+     * PLATFORM：
+     * - 代表此 Entity 是床面平台。
+     * - 通常會搭配 OneWayPlatform 或類似機制使用。
+     *
+     * COLLIDER：
+     * - 代表此 Entity 是床的阻擋碰撞區。
+     * - 例如床架、床頭、側邊障礙。
+     */
     public enum Role {
         PLATFORM,
         COLLIDER
     }
 
+
+    // =========================================================
+    // Nested Data Classes
+    // =========================================================
+
+    /**
+     * ColliderArea
+     *
+     * 用來描述一個矩形碰撞區的位置與尺寸。
+     *
+     * 原本程式使用：
+     * - collider1OffsetX
+     * - collider1OffsetY
+     * - collider1Width
+     * - collider1Height
+     *
+     * 以及：
+     * - collider2OffsetX
+     * - collider2OffsetY
+     * - collider2Width
+     * - collider2Height
+     *
+     * 這樣欄位會非常分散。
+     *
+     * 整理成 ColliderArea 後，
+     * 每一組碰撞區都可以被視為一個完整資料。
+     */
+    public static class ColliderArea {
+
+        /**
+         * 碰撞區相對於床 Entity 的 X 偏移。
+         */
+        private final double offsetX;
+
+        /**
+         * 碰撞區相對於床 Entity 的 Y 偏移。
+         */
+        private final double offsetY;
+
+        /**
+         * 碰撞區寬度。
+         */
+        private final double width;
+
+        /**
+         * 碰撞區高度。
+         */
+        private final double height;
+
+        /**
+         * 建立一個矩形碰撞區資料。
+         *
+         * @param offsetX 相對 X 偏移
+         * @param offsetY 相對 Y 偏移
+         * @param width 碰撞區寬度
+         * @param height 碰撞區高度
+         */
+        public ColliderArea(
+                double offsetX,
+                double offsetY,
+                double width,
+                double height
+        ) {
+            this.offsetX = offsetX;
+            this.offsetY = offsetY;
+            this.width = width;
+            this.height = height;
+        }
+
+        /**
+         * 判斷此碰撞區是否有效。
+         *
+         * 只要寬度或高度小於等於 0，
+         * 就代表這個碰撞區不應該被生成。
+         *
+         * @return true 表示此碰撞區有效
+         */
+        public boolean isValid() {
+            return width > 0 && height > 0;
+        }
+
+        public double getOffsetX() {
+            return offsetX;
+        }
+
+        public double getOffsetY() {
+            return offsetY;
+        }
+
+        public double getWidth() {
+            return width;
+        }
+
+        public double getHeight() {
+            return height;
+        }
+    }
+
+
+    // =========================================================
+    // Basic Bed Settings
+    // =========================================================
+
+    /**
+     * 此 Entity 在床系統中的角色。
+     */
     private final Role role;
+
+    /**
+     * 床 ID。
+     *
+     * 用來辨識不同 Entity 是否屬於同一張床。
+     *
+     * 例如：
+     * - bed_room_main
+     * - bed_room_child
+     * - bed_living_room
+     */
     private final String bedId;
 
+
+    // =========================================================
+    // Platform Settings
+    // =========================================================
+
+    /**
+     * 床平台寬度。
+     *
+     * 通常用於生成一方通行平台的碰撞範圍。
+     */
     private final double platformWidth;
+
+    /**
+     * 床平台高度。
+     *
+     * 通常用於生成一方通行平台的碰撞範圍。
+     */
     private final double platformHeight;
 
-    private final double collider1OffsetX;
-    private final double collider1OffsetY;
-    private final double collider1Width;
-    private final double collider1Height;
 
-    private final double collider2OffsetX;
-    private final double collider2OffsetY;
-    private final double collider2Width;
-    private final double collider2Height;
+    // =========================================================
+    // Collider Settings
+    // =========================================================
 
+    /**
+     * 第一組床碰撞區。
+     *
+     * 通常可用於床頭、床架或主要阻擋區。
+     */
+    private final ColliderArea firstColliderArea;
+
+    /**
+     * 第二組床碰撞區。
+     *
+     * 若床需要兩段阻擋區，可以使用此欄位。
+     * 若不需要第二組碰撞區，width 或 height 可設為 0。
+     */
+    private final ColliderArea secondColliderArea;
+
+
+    // =========================================================
+    // Player Layer Settings
+    // =========================================================
+
+    /**
+     * 玩家站在床上時的 ZIndex。
+     *
+     * 用途：
+     * 讓玩家在床上時可以顯示在正確圖層。
+     *
+     * 例如：
+     * - 玩家需要顯示在棉被上方。
+     * - 玩家需要顯示在床架後方。
+     */
     private final int playerZIndexOnBed;
+
+    /**
+     * 玩家離開床後恢復的普通 ZIndex。
+     */
     private final int normalPlayerZIndex;
 
+
+    // =========================================================
+    // Death Settings
+    // =========================================================
+
+    /**
+     * 玩家第二次落在床上時要觸發的死亡原因。
+     *
+     * 例如：
+     * 第一次跳到床上安全，
+     * 但如果玩家又從床上跳起並再次落回床上，
+     * 就觸發「在床上跳」相關死亡。
+     */
     private final DeathReason deathReasonOnSecondLanding;
 
+
+    // =========================================================
+    // Constructors
+    // =========================================================
+
+    /**
+     * 建立床 Component。
+     *
+     * 這個建構子保留原本參數格式，
+     * 方便你原本 Spawn 床的程式碼不需要大幅修改。
+     *
+     * 但內部會把 collider1 / collider2 的資料整理成 ColliderArea，
+     * 避免類別內部欄位過度分散。
+     *
+     * @param role 此 Entity 的床角色
+     * @param bedId 床 ID
+     *
+     * @param platformWidth 床平台寬度
+     * @param platformHeight 床平台高度
+     *
+     * @param collider1OffsetX 第一組碰撞區 X 偏移
+     * @param collider1OffsetY 第一組碰撞區 Y 偏移
+     * @param collider1Width 第一組碰撞區寬度
+     * @param collider1Height 第一組碰撞區高度
+     *
+     * @param collider2OffsetX 第二組碰撞區 X 偏移
+     * @param collider2OffsetY 第二組碰撞區 Y 偏移
+     * @param collider2Width 第二組碰撞區寬度
+     * @param collider2Height 第二組碰撞區高度
+     *
+     * @param playerZIndexOnBed 玩家在床上時的 ZIndex
+     * @param normalPlayerZIndex 玩家離開床後恢復的 ZIndex
+     * @param deathReasonOnSecondLanding 第二次落床死亡原因
+     */
     public BedComponent(
             Role role,
             String bedId,
@@ -51,41 +304,135 @@ public class BedComponent extends Component {
             int normalPlayerZIndex,
             DeathReason deathReasonOnSecondLanding
     ) {
+        this(
+                role,
+                bedId,
+                platformWidth,
+                platformHeight,
+                new ColliderArea(
+                        collider1OffsetX,
+                        collider1OffsetY,
+                        collider1Width,
+                        collider1Height
+                ),
+                new ColliderArea(
+                        collider2OffsetX,
+                        collider2OffsetY,
+                        collider2Width,
+                        collider2Height
+                ),
+                playerZIndexOnBed,
+                normalPlayerZIndex,
+                deathReasonOnSecondLanding
+        );
+    }
+
+    /**
+     * 建立床 Component。
+     *
+     * 這個版本使用 ColliderArea 作為碰撞區參數，
+     * 適合之後新的程式碼使用。
+     *
+     * 優點：
+     * 1. 參數較少。
+     * 2. collider 的資料比較集中。
+     * 3. 可讀性較高。
+     *
+     * @param role 此 Entity 的床角色
+     * @param bedId 床 ID
+     * @param platformWidth 床平台寬度
+     * @param platformHeight 床平台高度
+     * @param firstColliderArea 第一組碰撞區
+     * @param secondColliderArea 第二組碰撞區
+     * @param playerZIndexOnBed 玩家在床上時的 ZIndex
+     * @param normalPlayerZIndex 玩家離開床後恢復的 ZIndex
+     * @param deathReasonOnSecondLanding 第二次落床死亡原因
+     */
+    public BedComponent(
+            Role role,
+            String bedId,
+            double platformWidth,
+            double platformHeight,
+            ColliderArea firstColliderArea,
+            ColliderArea secondColliderArea,
+            int playerZIndexOnBed,
+            int normalPlayerZIndex,
+            DeathReason deathReasonOnSecondLanding
+    ) {
         this.role = role;
         this.bedId = bedId;
         this.platformWidth = platformWidth;
         this.platformHeight = platformHeight;
-
-        this.collider1OffsetX = collider1OffsetX;
-        this.collider1OffsetY = collider1OffsetY;
-        this.collider1Width = collider1Width;
-        this.collider1Height = collider1Height;
-
-        this.collider2OffsetX = collider2OffsetX;
-        this.collider2OffsetY = collider2OffsetY;
-        this.collider2Width = collider2Width;
-        this.collider2Height = collider2Height;
-
+        this.firstColliderArea = firstColliderArea;
+        this.secondColliderArea = secondColliderArea;
         this.playerZIndexOnBed = playerZIndexOnBed;
         this.normalPlayerZIndex = normalPlayerZIndex;
         this.deathReasonOnSecondLanding = deathReasonOnSecondLanding;
     }
 
-    public Role getRole() {
-        return role;
-    }
 
+    // =========================================================
+    // Role Checks
+    // =========================================================
+
+    /**
+     * 判斷此 Entity 是否為床平台。
+     *
+     * @return true 表示此 Entity 是床平台
+     */
     public boolean isPlatform() {
         return role == Role.PLATFORM;
     }
 
+    /**
+     * 判斷此 Entity 是否為床碰撞區。
+     *
+     * @return true 表示此 Entity 是床碰撞區
+     */
     public boolean isCollider() {
         return role == Role.COLLIDER;
+    }
+
+
+    // =========================================================
+    // Collider Checks
+    // =========================================================
+
+    /**
+     * 判斷是否有有效的第一組碰撞區。
+     *
+     * @return true 表示第一組碰撞區有效
+     */
+    public boolean hasFirstColliderArea() {
+        return firstColliderArea != null && firstColliderArea.isValid();
+    }
+
+    /**
+     * 判斷是否有有效的第二組碰撞區。
+     *
+     * @return true 表示第二組碰撞區有效
+     */
+    public boolean hasSecondColliderArea() {
+        return secondColliderArea != null && secondColliderArea.isValid();
+    }
+
+
+    // =========================================================
+    // Basic Getters
+    // =========================================================
+
+    public Role getRole() {
+        return role;
     }
 
     public String getBedId() {
         return bedId;
     }
+
+
+    // =========================================================
+    // Platform Getters
+    // =========================================================
 
     public double getPlatformWidth() {
         return platformWidth;
@@ -95,41 +442,23 @@ public class BedComponent extends Component {
         return platformHeight;
     }
 
-    public double getCollider1OffsetX() {
-        return collider1OffsetX;
+
+    // =========================================================
+    // Collider Getters
+    // =========================================================
+
+    public ColliderArea getFirstColliderArea() {
+        return firstColliderArea;
     }
 
-    public double getCollider1OffsetY() {
-        return collider1OffsetY;
+    public ColliderArea getSecondColliderArea() {
+        return secondColliderArea;
     }
 
-    public double getCollider1Width() {
-        return collider1Width;
-    }
 
-    public double getCollider1Height() {
-        return collider1Height;
-    }
-
-    public double getCollider2OffsetX() {
-        return collider2OffsetX;
-    }
-
-    public double getCollider2OffsetY() {
-        return collider2OffsetY;
-    }
-
-    public double getCollider2Width() {
-        return collider2Width;
-    }
-
-    public double getCollider2Height() {
-        return collider2Height;
-    }
-
-    public boolean hasSecondCollider() {
-        return collider2Width > 0 && collider2Height > 0;
-    }
+    // =========================================================
+    // Player Layer Getters
+    // =========================================================
 
     public int getPlayerZIndexOnBed() {
         return playerZIndexOnBed;
@@ -138,6 +467,11 @@ public class BedComponent extends Component {
     public int getNormalPlayerZIndex() {
         return normalPlayerZIndex;
     }
+
+
+    // =========================================================
+    // Death Getters
+    // =========================================================
 
     public DeathReason getDeathReasonOnSecondLanding() {
         return deathReasonOnSecondLanding;

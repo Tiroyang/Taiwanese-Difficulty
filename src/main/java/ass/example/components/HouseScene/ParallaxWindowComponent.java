@@ -5,7 +5,6 @@ import com.almasb.fxgl.entity.component.Component;
 import static com.almasb.fxgl.dsl.FXGL.*;
 
 public class ParallaxWindowComponent extends Component {
-
     private final double baseX;
     private final double baseY;
 
