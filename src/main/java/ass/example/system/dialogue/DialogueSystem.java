@@ -2,6 +2,7 @@ package ass.example.system.dialogue;
 
 import ass.example.components.PlayerComponent;
 import ass.example.core.DeathReason;
+import ass.example.core.DialogueDatabase;
 import ass.example.core.SoundId;
 import ass.example.system.AudioSystem;
 import ass.example.system.DeathSystem;
@@ -395,7 +396,7 @@ public class DialogueSystem {
      * package-private：
      * - 讓 DialogueDatabase 可以使用 method reference。
      */
-    void startMomBattleMiniGame() {
+    public void startMomBattleMiniGame() {
         MomBattleMiniGame layer = new MomBattleMiniGame(
                 DeathReason.MOM_BATTLE_LOSE_A,
                 DeathReason.MOM_BATTLE_LOSE_B,
@@ -418,7 +419,7 @@ public class DialogueSystem {
      * package-private：
      * - 讓 DialogueDatabase 可以使用 method reference。
      */
-    void callMomDanceOff() {
+    public void callMomDanceOff() {
         audioSystem.playSFX(SoundId.MOM_DANCE_OFF);
 
         PlayerComponent playerComponent = getPlayerComponent();

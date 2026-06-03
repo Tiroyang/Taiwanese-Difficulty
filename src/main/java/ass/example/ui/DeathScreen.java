@@ -1,6 +1,7 @@
 package ass.example.ui;
 
 import ass.example.core.DeathReason;
+import ass.example.system.CursorManager;
 import ass.example.system.LanguageSystem;
 import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;

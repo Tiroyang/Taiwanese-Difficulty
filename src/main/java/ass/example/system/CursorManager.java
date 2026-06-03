@@ -1,4 +1,4 @@
-package ass.example.ui;
+package ass.example.system;
 
 import javafx.animation.PauseTransition;
 import javafx.scene.Cursor;

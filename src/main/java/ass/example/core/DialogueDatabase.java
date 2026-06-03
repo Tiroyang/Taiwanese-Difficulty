@@ -1,7 +1,8 @@
-package ass.example.system.dialogue;
+package ass.example.core;
 
-import ass.example.core.QuestType;
 import ass.example.system.QuestSystem;
+import ass.example.system.dialogue.DialogueLine;
+import ass.example.system.dialogue.DialogueSystem;
 
 import java.util.HashMap;
 import java.util.Map;

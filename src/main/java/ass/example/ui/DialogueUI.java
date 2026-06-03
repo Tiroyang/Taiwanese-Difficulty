@@ -2,6 +2,7 @@ package ass.example.ui;
 
 import ass.example.core.SoundId;
 import ass.example.system.AudioSystem;
+import ass.example.system.CursorManager;
 import ass.example.system.LanguageSystem;
 import ass.example.system.dialogue.DialogueLine;
 import ass.example.system.dialogue.DialogueLine.DialogueButton;
