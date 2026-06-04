@@ -170,6 +170,7 @@ public class PauseMenu extends FXGLMenu {
      */
     @Override
     public void onCreate() {
+        refreshPauseMenuTexts();
         resetState();
         playOpenAnimation();
     }
@@ -459,8 +460,37 @@ public class PauseMenu extends FXGLMenu {
      * 語言變更後刷新主暫停按鈕文字。
      */
     private void refreshPauseMenuTexts() {
-        rebuildMainPauseButtons(true);
-        menuExpanded = true;
+        buttonStack.getChildren().clear();
+        pauseButtons.clear();
+
+        pauseButtons.add(createPauseButton(
+                text("pause.resume"),
+                this::resumeGame,
+                PauseButtonType.PRIMARY
+        ));
+
+        pauseButtons.add(createPauseButton(
+                text("pause.save"),
+                this::showSaveMenuPage,
+                PauseButtonType.NORMAL
+        ));
+
+        pauseButtons.add(createPauseButton(
+                text("pause.settings"),
+                this::showSettingsPage,
+                PauseButtonType.NORMAL
+        ));
+
+        pauseButtons.add(createPauseButton(
+                text("pause.exitToMain"),
+                this::exitToMainMenu,
+                PauseButtonType.EXIT
+        ));
+
+        for (StackPane button : pauseButtons) {
+            StackPane.setAlignment(button, Pos.CENTER_LEFT);
+            buttonStack.getChildren().add(button);
+        }
     }
 
     /**
