@@ -50,22 +50,6 @@ import static com.almasb.fxgl.dsl.FXGL.*;
  * 5. 註冊物理碰撞事件。
  * 6. 註冊玩家輸入事件。
  * 7. 每幀轉交 update 給 SceneManager。
- *
- * 單例判斷：
- * Main 不建議做 Singleton。
- *
- * 原因：
- * - Main 繼承 GameApplication。
- * - GameApplication 的生命週期由 FXGL 管理。
- * - 若自行做 Singleton，容易和 FXGL 的初始化順序衝突。
- *
- * 適合 Singleton 的系統：
- * - AudioSystem
- * - AchievementSystem
- * - SceneManager
- * - DeathSystem
- * - SaveSystem
- * - SaveSlotManager
  */
 public class Main extends GameApplication {
 
@@ -89,7 +73,6 @@ public class Main extends GameApplication {
      *
      * true 時：
      * - Factory 會顯示碰撞箱色塊。
-     * - UI 可顯示 DEV MODE 標籤。
      */
     public static boolean devMode = false;
 
@@ -241,9 +224,6 @@ public class Main extends GameApplication {
      *
      * 注意：
      * 不要宣告區域變數遮蔽欄位。
-     * 例如不要寫：
-     * AchievementSystem achievementSystem = ...
-     *
      * 否則 this.achievementSystem 不會被正確設定。
      */
     private void initializeSystems() {
@@ -264,7 +244,7 @@ public class Main extends GameApplication {
     }
 
     /**
-     * 如果主選單有要求讀取某個存檔槽，就讀取該存檔。
+     * 如果主選單要求讀取某個存檔槽，就讀取該存檔。
      *
      * @return true 表示已處理讀檔，initGame 不應再載入預設場景。
      */
@@ -284,10 +264,6 @@ public class Main extends GameApplication {
     /**
      * 如果主選單要求啟動特定場景或模式，就載入該場景。
      *
-     * 例如：
-     * - Story Mode
-     * - Street Endless MiniGame
-     *
      * @return true 表示已載入指定場景。
      */
     private boolean tryLoadPendingStartScene() {
@@ -303,10 +279,6 @@ public class Main extends GameApplication {
 
     /**
      * 安裝自訂游標。
-     *
-     * 平常顯示自訂游標；
-     * 滑鼠閒置一段時間後隱藏；
-     * 滑鼠再次移動時重新顯示。
      */
     private void installCustomCursor() {
         CursorManager.install(getGameScene().getRoot());
@@ -347,7 +319,7 @@ public class Main extends GameApplication {
     }
 
     /**
-     * HouseScene 劇情與互動狀態。
+     * HouseScene 劇情與互動狀態相關 vars。
      */
     private void initHouseVars(Map<String, Object> vars) {
         vars.put(SaveKey.QUILT_FOLDED, false);
@@ -364,10 +336,7 @@ public class Main extends GameApplication {
     }
 
     /**
-     * Street Endless MiniGame 狀態。
-     *
-     * 這些變數目前不一定都放在 SaveKey，
-     * 因為 Street Endless 通常不存檔。
+     * Street Endless MiniGame 狀態相關 vars。
      */
     private void initStreetEndlessVars(Map<String, Object> vars) {
         vars.put("streetEndlessMode", false);
@@ -407,7 +376,7 @@ public class Main extends GameApplication {
     /**
      * 註冊 player_ground_sensor 與指定地面類型的碰撞。
      *
-     * 支援：
+     * 含
      * - WALL
      * - FLOOR
      * - BED_ONE_WAY_PLATFORM_COLLIDER
@@ -482,7 +451,6 @@ public class Main extends GameApplication {
         registerDropInput();
         registerDashInput();
         registerInteractInput();
-        registerDebugInput();
     }
 
     /**
@@ -531,10 +499,6 @@ public class Main extends GameApplication {
 
     /**
      * 從單向平台下落。
-     *
-     * 注意：
-     * Drop 鍵不是 Jump 鍵，
-     * 所以 onActionEnd 不應該呼叫 releaseJumpKey()。
      */
     private void registerDropInput() {
         getInput().addAction(new UserAction("Drop S") {
@@ -559,8 +523,10 @@ public class Main extends GameApplication {
     /**
      * 衝刺。
      *
+     * 由於 Shift 是功能鍵，不能使用 addAction 。
+     *
      * 使用 EventFilter 是為了攔截 Shift，
-     * 避免部分情況下被其他 UI 或 FXGL Menu 消耗。
+     * 避免被其他 UI 或 FXGL Menu 消耗。
      */
     private void registerDashInput() {
         getPrimaryStage().getScene().addEventFilter(
@@ -589,18 +555,6 @@ public class Main extends GameApplication {
                 }
             }
         }, KeyCode.F);
-    }
-
-    /**
-     * Debug 快捷鍵。
-     */
-    private void registerDebugInput() {
-        getInput().addAction(new UserAction("Debug F5") {
-            @Override
-            protected void onActionBegin() {
-                printPlayerPositionDebugInfo();
-            }
-        }, KeyCode.F5);
     }
 
     /**
@@ -714,25 +668,6 @@ public class Main extends GameApplication {
 
         action.accept(playerComponent);
     }
-
-    /**
-     * Debug：印出目前場景與玩家座標。
-     */
-    private void printPlayerPositionDebugInfo() {
-        if (sceneManager == null || sceneManager.getPlayer() == null) {
-            System.out.println("=== SAVE PLAYER POSITION ===");
-            System.out.println("sceneManager or player is null.");
-            return;
-        }
-
-        Entity player = sceneManager.getPlayer();
-
-        System.out.println("=== SAVE PLAYER POSITION ===");
-        System.out.println("sceneType = " + sceneManager.getCurrentSceneType());
-        System.out.println("player.getX() = " + player.getX());
-        System.out.println("player.getY() = " + player.getY());
-    }
-
 
     // =========================================================
     // Update

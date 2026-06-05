@@ -350,10 +350,10 @@ public class HouseScene {
      * 10. 設定攝影機。
      * 11. 視需求播放起床動畫。
      *
-     * @param playWakeUpIntro 是否播放起床開場動畫
+     * @param playIntro 是否播放起床開場動畫
      * @return 生成出的玩家 Entity
      */
-    public Entity load(boolean playWakeUpIntro) {
+    public Entity load(boolean playIntro) {
         spawnTestObjects();
         spawnBackgroundLayers();
 
@@ -370,9 +370,9 @@ public class HouseScene {
         initQuestHUD();
         setupCamera();
 
-        if (playWakeUpIntro) {
+        if (playIntro) {
             hideQuestHUD();
-            playWakeUpIntroAnimation();
+            playIntroAnimation();
         } else {
             showQuestHUD();
         }
@@ -1271,7 +1271,7 @@ public class HouseScene {
      * 13. 開啟攝影機 lazy。
      * 14. 切回正式 HouseScene BGM。
      */
-    private void playWakeUpIntroAnimation() {
+    private void playIntroAnimation() {
         if (player == null) {
             return;
         }

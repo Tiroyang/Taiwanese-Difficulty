@@ -34,11 +34,6 @@ import static com.almasb.fxgl.dsl.FXGL.*;
  * 5. 將玩家輸入事件轉交給目前場景。
  * 6. 處理玩家死亡、重生與讀檔死亡還原。
  * 7. 協助 SaveSystem 儲存 / 還原目前場景額外資料。
- *
- * 注意：
- * SceneManager 可以設計成單例，因為整個遊戲通常只需要一個場景管理器。
- * 但 HouseScene / StreetScene / Runtime System 不建議單例化，
- * 因為它們綁定目前場景載入時生成的 player 與臨時 Entity。
  */
 public class SceneManager {
 
@@ -103,13 +98,9 @@ public class SceneManager {
     // =========================================================
 
     /**
-     * 從街道回家時，玩家出現在家中的 X。
+     * 從街道回家時，玩家出現在家中的 X 和 Y。
      */
     private static final double HOUSE_RETURN_X = 43.0;
-
-    /**
-     * 從街道回家時，玩家出現在家中的 Y。
-     */
     private static final double HOUSE_RETURN_Y = 452.0;
 
 
@@ -295,17 +286,17 @@ public class SceneManager {
      * @param fromSave 是否由讀檔進入
      * @param overridePlayerX 指定玩家 X，可為 null
      * @param overridePlayerY 指定玩家 Y，可為 null
-     * @param playWakeUpIntro 是否播放起床過場
+     * @param playIntro 是否播放起床過場
      */
     private void loadHouseSceneInternal(
             boolean fromSave,
             Double overridePlayerX,
             Double overridePlayerY,
-            boolean playWakeUpIntro
+            boolean playIntro
     ) {
         currentSceneType = SceneType.HOUSE;
 
-        if (playWakeUpIntro) {
+        if (playIntro) {
             QuestSystem.getInstance().resetRuntimeState();
         }
 
@@ -323,7 +314,7 @@ public class SceneManager {
          * houseScene = new HouseScene(config, deathSystem, audioSystem, this);
          */
         houseScene = new HouseScene(config, this);
-        player = houseScene.load(playWakeUpIntro);
+        player = houseScene.load(playIntro);
 
         movePlayerToOverridePositionIfNeeded(overridePlayerX, overridePlayerY);
 
