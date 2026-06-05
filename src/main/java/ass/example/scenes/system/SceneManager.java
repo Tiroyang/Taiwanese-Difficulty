@@ -266,7 +266,7 @@ public class SceneManager {
     /**
      * 載入 HouseScene 並指定玩家位置。
      *
-     * 通常用於從 StreetScene 回家。
+     * 用於從 StreetScene 回家。
      *
      * @param playerX 玩家 X
      * @param playerY 玩家 Y
@@ -326,7 +326,7 @@ public class SceneManager {
      * 設定 HouseScene 載入時需要的變數。
      *
      * 新遊戲進家中時會重置 shoesWorn。
-     * 從街道回家或讀檔時，不一定要重置鞋子。
+     * 從街道回家或讀檔時，不一定會重置鞋子。
      */
     private void setupHouseVarsForLoad(
             boolean fromSave,
@@ -472,13 +472,6 @@ public class SceneManager {
 
     /**
      * 設定故事模式場景共用變數。
-     *
-     * 適用：
-     * - HouseScene
-     * - Story StreetScene
-     *
-     * 不適用：
-     * - StreetEndlessScene
      */
     private void setupCommonStorySceneVars() {
         set("saveDisabled", false);
@@ -489,7 +482,7 @@ public class SceneManager {
     }
 
     /**
-     * 播放 Street 相關 BGM。
+     * 播放 Street 場景 BGM。
      */
     private void playStreetBGM() {
         MusicSystem.getInstance().playBGM(

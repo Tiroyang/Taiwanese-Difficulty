@@ -29,17 +29,11 @@ import static com.almasb.fxgl.dsl.FXGL.*;
  * 1. 處理玩家左右移動。
  * 2. 處理可變高度跳躍。
  * 3. 處理衝刺與衝刺冷卻 UI。
- * 4. 處理玩家走路 / 衝刺 / 站立 / 死亡圖片。
- * 5. 支援穿鞋與赤腳兩套外觀。
+ * 4. 處理玩家走路 / 衝刺 / 站立 / 死亡圖片，並支援穿鞋與赤腳兩套外觀。
  * 6. 建立並更新玩家腳底 ground sensor。
  * 7. 判斷玩家是否站在地上或單向平台上。
  * 8. 支援死亡、重生、瞬移。
  * 9. 支援起床過場與特殊強制外觀動畫。
- *
- * 注意：
- * 這個 Component 不直接處理輸入事件。
- * 輸入事件通常由 Main 或 SceneManager 接收後，
- * 再呼叫 moveLeft(), jumpPressed(), dashPressed() 等方法。
  */
 public class PlayerComponent extends Component {
 
@@ -69,9 +63,6 @@ public class PlayerComponent extends Component {
 
     /**
      * 玩家起跳瞬間的向上速度。
-     *
-     * FXGL / Box2D 中 Y 軸通常向下為正，
-     * 所以跳躍時會給負速度。
      */
     private static final double JUMP_SPEED = 560.0;
 
@@ -239,8 +230,6 @@ public class PlayerComponent extends Component {
 
     /**
      * FXGL PhysicsComponent。
-     *
-     * 由 FXGL 依欄位名稱自動注入。
      */
     private PhysicsComponent physics;
 
@@ -440,8 +429,6 @@ public class PlayerComponent extends Component {
 
     /**
      * 強制外觀動畫 Timeline。
-     *
-     * 例如媽媽制裁時，強制玩家左右抖動。
      */
     private Timeline forcedVisualTimeline;
 
@@ -1122,7 +1109,6 @@ public class PlayerComponent extends Component {
     /**
      * 顯示起床過場中躺在床上的姿勢。
      *
-     * 注意：
      * 這裡只旋轉 playerView，
      * 不旋轉 Entity 本身，避免影響 PhysicsComponent。
      */
@@ -1164,8 +1150,7 @@ public class PlayerComponent extends Component {
     /**
      * 取得起床過場躺床使用的圖片。
      *
-     * 預設使用赤腳左走第 2 張。
-     * 若圖片組不足，會退回赤腳站立圖。
+     * 使用赤腳左走第 2 張。
      */
     private Image getWakeUpPoseImage() {
         if (walkLeftShoelessImages != null && walkLeftShoelessImages.length > 1) {
@@ -1176,7 +1161,7 @@ public class PlayerComponent extends Component {
     }
 
     /**
-     * 播放媽媽制裁用的左右抖動動畫。
+     * 播放媽媽制裁動畫。
      *
      * @param seconds 動畫秒數
      */
@@ -1545,9 +1530,6 @@ public class PlayerComponent extends Component {
 
     /**
      * 完全刪除玩家 Entity。
-     *
-     * 一般死亡流程請使用 playerDead()，
-     * kill() 比較適合場景切換或強制移除玩家。
      */
     public void kill() {
         disposeRuntimeNodes();
