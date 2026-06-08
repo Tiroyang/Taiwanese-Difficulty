@@ -46,15 +46,6 @@ import java.util.function.Consumer;
  * 5. 支援儲存到指定槽位。
  * 6. 支援顯示存檔縮圖。
  * 7. 支援顯示存檔詳細資訊 Tooltip。
- *
- * 單例判斷：
- * SaveSlotPanel 不適合做成單例。
- *
- * 原因：
- * - 它是 JavaFX UI Node。
- * - 每次進入不同選單頁面都可能需要建立新的面板。
- * - 它持有 mode、saveSystem、callback、nodeToHideBeforeScreenshot。
- * - 若做成單例，容易造成舊 callback、舊 UI 狀態殘留。
  */
 public class SaveSlotPanel extends VBox {
 
@@ -125,14 +116,12 @@ public class SaveSlotPanel extends VBox {
     /**
      * 存檔槽位管理器。
      */
-    private final SaveSlotManager saveSlotManager =
-            SaveSlotManager.getInstance();
+    private final SaveSlotManager saveSlotManager = SaveSlotManager.getInstance();
 
     /**
      * 語言系統。
      */
-    private final LanguageSystem languageSystem =
-            LanguageSystem.getInstance();
+    private final LanguageSystem languageSystem = LanguageSystem.getInstance();
 
     /**
      * SaveSystem。
@@ -566,7 +555,7 @@ public class SaveSlotPanel extends VBox {
     /**
      * 建立縮圖內容。
      *
-     * 若沒有縮圖或 Base64 解析失敗，顯示 EMPTY 文字。
+     * 若沒有縮圖或解析失敗，顯示 EMPTY。
      */
     private Node createThumbnailContent(SaveSlotData slot) {
         if (!hasThumbnail(slot)) {
@@ -598,15 +587,13 @@ public class SaveSlotPanel extends VBox {
 
     /**
      * 建立縮圖 ImageView。
-     *
-     * 會裁切成 16:9，避免圖片變形。
      */
     private ImageView createThumbnailView(Image image) {
         ImageView view = new ImageView(image);
 
         view.setFitWidth(THUMBNAIL_WIDTH);
         view.setFitHeight(THUMBNAIL_HEIGHT);
-        view.setPreserveRatio(true);
+        view.setPreserveRatio(false);
         view.setSmooth(true);
 
         applyCenterCropViewport(image, view);
@@ -733,8 +720,7 @@ public class SaveSlotPanel extends VBox {
     /**
      * 主選單讀取存檔。
      *
-     * 因為主選單可能還沒有完整 SaveSystem，
-     * 所以先把欲載入槽位記到 SaveSlotManager。
+     * 因為主選單可能還沒有完整 SaveSystem，所以先把欲載入槽位記到 SaveSlotManager。
      */
     private void requestLoadFromMainMenu(SaveSlotData slot) {
         saveSlotManager.requestLoadSlot(slot.getSlotIndex());
