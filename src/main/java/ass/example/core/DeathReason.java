@@ -16,7 +16,7 @@ import ass.example.system.LanguageSystem;
  *    - 死亡畫面標題的語言 key。
  *
  * 3. subtitleKey：
- *    - 死亡畫面吐槽文字 / 副標題的語言 key。
+ *    - 死亡副標題的語言 key。
  *
  * 4. iconPath：
  *    - 死亡原因對應的圖示路徑。
@@ -134,14 +134,14 @@ public enum DeathReason {
 
     /**
      * 把自己鎖進衣櫃。
-     */
+
     LOCK_YOURSELF_IN_THE_CLOSET(
             "LOCK_YOURSELF_IN_THE_CLOSET",
             "death.LOCK_YOURSELF_IN_THE_CLOSET.title",
             "death.LOCK_YOURSELF_IN_THE_CLOSET.subtitle",
             null
     ),
-
+     */
 
     // =========================================================
     // HouseScene - Mom Battle
@@ -179,10 +179,6 @@ public enum DeathReason {
 
     /**
      * 媽媽跳舞制裁。
-     *
-     * 注意：
-     * 原本 id 寫成 MOM_BATTLE_LOSE_C，
-     * 這裡修正為 MOM_DANCE_OFF。
      */
     MOM_DANCE_OFF(
             "MOM_DANCE_OFF",
@@ -227,7 +223,7 @@ public enum DeathReason {
     ),
 
     /**
-     * 被掉落的直升機砸到。
+     * 被阿帕契砸到。
      */
     FALLING_HELI(
             "FALLING_HELI",

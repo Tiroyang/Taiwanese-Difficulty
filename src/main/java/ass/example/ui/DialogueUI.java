@@ -49,13 +49,6 @@ import java.net.URL;
  * 6. 顯示對話選項按鈕。
  * 7. 處理玩家點擊對話框進入下一句。
  * 8. 處理玩家點擊選項按鈕。
- *
- * 職責分工：
- * - DialogueUI 只負責畫面與點擊行為。
- * - DialogueLine 保存單句對話資料。
- * - DialogueLine.DialogueButton 保存選項資料。
- * - DialogueSystem 控制對話流程與切換。
- * - DialogueDatabase 保存所有對話資料。
  */
 public class DialogueUI extends StackPane {
 
@@ -611,14 +604,6 @@ public class DialogueUI extends StackPane {
 
     /**
      * 開始說話立繪效果。
-     *
-     * 有角色名稱時：
-     * - 切成 speaking portrait。
-     * - 稍微放大角色。
-     *
-     * 旁白時：
-     * - 不切 speaking portrait。
-     * - 不做放大效果。
      */
     private void startSpeakingPortraitEffect(DialogueLine line) {
         if (!hasCharacterName(line)) {
@@ -892,9 +877,7 @@ public class DialogueUI extends StackPane {
     // =========================================================
 
     /**
-     * 建立粉紅點點背景樣式。
-     *
-     * 用於對話框背景。
+     * 建立背景樣式，用於對話框背景。
      *
      * @return ImagePattern
      */

@@ -15,14 +15,6 @@ import java.util.Properties;
  * 2. 啟動時從本地檔案讀取最高距離。
  * 3. 若本局距離超過最高紀錄，更新並存檔。
  * 4. 支援重置最高紀錄。
- *
- * 單例判斷：
- * StreetEndlessRecordSystem 適合做成單例。
- *
- * 原因：
- * - 最高紀錄是全遊戲共用資料。
- * - DeathSystem、StreetEndlessScene、設定選單都可能需要讀取或重置紀錄。
- * - 如果建立多份 StreetEndlessRecordSystem，紀錄狀態可能不同步。
  */
 public final class StreetEndlessRecordSystem {
 
@@ -32,9 +24,6 @@ public final class StreetEndlessRecordSystem {
 
     /**
      * StreetEndlessRecordSystem 單例。
-     *
-     * 此系統沒有外部依賴，
-     * 因此可以直接使用 static final 建立。
      */
     private static final StreetEndlessRecordSystem INSTANCE =
             new StreetEndlessRecordSystem();

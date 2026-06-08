@@ -42,18 +42,6 @@ import static com.almasb.fxgl.dsl.FXGL.*;
  * 4. 處理玩家按下互動鍵後執行互動行為。
  * 5. 支援互動冷卻，避免連續觸發。
  * 6. 支援全域互動鎖，避免轉場前後連續觸發互動。
- *
- * 單例判斷：
- * InteractionSystem 不適合做成單例。
- *
- * 原因：
- * - 它綁定目前場景的 player Entity。
- * - 它會建立 promptBox UI，並在 dispose() 時移除。
- * - 每個場景載入後都應該建立自己的 InteractionSystem。
- *
- * 但全域互動鎖適合 static：
- * - 轉場時可以暫時鎖住所有場景互動。
- * - 例如從 House 進 Street，避免長按 F 導致切場景後立刻又進門。
  */
 public class InteractionSystem {
 
@@ -83,8 +71,7 @@ public class InteractionSystem {
     /**
      * 按鍵圖示路徑。
      */
-    private static final String KEY_ICON_PATH =
-            "/assets/textures/ui/keys/key-f.png";
+    private static final String KEY_ICON_PATH = "/assets/textures/ui/keys/key-f.png";
 
 
     // =========================================================
@@ -256,8 +243,7 @@ public class InteractionSystem {
         }
 
         Entity target = nearestInteractable.get();
-        InteractableComponent component =
-                target.getComponent(InteractableComponent.class);
+        InteractableComponent component = target.getComponent(InteractableComponent.class);
 
         showPrompt(target, component);
         updatePromptPosition(target, component);
@@ -315,11 +301,7 @@ public class InteractionSystem {
             }
 
             /*
-             * 先進入冷卻，再執行 action。
-             *
-             * 因為 action 可能會切場景，
-             * 若先執行 action，再設定冷卻，
-             * 可能會在新場景立即重複觸發互動。
+            先進入冷卻，再執行 action，否則可能會重複觸發。
              */
             interactTimer = INTERACT_COOLDOWN_SECONDS;
 
@@ -339,9 +321,6 @@ public class InteractionSystem {
         promptBox.setVisible(false);
         promptBox.setMouseTransparent(true);
 
-        /*
-         * 不固定提示框寬度，讓內容自動決定大小。
-         */
         promptBox.setMinSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
         promptBox.setPrefSize(Region.USE_COMPUTED_SIZE, Region.USE_COMPUTED_SIZE);
         promptBox.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
@@ -434,10 +413,6 @@ public class InteractionSystem {
     ) {
         actionText.setText(component.getPromptText());
 
-        /*
-         * 只有換目標時才播放出現動畫。
-         * 避免每幀重播動畫。
-         */
         if (currentPromptTarget != target) {
             currentPromptTarget = target;
             playPromptAppearAnimation();
@@ -462,7 +437,7 @@ public class InteractionSystem {
      *
      * 分兩種模式：
      * 1. promptOnEntity = false：
-     *    固定顯示在畫面下方中央。
+     *    固定顯示在畫面中下方。
      *
      * 2. promptOnEntity = true：
      *    顯示在互動物件上方。
@@ -484,21 +459,17 @@ public class InteractionSystem {
             return;
         }
 
-        double worldX =
-                target.getBoundingBoxComponent()
+        double worldX = target.getBoundingBoxComponent()
                         .getCenterWorld()
                         .getX();
 
-        double worldY =
-                target.getBoundingBoxComponent()
+        double worldY = target.getBoundingBoxComponent()
                         .getMinYWorld()
                         - component.getPromptOffsetY();
 
-        double screenX =
-                worldX - getGameScene().getViewport().getX();
+        double screenX = worldX - getGameScene().getViewport().getX();
 
-        double screenY =
-                worldY - getGameScene().getViewport().getY();
+        double screenY = worldY - getGameScene().getViewport().getY();
 
         setPromptScreenPosition(
                 screenX - promptWidth / 2.0,
@@ -728,9 +699,7 @@ public class InteractionSystem {
      * @param seconds 鎖定秒數
      */
     public static void lockAllInteractions(double seconds) {
-        globalInteractLockedUntilNanos =
-                System.nanoTime() +
-                        (long) (seconds * 1_000_000_000L);
+        globalInteractLockedUntilNanos = System.nanoTime() + (long) (seconds * 1_000_000_000L);
     }
 
     /**

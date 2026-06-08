@@ -33,9 +33,6 @@ import static com.almasb.fxgl.dsl.FXGL.removeUINode;
  * 6. 控制玩家在對話期間不能移動。
  * 7. 控制對話 BGM 與場景 BGM。
  * 8. 處理特殊對話事件，例如媽媽 Boss 戰、媽媽跳舞制裁。
- *
- * 單例設計：
- * DialogueSystem 適合使用單例，因為整個遊戲同一時間只需要一個對話系統。
  */
 public class DialogueSystem {
 
@@ -143,7 +140,7 @@ public class DialogueSystem {
      * 2. 查找起始對話。
      * 3. 保存玩家與場景 BGM。
      * 4. 禁用玩家控制。
-     * 5. 播放對話 BGM 或暫停目前 BGM。
+     * 5. 播放對話 BGM 並暫停目前 BGM。
      * 6. 建立 DialogueUI。
      * 7. 顯示第一句對話。
      *
@@ -180,7 +177,7 @@ public class DialogueSystem {
         dialogueUI = new DialogueUI(this);
         addUINode(dialogueUI, 0, 0);
 
-        dialogueUI.showLine(firstLine);
+        dialogueUI. showLine(firstLine);
     }
 
     /**
@@ -392,9 +389,6 @@ public class DialogueSystem {
 
     /**
      * 開始媽媽 Boss 戰小遊戲。
-     *
-     * package-private：
-     * - 讓 DialogueDatabase 可以使用 method reference。
      */
     public void startMomBattleMiniGame() {
         MomBattleMiniGame layer = new MomBattleMiniGame(
@@ -415,9 +409,6 @@ public class DialogueSystem {
      * 2. 強制玩家播放跳舞制裁動畫。
      * 3. 延遲結束對話。
      * 4. 對話結束後觸發 MOM_DANCE_OFF 死亡。
-     *
-     * package-private：
-     * - 讓 DialogueDatabase 可以使用 method reference。
      */
     public void callMomDanceOff() {
         audioSystem.playSFX(SoundId.MOM_DANCE_OFF);

@@ -22,8 +22,6 @@ public enum FallingObjectVariant {
 
     /**
      * 冰箱掉落物。
-     *
-     * 寬扁型碰撞箱。
      */
     FRIDGE(
             DeathReason.FALLING_FRIDGE,
@@ -33,8 +31,6 @@ public enum FallingObjectVariant {
 
     /**
      * 直升機掉落物。
-     *
-     * 接近正方形碰撞箱。
      */
     HELI(
             DeathReason.FALLING_HELI,

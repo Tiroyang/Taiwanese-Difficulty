@@ -20,8 +20,7 @@ import static com.almasb.fxgl.dsl.FXGL.*;
  *
  * 專門處理 HouseScene 中「床」的一方通行平台邏輯。
  *
- * 這個系統本身不是 FXGL Component，
- * 而是由 HouseScene 或其他場景系統每幀呼叫 update(tpf)。
+ * 這個系統由 HouseScene 或其他場景系統每幀呼叫 update(tpf)。
  *
  * ------------------------------------------------------------
  * 床的基本設計
@@ -68,8 +67,7 @@ public class BedSystem {
     /**
      * 玩家目前是否站在床 collider 上的全域變數名稱。
      *
-     * 這個值可被 SaveSystem 儲存，
-     * 讀檔後再由 applySavedState() 還原床狀態。
+     * 這個值可被 SaveSystem 儲存，讀檔後再由 applySavedState() 還原床狀態。
      */
     private static final String VAR_PLAYER_ON_BED_COLLIDER = "playerOnBedCollider";
 
@@ -81,9 +79,7 @@ public class BedSystem {
     /**
      * 動態生成床 collider 時使用的 spawn name。
      *
-     * 需要在 EntityFactory 裡有對應：
-     *
-     * @Spawns("bed_one_way_platform_collider")
+     * 需要在 EntityFactory 裡有對應 @Spawns("bed_one_way_platform_collider")
      */
     private static final String SPAWN_BED_COLLIDER = "bed_one_way_platform_collider";
 
@@ -95,7 +91,6 @@ public class BedSystem {
     /**
      * 玩家按 Shift 往下落後，暫時忽略床平台吸附的時間。
      *
-     * 用途：
      * 避免玩家剛穿過床平台時，
      * 下一幀又立刻被判定重新站回床上。
      */
@@ -111,7 +106,6 @@ public class BedSystem {
     /**
      * 玩家重生後，暫時忽略床落地判定的時間。
      *
-     * 用途：
      * 避免 previousPlayerBottom 還殘留死亡前的位置，
      * 導致重生後第一幀誤判為落到床上。
      */
@@ -120,39 +114,25 @@ public class BedSystem {
     /**
      * 落地判定容許誤差。
      *
-     * 數值越大，越容易判定玩家落到床上。
-     * 數值太小時，可能因為每幀移動距離過大而錯過平台頂部。
+     * 不可為0，否則將無法判定落床。
      */
     private static final double LANDING_TOLERANCE = 2.0;
 
     /**
      * 水平判定內縮值。
      *
-     * 用途：
-     * 避免玩家只是碰到床平台邊緣，
-     * 就被判定為站在床上。
+     * 避免玩家只是碰到床平台邊緣，就被判定為站在床上。
      */
     private static final double SIDE_PADDING = 8.0;
 
     /**
      * 觸發死亡所需的床上跳躍次數。
-     *
-     * 目前設定為 2：
-     * - 第一次站到床上：安全。
-     * - 第一次在床上跳並落回來：安全或警告感。
-     * - 第二次在床上跳並落回來：觸發死亡。
-     *
-     * 如果你想要「第 3 次落回床上才死」，
-     * 可以改成 3。
      */
     private static final int REQUIRED_BED_JUMPS_BEFORE_DEATH = 2;
 
     /**
      * reset() 時使用的預設玩家 zIndex。
-     *
-     * 一般離開床時會使用 BedComponent 裡的 normalPlayerZIndex。
-     * 但 reset() 可能沒有 currentBedPlatform，
-     * 因此這裡保留一個安全預設值。
+     * 這裡保留一個安全預設值。
      */
     private static final int DEFAULT_PLAYER_Z_INDEX = 0;
 
@@ -169,8 +149,7 @@ public class BedSystem {
     /**
      * 死亡系統。
      *
-     * 當玩家達成床上跳躍死亡條件時，
-     * 透過 deathSystem.die(...) 觸發死亡。
+     * 當玩家達成床上跳躍死亡條件時，透過 deathSystem.die(...) 觸發死亡。
      */
     private final DeathSystem deathSystem = DeathSystem.getInstance();
 
@@ -182,7 +161,7 @@ public class BedSystem {
     /**
      * 玩家目前所在的床入口平台。
      *
-     * 此 Entity 類型通常是：
+     * 此 Entity 類型應該是：
      * EntityType.BED_ONE_WAY_PLATFORM
      *
      * 若為 null，代表玩家目前不在床系統管理中的床上。
@@ -231,8 +210,7 @@ public class BedSystem {
     /**
      * 玩家是否已經確定落在床上。
      *
-     * 只有這個值為 true 時，
-     * 玩家按跳躍鍵才會被視為「從床上跳起」。
+     * 只有這個值為 true 時，玩家按跳躍鍵才會被視為「從床上跳起」。
      */
     private boolean hasLandedOnBed = false;
 
@@ -246,9 +224,7 @@ public class BedSystem {
     /**
      * 是否正在等待玩家跳起後再次落回床上。
      *
-     * 用途：
-     * 避免玩家在空中連續按跳躍鍵，
-     * 導致 bedJumpCount 被重複計算。
+     * 避免玩家在空中連續按跳躍鍵，導致 bedJumpCount 被重複計算。
      */
     private boolean waitingForLandingAfterBedJump = false;
 
@@ -274,8 +250,6 @@ public class BedSystem {
 
     /**
      * 每幀更新床系統。
-     *
-     * 建議由 HouseScene 的 onUpdate(tpf) 呼叫。
      *
      * 更新流程：
      * 1. 玩家死亡時不更新床系統。
@@ -318,8 +292,7 @@ public class BedSystem {
     /**
      * 讀檔後套用床狀態。
      *
-     * SaveSystem 若儲存了 playerOnBedCollider == true，
-     * 代表玩家存檔時站在床上。
+     * SaveSystem 若儲存了 playerOnBedCollider == true 代表玩家存檔時站在床上。
      *
      * 讀檔後需要：
      * 1. 找到離玩家最近且合理的 BED_ONE_WAY_PLATFORM。
@@ -348,9 +321,7 @@ public class BedSystem {
     /**
      * 玩家按下跳躍鍵時呼叫。
      *
-     * 注意：
-     * 這個方法不應該自己判斷按鍵，
-     * 而是由 PlayerComponent 或輸入系統在玩家按跳時呼叫。
+     * 由場景在玩家按跳時呼叫。
      *
      * 判定：
      * 1. 玩家必須目前正在床 collider 上。
@@ -412,9 +383,6 @@ public class BedSystem {
 
     /**
      * 重設床系統。
-     *
-     * 通常在玩家死亡重生、重新載入 HouseScene，
-     * 或離開場景時呼叫。
      *
      * 會清除：
      * 1. 目前追蹤的床平台。
@@ -505,9 +473,6 @@ public class BedSystem {
 
     /**
      * 更新 previousPlayerBottom。
-     *
-     * 這個方法統一放在每幀流程最後呼叫，
-     * 避免各處直接設定 previousPlayerBottom 造成混亂。
      */
     private void updatePreviousPlayerBottom() {
         previousPlayerBottom = getPlayerBottom();
@@ -521,8 +486,7 @@ public class BedSystem {
     /**
      * 尋找讀檔後最適合還原玩家床狀態的床平台。
      *
-     * 會從所有 BED_ONE_WAY_PLATFORM 中，
-     * 找出玩家水平位置最接近且合理重疊的床。
+     * 會從所有 BED_ONE_WAY_PLATFORM 中找出玩家水平位置最接近且合理重疊的床。
      *
      * @return 最適合還原的床平台
      */
@@ -541,8 +505,6 @@ public class BedSystem {
      * 1. 原始平台範圍上方。
      * 2. 第一個 collider 範圍上方。
      * 3. 第二個 collider 範圍上方。
-     *
-     * 只要符合其中一種，就視為可用該床還原。
      *
      * @param bedPlatform 床平台 Entity
      * @return true 表示玩家位置接近此床
@@ -896,12 +858,7 @@ public class BedSystem {
     /**
      * 清除目前床相關狀態。
      *
-     * 注意：
-     * 這個方法只清除狀態，
-     * 不會移除 Entity。
-     *
-     * 若需要移除床 collider，
-     * 請先呼叫 removeCurrentBedColliders()。
+     * 若要移除床 collider，要先呼叫 removeCurrentBedColliders()。
      */
     private void clearCurrentBedState() {
         currentBedPlatform = null;
@@ -967,11 +924,6 @@ public class BedSystem {
      *
      * 用於床上跳躍死亡判定。
      *
-     * 注意：
-     * 目前以第一個 collider 的頂部作為床面高度。
-     * 如果未來床有不同高度的 collider，
-     * 可以改成逐一檢查所有 collider。
-     *
      * @return true 表示玩家剛落回床面
      */
     private boolean hasJustLandedOnCurrentBedCollider() {
@@ -1020,8 +972,7 @@ public class BedSystem {
     /**
      * 判斷玩家是否水平重疊指定 X 範圍。
      *
-     * 這裡會套用 SIDE_PADDING，
-     * 避免玩家只碰到邊緣就被判定為站在床上。
+     * 這裡會套用 SIDE_PADDING，避免玩家只碰到邊緣就被判定為站在床上。
      *
      * @param rangeLeft 範圍左側 X
      * @param rangeRight 範圍右側 X

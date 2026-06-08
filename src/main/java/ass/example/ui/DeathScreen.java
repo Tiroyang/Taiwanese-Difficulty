@@ -40,15 +40,6 @@ import static com.almasb.fxgl.dsl.FXGLForKtKt.getd;
  * 5. 提供重生按鈕。
  * 6. 支援死亡成就解鎖 Toast。
  * 7. 播放死亡畫面進場動畫。
- *
- * 單例判斷：
- * DeathScreen 不適合做成單例。
- *
- * 原因：
- * - 它是 JavaFX UI Node。
- * - 它會被 DeathSystem 建立並加入 UI layer。
- * - 它持有 AchievementToast、按鈕、動畫狀態。
- * - 若做成單例，切換場景或重新初始化 UI 時容易殘留舊狀態。
  */
 public class DeathScreen extends StackPane {
 
@@ -187,23 +178,6 @@ public class DeathScreen extends StackPane {
         CursorManager.install(this);
     }
 
-    /**
-     * 相容舊版 DeathSystem 用。
-     *
-     * 如果 DeathSystem 目前仍然是：
-     *
-     * new DeathScreen(this::respawn, this::goToMainMenu)
-     *
-     * 保留這個建構子可以避免編譯錯誤。
-     * 第二個參數已不再使用。
-     */
-    public DeathScreen(
-            Runnable onRespawn,
-            Runnable ignoredOnMainMenu
-    ) {
-        this(onRespawn);
-    }
-
 
     // =========================================================
     // Setup
@@ -314,10 +288,6 @@ public class DeathScreen extends StackPane {
         StackPane.setAlignment(detailTextBox, Pos.CENTER);
         detailTextBox.setTranslateY(DETAIL_BOX_TARGET_Y);
 
-        /*
-         * 保留原本重生按鈕位置：
-         * 右下角。
-         */
         StackPane.setAlignment(respawnButton, Pos.BOTTOM_RIGHT);
         StackPane.setMargin(
                 respawnButton,

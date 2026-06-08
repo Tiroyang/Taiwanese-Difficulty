@@ -42,17 +42,6 @@ import static java.lang.Math.min;
  * 8. 鎖定攝影機只能往左推進。
  * 9. 計算本局跑步距離與最佳距離。
  * 10. 清理本場景所有 runtime Entity 與 UI。
- *
- * 單例判斷：
- * 此類別不適合做成單例。
- *
- * 原因：
- * - 它保存大量本次遊玩才存在的狀態。
- * - 例如 player、segments、scooters、fallingObjects、warning UI。
- * - 每次重新開始 Street Endless 都應該建立新的場景實例。
- *
- * 適合單例的是：
- * - StreetEndlessRecordSystem：保存全遊戲最佳距離。
  */
 public class StreetEndlessScene {
 
@@ -165,8 +154,7 @@ public class StreetEndlessScene {
     // UI Paths
     // =========================================================
 
-    private static final String DANGER_ICON_PATH =
-            "/assets/textures/Scene2/UI/danger.png";
+    private static final String DANGER_ICON_PATH = "/assets/textures/Scene2/UI/danger.png";
 
 
     // =========================================================
@@ -175,9 +163,6 @@ public class StreetEndlessScene {
 
     /**
      * 場景設定。
-     *
-     * 由 SceneManager 傳入。
-     * 不適合單例，因為不同場景會有不同設定。
      */
     private final SceneConfig config;
 
@@ -402,8 +387,7 @@ public class StreetEndlessScene {
     /**
      * 死亡或重生時重設本場景 runtime 系統。
      *
-     * Street Endless 目前沒有床平台，
-     * 只需要清除 playerOnBedCollider。
+     * Street Endless 目前沒有床平台，只需要清除 playerOnBedCollider。
      */
     public void resetRuntimeSystems() {
         set("playerOnBedCollider", false);
@@ -1283,9 +1267,6 @@ public class StreetEndlessScene {
                         .put("variant", variant.name())
         );
 
-        PhysicsComponent physics = object.getComponent(PhysicsComponent.class);
-        physics.setVelocityX(randomRange(-35, 35));
-
         Entity trigger = spawnFallingObjectTrigger(
                 spawnX,
                 spawnY,
@@ -1913,11 +1894,6 @@ public class StreetEndlessScene {
      * FallingObjectInstance
      *
      * 掉落物 runtime 狀態。
-     *
-     * 不能改成 record 的原因：
-     * - warningHidden 會改變。
-     * - removing 會改變。
-     * - stoppedTimer 會改變。
      */
     private static class FallingObjectInstance {
 

@@ -87,10 +87,14 @@ public class SceneManager {
     // =========================================================
 
     /**
+     * House 使用的 BGM。
+     */
+    private static final String HOUSE_BGM_PATH = "/assets/music/scene1/Kobo Kanaeru - HELP!! (No Vocal).mp3";
+
+    /**
      * Story Street 與 Street Endless 使用的 BGM。
      */
-    private static final String STREET_BGM_PATH =
-            "/assets/music/scene2/轟はじめ OP.mp3";
+    private static final String STREET_BGM_PATH = "/assets/music/scene2/轟はじめ OP.mp3";
 
 
     // =========================================================
@@ -298,6 +302,8 @@ public class SceneManager {
 
         if (playIntro) {
             QuestSystem.getInstance().resetRuntimeState();
+        } else {
+            playHouseBGM();
         }
 
         prepareWorldForSceneLoad();
@@ -307,12 +313,6 @@ public class SceneManager {
 
         SceneConfig config = getCurrentSceneConfig();
 
-        /*
-         * 如果你的 HouseScene 建構子仍然需要 AudioSystem，
-         * 請改成：
-         *
-         * houseScene = new HouseScene(config, deathSystem, audioSystem, this);
-         */
         houseScene = new HouseScene(config, this);
         player = houseScene.load(playIntro);
 
@@ -479,6 +479,16 @@ public class SceneManager {
 
         set(SaveKey.PLAYER_DEAD, false);
         set(SaveKey.LAST_DEATH_REASON, "");
+    }
+
+    /**
+     * 播放 House 場景 BGM。
+     */
+    private void playHouseBGM() {
+        MusicSystem.getInstance().playBGM(
+                HOUSE_BGM_PATH,
+                true
+        );
     }
 
     /**
@@ -895,7 +905,9 @@ public class SceneManager {
      * 用於通知目前場景重設暫時狀態。
      */
     public void onPlayerDied() {
-        resetCurrentSceneRuntimeSystems();
+        if (currentSceneType != SceneType.STREET) {
+            resetCurrentSceneRuntimeSystems();
+        }
     }
 
     /**

@@ -72,7 +72,6 @@ import static com.almasb.fxgl.dsl.FXGL.*;
  *    - cabinet
  *    - kitchen
  *
- * 設計原則：
  * - Factory 只負責 Entity 組裝。
  * - 實際互動邏輯盡量交給 Component 或 System。
  * - 重複的 devMode 碰撞框、SpawnData 預設值讀取集中成共用方法。
@@ -123,7 +122,7 @@ public class HouseFactory implements EntityFactory {
 
     private static final double DEFAULT_INTERACT_RANGE = 180.0;
     private static final boolean DEFAULT_PROMPT_ON_ENTITY = true;
-    private static final double DEFAULT_PROMPT_OFFSET_Y = 45.0;
+    private static final double DEFAULT_PROMPT_OFFSET_Y = 20.0;
 
 
     // =========================================================
@@ -251,8 +250,7 @@ public class HouseFactory implements EntityFactory {
      * - 掛上 DoorComponent 管理狀態。
      * - 掛上 InteractableComponent 讓玩家可互動。
      *
-     * 門關閉時真正阻擋玩家的 collider，
-     * 由 DoorComponent 另外 spawn("door_collider") 生成。
+     * 門關閉時阻擋玩家的 collider，由 DoorComponent 另外 spawn("door_collider") 生成。
      */
     @Spawns("door")
     public Entity newDoor(SpawnData data) {
@@ -347,7 +345,7 @@ public class HouseFactory implements EntityFactory {
                 .view(createInteractableDebugView(width, height))
                 .with(new InteractableComponent(
                         () -> "story.house.exit",
-                        () -> tryExitHouse(),
+                        this::tryExitHouse,
                         interactRange,
                         promptOnEntity,
                         promptOffsetY
@@ -431,7 +429,7 @@ public class HouseFactory implements EntityFactory {
                 .type(EntityType.TRIGGER)
                 .bbox(new HitBox(BoundingShape.box(width, height)))
                 .view(createInteractableDebugView(width, height))
-                .with(quiltComponent)
+                                                    .with(quiltComponent)
                 .with(new InteractableComponent(
                         () -> "story.house.foldQuilt",
                         quiltComponent::fold,
@@ -467,8 +465,7 @@ public class HouseFactory implements EntityFactory {
      * 生成床的一方通行入口平台。
      *
      * 這個 Entity 是固定存在的「偵測入口」。
-     * 玩家從上方落到這個區域後，
-     * BedSystem 會動態生成 bed_one_way_platform_collider。
+     * 玩家從上方落到這個區域後，BedSystem 會動態生成 bed_one_way_platform_collider。
      */
     @Spawns("bed_one_way_platform")
     public Entity newBedOneWayPlatform(SpawnData data) {
@@ -480,7 +477,7 @@ public class HouseFactory implements EntityFactory {
         BedComponent.ColliderArea firstColliderArea = readFirstBedColliderArea(data);
         BedComponent.ColliderArea secondColliderArea = readSecondBedColliderArea(data);
 
-        int playerZIndexOnBed = getInt(data, "playerZIndexOnBed", -3);
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                int playerZIndexOnBed = getInt(data, "playerZIndexOnBed", -3);
         int normalPlayerZIndex = getInt(data, "normalPlayerZIndex", 0);
 
         DeathReason deathReason = data.get("deathReason");
@@ -593,7 +590,7 @@ public class HouseFactory implements EntityFactory {
     // =========================================================
 
     /**
-     * 生成水的視覺物件。
+     * 生成過夜水的視覺物件。
      *
      * 真正互動由 water_trigger 負責。
      */
@@ -633,7 +630,7 @@ public class HouseFactory implements EntityFactory {
                 .with(waterComponent)
                 .with(new InteractableComponent(
                         () -> "story.house.drinkWater",
-                        waterComponent::drink,
+                                waterComponent::drink,
                         interactRange,
                         promptOnEntity,
                         promptOffsetY
@@ -645,8 +642,7 @@ public class HouseFactory implements EntityFactory {
     /**
      * 生成浴缸死亡 sensor。
      *
-     * 玩家高速落入此 sensor 時，
-     * BathtubComponent 會呼叫 DeathSystem 觸發死亡。
+     * 玩家落入此 sensor 時若速度超過限制，BathtubComponent 會呼叫 DeathSystem 觸發死亡。
      */
     @Spawns("bathtub_sensor")
     public Entity newBathtubSensor(SpawnData data) {
@@ -679,8 +675,7 @@ public class HouseFactory implements EntityFactory {
     /**
      * 生成刷牙互動 trigger。
      *
-     * 若 teethBrushed == true，
-     * InteractableComponent 的條件會讓互動不可再次執行。
+     * 若 teethBrushed == true，InteractableComponent 的條件會讓互動不可再次執行。
      */
     @Spawns("toothbrush_trigger")
     public Entity newToothbrushTrigger(SpawnData data) {
@@ -697,7 +692,7 @@ public class HouseFactory implements EntityFactory {
                 .view(createInteractableDebugView(width, height))
                 .with(new InteractableComponent(
                         () -> "story.house.brush_teeth",
-                        () -> brushTeeth(),
+                        this::brushTeeth,
                         interactRange,
                         promptOnEntity,
                         promptOffsetY,
@@ -896,9 +891,6 @@ public class HouseFactory implements EntityFactory {
 
     /**
      * 建立互動 trigger 的 devMode 顯示框。
-     *
-     * 正式模式會回傳透明 0x0 Rectangle，
-     * 避免顯示碰撞區。
      */
     private Rectangle createInteractableDebugView(double width, double height) {
         return createDebugRectangle(width, height, COLOR_TRIGGER_DEBUG);
@@ -962,9 +954,6 @@ public class HouseFactory implements EntityFactory {
 
     /**
      * 從 SpawnData 讀取 int。
-     *
-     * FXGL SpawnData 有時會把數字存成 Double 或 Integer，
-     * 因此統一用 Number 轉 int。
      */
     private int getInt(
             SpawnData data,
@@ -1027,7 +1016,7 @@ public class HouseFactory implements EntityFactory {
      * 建立牆壁用 FixtureDef。
      *
      * 特性：
-     * - 無摩擦。
+     * - 無摩擦，防止角色粘在牆上。
      * - 無彈性。
      * - 只與 PLAYER 碰撞。
      */
@@ -1048,8 +1037,7 @@ public class HouseFactory implements EntityFactory {
     /**
      * 建立床 collider 用 FixtureDef。
      *
-     * 基礎使用 floor 類型碰撞過濾，
-     * 但摩擦與彈性調整成床面手感。
+     * 基礎使用 floor 類型碰撞過濾，但摩擦與彈性調整成床面。
      */
     private FixtureDef createBedFixtureDef() {
         FixtureDef fixtureDef = createFloorFixtureDef();

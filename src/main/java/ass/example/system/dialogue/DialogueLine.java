@@ -33,10 +33,6 @@ public class DialogueLine {
 
     /**
      * 對話 ID。
-     *
-     * 例如：
-     * - mom_001
-     * - mom_002
      */
     private final String id;
 
@@ -57,7 +53,7 @@ public class DialogueLine {
     /**
      * 角色名稱語言 key。
      *
-     * 若為 null，可代表此句不顯示角色名稱。
+     * 若為 null，代表此句不顯示角色名稱。
      */
     private final String characterNameKey;
 
@@ -97,11 +93,6 @@ public class DialogueLine {
 
     /**
      * 此句結束時要執行的事件。
-     *
-     * 例如：
-     * - 完成任務
-     * - 觸發小遊戲
-     * - 觸發死亡
      */
     private Runnable onFinish;
 
@@ -259,8 +250,6 @@ public class DialogueLine {
     /**
      * 取得不可直接修改的按鈕清單。
      *
-     * 若外部需要新增按鈕，應使用 addButton(...)。
-     *
      * @return 按鈕清單
      */
     public List<DialogueButton> getButtons() {
@@ -276,9 +265,6 @@ public class DialogueLine {
      * DialogueButton
      *
      * 對話選項按鈕資料。
-     *
-     * 原本是獨立 DialogueButton.java，
-     * 現在合併到 DialogueLine 中，因為它只服務 DialogueLine。
      */
     public static class DialogueButton {
 

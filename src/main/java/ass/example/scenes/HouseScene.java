@@ -40,10 +40,6 @@ import static java.lang.Math.clamp;
  * 5. 設定橫向卷軸攝影機。
  * 6. 處理讀檔後的場景狀態還原。
  * 7. 處理起床開場動畫。
- *
- * 注意：
- * HouseScene 本身不是 FXGL Scene，
- * 而是由 SceneManager 持有並呼叫 load()、onUpdate()、tryInteract() 等方法。
  */
 public class HouseScene {
 
@@ -144,8 +140,6 @@ public class HouseScene {
 
     /**
      * 浴缸曲線切成幾段 slope_wall。
-     *
-     * 數值越大，曲線越平滑，但碰撞 Entity 也越多。
      */
     private static final int BATHTUB_CURVE_PIECES = 12;
 
@@ -383,8 +377,6 @@ public class HouseScene {
     /**
      * 清理 HouseScene。
      *
-     * 通常在離開 HouseScene 或切換場景時呼叫。
-     *
      * 清理內容：
      * 1. 移除起床動畫黑幕。
      * 2. 停止起床動畫狀態。
@@ -423,12 +415,12 @@ public class HouseScene {
      * 由 SceneManager 呼叫。
      *
      * 更新順序：
-     * 1. 起床動畫期間不更新任何 runtime system。
-     * 2. 更新 InteractionSystem。
-     * 3. 更新 RoomSystem。
-     * 4. 更新 OneWayPlatformSystem。
-     * 5. 更新 BedSystem。
-     * 6. 更新 QuestHUD。
+     * 1. 起床動畫期間不更新任何 runtime system
+     * 2. 更新 InteractionSystem
+     * 3. 更新 RoomSystem
+     * 4. 更新 OneWayPlatformSystem
+     * 5. 更新 BedSystem
+     * 6. 更新 QuestHUD
      *
      * @param tpf time per frame
      */
@@ -463,8 +455,7 @@ public class HouseScene {
      * 玩家按下跳躍鍵時呼叫。
      *
      * 用途：
-     * 通知床系統與一般單向平台系統，
-     * 玩家可能從一方通行平台上跳起。
+     * 通知床系統與一般單向平台系統。
      */
     public void onPlayerJumpPressed() {
         if (bedSystem != null) {
@@ -479,13 +470,7 @@ public class HouseScene {
     /**
      * 玩家按下下落鍵時呼叫。
      *
-     * 用途：
-     * 通知床系統與一般單向平台系統，
-     * 玩家可能要向下穿過一方通行平台。
-     *
-     * 注意：
-     * 建議先處理 BedSystem，
-     * 因為床的狀態較特殊，且有自己的 collider 管理。
+     * 通知床系統與一般單向平台系統
      */
     public void dropThroughOneWayPlatform() {
         if (bedSystem != null) {
@@ -529,7 +514,6 @@ public class HouseScene {
      * 2. 套用所有實作 LoadSaveComponent 的元件狀態。
      * 3. 還原 BedSystem 狀態。
      *
-     * 注意：
      * BedSystem 不是 Component，
      * 所以不會被 applyStateToLoadSaveComponents() 掃描到，
      * 需要另外呼叫。
@@ -555,17 +539,6 @@ public class HouseScene {
 
     /**
      * 套用所有 Entity 上的 LoadSaveComponent 狀態。
-     *
-     * 例如：
-     * - DoorComponent
-     * - QuiltComponent
-     * - WaterComponent
-     * - ShoeComponent
-     *
-     * 好處：
-     * 新增可存檔互動物件時，
-     * 只要該 Component 實作 LoadSaveComponent，
-     * 這裡就會自動套用。
      */
     private void applyStateToLoadSaveComponents() {
         getGameWorld()
@@ -582,8 +555,7 @@ public class HouseScene {
     /**
      * 套用 BedSystem 的存檔狀態。
      *
-     * BedSystem 不是 FXGL Component，
-     * 因此需要獨立還原。
+     * BedSystem 不是 FXGL Component，因此需要獨立還原。
      */
     private void applyBedSystemSavedState() {
         if (bedSystem != null) {
@@ -658,8 +630,6 @@ public class HouseScene {
 
     /**
      * 生成測試用物件。
-     *
-     * 目前保留空方法，方便日後快速測試平台、陷阱或互動物件。
      */
     private void spawnTestObjects() {
         /*
@@ -862,7 +832,7 @@ public class HouseScene {
     }
 
     /**
-     * 生成離開家門。
+     * 生成大門。
      *
      * 玩家互動後會透過 SceneManager 切換到 StreetScene。
      */
@@ -872,7 +842,7 @@ public class HouseScene {
                 .put("height", 318.0)
                 .put("interactRange", 180.0)
                 .put("promptOnEntity", false)
-                .put("promptOffsetY", 45.0)
+                .put("promptOffsetY", 20.0)
                 .put("sceneManager", sceneManager));
     }
 
@@ -960,11 +930,11 @@ public class HouseScene {
                 .put("height", 80.0)
                 .put("interactRange", 150.0)
                 .put("promptOnEntity", true)
-                .put("promptOffsetY", 40.0));
+                .put("promptOffsetY", 20.0));
     }
 
     /**
-     * 生成床視覺圖與床的一方通行平台資料。
+     * 生成床視覺圖與單向平台資料。
      */
     private void spawnBed() {
         spawn("bed", 0, 0);
@@ -992,7 +962,7 @@ public class HouseScene {
     }
 
     /**
-     * 生成水龍頭水流與互動區。
+     * 生成水杯與互動區。
      */
     private void spawnWater() {
         Entity waterVisual = spawn("water", new SpawnData(0, 0));
@@ -1005,11 +975,11 @@ public class HouseScene {
                 .put("height", 28.0)
                 .put("interactRange", 130.0)
                 .put("promptOnEntity", true)
-                .put("promptOffsetY", 40.0));
+                .put("promptOffsetY", 20.0));
     }
 
     /**
-     * 生成牙刷互動區。
+     * 生成刷牙互動區。
      */
     private void spawnToothbrush() {
         spawn("toothbrush_trigger", new SpawnData(2928, 513)
@@ -1017,7 +987,7 @@ public class HouseScene {
                 .put("height", 120.0)
                 .put("interactRange", 180.0)
                 .put("promptOnEntity", true)
-                .put("promptOffsetY", 50.0));
+                .put("promptOffsetY", 20.0));
     }
 
     /**
@@ -1033,7 +1003,7 @@ public class HouseScene {
                 .put("player", player)
                 .put("interactRange", 180.0)
                 .put("promptOnEntity", true)
-                .put("promptOffsetY", 50.0));
+                .put("promptOffsetY", 20.0));
     }
 
     /**
@@ -1049,7 +1019,7 @@ public class HouseScene {
                 .put("player", player)
                 .put("interactRange", 220.0)
                 .put("promptOnEntity", true)
-                .put("promptOffsetY", 55.0)
+                .put("promptOffsetY", 20.0)
                 .put("sceneBgmPath", BGM_HOUSE_SCENE)
                 .put("dialogueBgmPath", BGM_MOM_DIALOGUE));
     }
@@ -1125,8 +1095,8 @@ public class HouseScene {
                 .put("height", height));
 
         // 底部外牆。
-        spawn("wall", new SpawnData(x, y + height - BATHTUB_WALL_THICKNESS)
-                .put("width", width)
+        spawn("wall", new SpawnData(x + (BATHTUB_WALL_THICKNESS / 2), y + height - BATHTUB_WALL_THICKNESS)
+                .put("width", width - BATHTUB_WALL_THICKNESS)
                 .put("height", BATHTUB_WALL_THICKNESS));
     }
 
@@ -1149,10 +1119,8 @@ public class HouseScene {
     ) {
         double centerX = x + width / 2.0;
 
-        // 凹面左右範圍，數值越大凹面越寬。
         double radiusX = 62.0;
 
-        // 凹面起點與最深點。
         double topY = y + 24.0;
         double bottomY = y + 74.0;
         double depth = bottomY - topY;
@@ -1200,14 +1168,12 @@ public class HouseScene {
 
         double length = Math.sqrt(dx * dx + dy * dy);
 
-        // 避免太短的斜面造成奇怪碰撞。
         if (length < 4.0) {
             return;
         }
 
         double angle = Math.toDegrees(Math.atan2(dy, dx));
 
-        // 使用線段中心作為基準，讓斜牆與曲線更貼合。
         double centerX = (x1 + x2) / 2.0;
         double centerY = (y1 + y2) / 2.0;
 
@@ -1222,9 +1188,6 @@ public class HouseScene {
 
     /**
      * 生成浴缸死亡 sensor。
-     *
-     * 玩家進入 sensor 且速度達到門檻時，
-     * BathtubComponent 會觸發死亡。
      */
     private void spawnBathtubSensor(
             double x,
@@ -1235,7 +1198,6 @@ public class HouseScene {
         double sensorWidth = width * BATHTUB_SENSOR_WIDTH_RATIO;
         double sensorHeight = BATHTUB_SENSOR_HEIGHT;
 
-        // 放在浴缸 U 型底部附近。
         double sensorX = x + (width - sensorWidth) / 2.0;
         double sensorY = y + height * 0.48;
 
@@ -1369,8 +1331,7 @@ public class HouseScene {
     /**
      * 在 fadeBackIn 開始前準備正式遊玩狀態。
      *
-     * 此時畫面仍是全黑，所以玩家恢復控制、
-     * QuestHUD 顯示、BGM 切換都不會被突兀看到。
+     * 此時畫面仍是全黑，所以玩家恢復控制、QuestHUD 顯示、BGM 切換都不會被突兀看到。
      */
     private void prepareGameplayBeforeFadeBackIn(PlayerComponent playerComponent) {
         playerComponent.setControlEnabled(true);
@@ -1430,8 +1391,6 @@ public class HouseScene {
 
     /**
      * 移除起床動畫黑幕。
-     *
-     * 若黑幕不存在，則不做任何事。
      */
     private void removeWakeUpOverlayIfPresent() {
         if (wakeUpBlackOverlay == null) {
@@ -1478,9 +1437,6 @@ public class HouseScene {
 
     /**
      * 立即將攝影機移動到玩家目前位置。
-     *
-     * 用於起床動畫中玩家瞬移後，
-     * 讓攝影機也立刻對準玩家。
      */
     private void snapCameraToPlayer() {
         if (player == null) {

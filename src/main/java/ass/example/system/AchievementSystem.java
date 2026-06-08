@@ -21,15 +21,6 @@ import java.util.Set;
  * 5. 啟動遊戲時讀取已解鎖成就。
  * 6. 提供成就數量統計。
  * 7. 支援重置全部成就。
- *
- * 單例判斷：
- * AchievementSystem 適合做成單例。
- *
- * 原因：
- * - 成就是全遊戲共用資料。
- * - 成就不是跟某個場景綁定。
- * - DeathSystem、AchievementUI、MainMenu 都可能需要讀取同一份成就資料。
- * - 如果建立多份 AchievementSystem，可能造成解鎖狀態不同步。
  */
 public final class AchievementSystem {
 
@@ -39,11 +30,6 @@ public final class AchievementSystem {
 
     /**
      * AchievementSystem 單例。
-     *
-     * 使用 static final 的原因：
-     * - AchievementSystem 沒有外部依賴。
-     * - 可以在類別載入時安全建立。
-     * - 不需要像 DeathSystem 那樣等待 init(...)。
      */
     private static final AchievementSystem INSTANCE = new AchievementSystem();
 
@@ -83,11 +69,6 @@ public final class AchievementSystem {
      * 已解鎖死亡成就 ID 集合。
      *
      * 使用 DeathReason.getId() 作為儲存內容。
-     *
-     * 例如：
-     * - HIT_CEILING
-     * - JUMPING_ON_BED
-     * - DRINK_WATER
      */
     private final Set<String> unlockedDeathIds = new HashSet<>();
 
@@ -213,10 +194,6 @@ public final class AchievementSystem {
      *
      * 檔案格式：
      * 每一行是一個 DeathReason id。
-     *
-     * 例如：
-     * HIT_CEILING
-     * JUMPING_ON_BED
      */
     private void load() {
         try {

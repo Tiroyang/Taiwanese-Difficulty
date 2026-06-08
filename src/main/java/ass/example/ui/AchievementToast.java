@@ -34,15 +34,6 @@ import javafx.util.Duration;
  * 4. 支援死亡原因自訂 icon。
  * 5. 若死亡原因沒有 icon，使用預設 icon。
  * 6. 播放滑入、停留、滑出動畫。
- *
- * 單例判斷：
- * AchievementToast 不適合做成單例。
- *
- * 原因：
- * - 它是 JavaFX UI Node。
- * - 它會被加入 UI layer。
- * - 它持有目前動畫 currentAnimation。
- * - 不同畫面可能需要各自建立與管理自己的 toast。
  */
 public class AchievementToast extends StackPane {
 
@@ -97,12 +88,6 @@ public class AchievementToast extends StackPane {
      */
     private static final double SLIDE_OFFSET_Y = 90.0;
 
-    /**
-     * Toast 出現時的初始縮放。
-     */
-    private static final double START_SCALE = 0.95;
-
-
     // =========================================================
     // Asset Constants
     // =========================================================
@@ -110,8 +95,7 @@ public class AchievementToast extends StackPane {
     /**
      * 當 DeathReason 沒有 iconPath 時使用的預設 icon。
      */
-    private static final String DEFAULT_ICON_PATH =
-            "/assets/textures/ui/deathicon/achievementtoast_sample.jpg";
+    private static final String DEFAULT_ICON_PATH = "/assets/textures/ui/deathicon/achievementtoast_sample.jpg";
 
 
     // =========================================================
@@ -121,8 +105,7 @@ public class AchievementToast extends StackPane {
     /**
      * 語言系統。
      */
-    private final LanguageSystem languageSystem =
-            LanguageSystem.getInstance();
+    private final LanguageSystem languageSystem = LanguageSystem.getInstance();
 
 
     // =========================================================
@@ -132,8 +115,7 @@ public class AchievementToast extends StackPane {
     /**
      * Toast 背景。
      */
-    private final Rectangle background =
-            new Rectangle(TOAST_WIDTH, TOAST_HEIGHT);
+    private final Rectangle background = new Rectangle(TOAST_WIDTH, TOAST_HEIGHT);
 
     /**
      * 左側成就 icon。
@@ -376,15 +358,13 @@ public class AchievementToast extends StackPane {
         setVisible(true);
         setOpacity(0);
         setTranslateY(SLIDE_OFFSET_Y);
-        setScaleX(START_SCALE);
-        setScaleY(START_SCALE);
     }
 
     /**
      * 建立完整 Toast 動畫。
      *
      * 流程：
-     * 1. 淡入 + 上滑 + 放大
+     * 1. 淡入 + 上滑
      * 2. 停留
      * 3. 淡出 + 下滑
      */
@@ -421,20 +401,9 @@ public class AchievementToast extends StackPane {
         slideIn.setToY(0);
         slideIn.setInterpolator(Interpolator.EASE_OUT);
 
-        ScaleTransition scaleIn = new ScaleTransition(
-                Duration.seconds(ANIMATION_SECONDS),
-                this
-        );
-        scaleIn.setFromX(START_SCALE);
-        scaleIn.setFromY(START_SCALE);
-        scaleIn.setToX(1.0);
-        scaleIn.setToY(1.0);
-        scaleIn.setInterpolator(Interpolator.EASE_OUT);
-
         return new ParallelTransition(
                 fadeIn,
-                slideIn,
-                scaleIn
+                slideIn
         );
     }
 
@@ -470,10 +439,10 @@ public class AchievementToast extends StackPane {
 
     /**
      * 載入 DeathReason 指定的 icon。
-     *
-     * 支援兩種 iconPath 寫法：
-     * 1. "assets/textures/ui/deathicon/xxx.png"
-     * 2. "/assets/textures/ui/deathicon/xxx.png"
+//     *
+//     * 支援：
+//     * 1. "assets/textures/ui/deathicon/xxx.png"
+//     * 2. "/assets/textures/ui/deathicon/xxx.png"
      *
      * @param reason 死亡原因
      * @return Image；若沒有 icon 或載入失敗，回傳 null

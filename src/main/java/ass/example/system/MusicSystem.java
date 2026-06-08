@@ -14,18 +14,10 @@ import java.net.URL;
  * 功能：
  * 1. 播放背景音樂。
  * 2. 從指定秒數開始播放背景音樂。
- * 3. 播放「第一次 intro，之後從 loopStart 無限循環」的背景音樂。
+ * 3. 支援播放「第一次 intro，之後從 loopStart 無限循環」的背景音樂。
  * 4. 停止背景音樂。
  * 5. 暫停 / 恢復背景音樂。
  * 6. 根據 AudioSystem 的音樂音量套用目前音量。
- *
- * 單例判斷：
- * MusicSystem 適合做成單例。
- *
- * 原因：
- * - 全遊戲同一時間通常只需要一首 BGM。
- * - MainMenu、SceneManager、DialogueSystem 都可能控制 BGM。
- * - 如果建立多個 MusicSystem，容易造成多首 BGM 同時播放。
  */
 public final class MusicSystem {
 
@@ -35,9 +27,6 @@ public final class MusicSystem {
 
     /**
      * MusicSystem 單例。
-     *
-     * MusicSystem 不依賴初始化順序複雜的物件，
-     * 因此可以直接使用 static final 建立。
      */
     private static final MusicSystem INSTANCE = new MusicSystem();
 
@@ -104,7 +93,7 @@ public final class MusicSystem {
      * - 正在播放：只重新套用音量，不重播。
      * - 暫停中：重新套用音量後繼續播放。
      *
-     * @param path 音樂資源路徑，例如 "/assets/music/scene1/bgm.mp3"
+     * @param path 音樂資源路徑
      * @param loop 是否循環播放
      */
     public void playBGM(
@@ -140,10 +129,6 @@ public final class MusicSystem {
 
     /**
      * 從指定秒數開始播放背景音樂。
-     *
-     * 適合：
-     * - 主選單 BGM 從特定時間點播放。
-     * - 場景 BGM 跳過前奏。
      *
      * @param path 音樂資源路徑
      * @param startSeconds 開始播放秒數
@@ -184,10 +169,6 @@ public final class MusicSystem {
      * 流程：
      * 1. 第一次從 firstStartSeconds 開始播放。
      * 2. 播放結束後，改成從 loopStartSeconds 開始無限循環。
-     *
-     * 適合：
-     * - 主選單音樂第一次從開頭播放。
-     * - 之後從無縫循環點開始播放。
      *
      * @param path 音樂資源路徑
      * @param firstStartSeconds 第一次播放起點
@@ -232,7 +213,6 @@ public final class MusicSystem {
     /**
      * 停止目前背景音樂。
      *
-     * 會：
      * 1. stop()
      * 2. dispose()
      * 3. 清除 currentMusic

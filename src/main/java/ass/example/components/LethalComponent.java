@@ -26,12 +26,6 @@ import com.almasb.fxgl.entity.component.Component;
  *
  * DeathReason reason = lethalComponent.getDeathReason();
  * deathSystem.die(reason);
- *
- * 設計說明：
- * 這個 Component 不負責主動偵測碰撞，
- * 也不直接呼叫 DeathSystem。
- *
- * 它只負責提供「這個物件會導致哪一種死亡」的資料。
  */
 public class LethalComponent extends Component {
 
@@ -41,11 +35,6 @@ public class LethalComponent extends Component {
 
     /**
      * 此致命物件對應的死亡原因。
-     *
-     * 例如：
-     * - HIT_CEILING
-     * - HIT_DOORFRAME
-     * - HIT_SHOWER_CURTAIN_ROD
      */
     private final DeathReason deathReason;
 

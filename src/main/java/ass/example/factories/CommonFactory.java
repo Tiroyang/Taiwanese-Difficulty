@@ -143,11 +143,6 @@ public class CommonFactory implements EntityFactory {
      * - PLAYER
      * - FALLING_OBJECT
      *
-     * 代表：
-     * 1. 玩家會踩在地板上。
-     * 2. 墜落物會撞到地板。
-     * 3. 一般牆壁不一定要與地板互相碰撞。
-     *
      * SpawnData 需要：
      * - width
      * - height
@@ -304,8 +299,7 @@ public class CommonFactory implements EntityFactory {
      * - 有 CollidableComponent。
      * - 有 LethalComponent。
      *
-     * 因此它既會阻擋玩家，
-     * 也會在玩家碰撞時觸發死亡。
+     * 既會阻擋玩家，也會在玩家碰撞時觸發死亡。
      *
      * 預設：
      * - category = WALL
@@ -365,8 +359,7 @@ public class CommonFactory implements EntityFactory {
      * OneWayPlatformSystem 會讀取它的位置與大小，
      * 判斷玩家是否從上方落下。
      *
-     * 當玩家成功落到平台時，
-     * 系統再動態生成 one_way_platform_collider 作為實體支撐。
+     * 當玩家成功落到平台時，系統再動態生成 one_way_platform_collider 作為實體支撐。
      *
      * SpawnData 需要：
      * - id

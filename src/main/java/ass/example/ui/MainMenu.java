@@ -107,14 +107,11 @@ public class MainMenu extends FXGLMenu {
     // Assets
     // =========================================================
 
-    private static final String MAIN_MENU_BG_PATH =
-            "/assets/textures/ui/mainmenu/titlescreen_bg.png";
+    private static final String MAIN_MENU_BG_PATH = "/assets/textures/ui/mainmenu/titlescreen_bg.png";
 
-    private static final String MAIN_MENU_LOGO_PATH =
-            "/assets/textures/ui/mainmenu/titlescreen_logo.png";
+    private static final String MAIN_MENU_LOGO_PATH = "/assets/textures/ui/mainmenu/titlescreen_logo.png";
 
-    private static final String MAIN_MENU_BGM_PATH =
-            "/assets/music/mainmenu/Happy Wheels Theme.mp3";
+    private static final String MAIN_MENU_BGM_PATH = "/assets/music/mainmenu/Happy Wheels Theme.mp3";
 
 
     // =========================================================

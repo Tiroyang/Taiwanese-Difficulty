@@ -15,20 +15,11 @@ import java.util.prefs.Preferences;
  *
  * 功能：
  * 1. 播放 SFX 音效。
- * 2. 播放 UI 按鈕音效。
- * 3. 快取 AudioClip，避免重複載入音效檔。
- * 4. 管理 master / music / sfx 音量。
- * 5. 管理 master / music / sfx 靜音狀態。
- * 6. 管理按鈕音效是否啟用。
- * 7. 使用 Preferences 保存設定。
- *
- * 單例判斷：
- * AudioSystem 適合做成單例。
- *
- * 原因：
- * - MainMenu 可能在 initGame 前建立。
- * - 遊戲內、主選單、暫停選單都需要共用同一份音量設定。
- * - 音效快取也應該全遊戲共用，避免重複建立 AudioClip。
+ * 2. 快取 AudioClip，避免重複載入音效檔。
+ * 3. 管理 master / music / sfx 音量。
+ * 4. 管理 master / music / sfx 靜音狀態。
+ * 5. 管理按鈕音效是否啟用。
+ * 6. 使用 Preferences 保存設定。
  */
 public final class AudioSystem {
 
@@ -38,8 +29,6 @@ public final class AudioSystem {
 
     /**
      * AudioSystem 單例。
-     *
-     * 使用 static final 是安全的，因為 AudioSystem 不依賴其他需要初始化順序的系統。
      */
     private static final AudioSystem INSTANCE = new AudioSystem();
 
@@ -100,12 +89,11 @@ public final class AudioSystem {
     // =========================================================
 
     /**
-     * Java Preferences。
+     * Java  。
      *
      * 用於保存音量與靜音設定。
      */
-    private final Preferences prefs =
-            Preferences.userNodeForPackage(AudioSystem.class);
+    private final Preferences prefs = Preferences.userNodeForPackage(AudioSystem.class);
 
     /**
      * 主音量。
@@ -150,17 +138,14 @@ public final class AudioSystem {
     /**
      * UI 按鈕音效是否啟用。
      *
-     * 注意：
      * 這只控制 playButtonSFX(...)。
-     * 普通 playSFX(...) 不受此設定影響。
      */
     private boolean buttonSoundEnabled;
 
     /**
      * 音效快取。
      *
-     * 第一次播放某個 SoundId 時才載入 AudioClip，
-     * 之後直接從快取取出。
+     * 第一次播放某個 SoundId 時才載入 AudioClip，之後直接從快取取出。
      */
     private final Map<SoundId, AudioClip> soundCache = new HashMap<>();
 
@@ -216,7 +201,6 @@ public final class AudioSystem {
     /**
      * 播放按鈕音效。
      *
-     * 與 playSFX(...) 的差異：
      * - 會先檢查 buttonSoundEnabled。
      *
      * @param soundId 音效 ID
@@ -512,8 +496,6 @@ public final class AudioSystem {
 
     /**
      * 修正讀取到的不合法音量。
-     *
-     * 避免 Preferences 中有舊資料或異常資料導致音量超出 0.0 ~ 1.0。
      */
     private void normalizeLoadedSettings() {
         masterVolume = clamp01(masterVolume);

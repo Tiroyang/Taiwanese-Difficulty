@@ -31,17 +31,6 @@ import static com.almasb.fxgl.dsl.FXGL.*;
  * 4. 偵測玩家是否穿鞋進入客廳。
  * 5. 管理房間黑幕遮罩。
  * 6. 支援房間遮罩淡出與立即移除。
- *
- * 單例判斷：
- * RoomSystem 不適合做成單例。
- *
- * 原因：
- * - 它持有目前 HouseScene 的 player Entity。
- * - 它持有目前場景生成出來的 room cover Entity。
- * - 切換場景或重新載入 HouseScene 時，這些 Entity 都會被重新建立。
- *
- * 適合單例的是 DeathSystem。
- * 因此本類別在需要觸發死亡時，直接呼叫 DeathSystem.getInstance().die(...)。
  */
 public class RoomSystem {
 
@@ -349,9 +338,6 @@ public class RoomSystem {
     /**
      * 觸發指定死亡原因。
      *
-     * DeathSystem 適合單例，
-     * 這裡不需要透過建構子傳入。
-     *
      * @param reason 死亡原因
      */
     private void triggerDeath(DeathReason reason) {
@@ -484,8 +470,7 @@ public class RoomSystem {
         }
 
         /*
-         * 先移除紀錄，避免淡出動畫還沒結束時，
-         * 玩家再次開門或讀檔 applySavedState 又呼叫 revealRoom。
+         * 先移除紀錄，避免淡出動畫還沒結束時，玩家再次開門或讀檔 applySavedState 又呼叫 revealRoom。
          */
         roomCovers.remove(roomType);
         roomCoverViews.remove(roomType);

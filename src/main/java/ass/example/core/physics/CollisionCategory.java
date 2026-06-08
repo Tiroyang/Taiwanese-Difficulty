@@ -44,9 +44,6 @@ public final class CollisionCategory {
     // Constructor
     // =========================================================
 
-    /**
-     * 工具類別不允許被建立實例。
-     */
     private CollisionCategory() {
     }
 

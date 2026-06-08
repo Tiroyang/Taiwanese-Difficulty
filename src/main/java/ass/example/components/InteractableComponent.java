@@ -9,11 +9,9 @@ import java.util.function.Supplier;
  *
  * 通用互動 Component。
  *
- * 此 Component 本身不負責偵測玩家距離，也不負責顯示提示 UI。
- * 它只保存一個 Entity 作為「可互動物件」所需的資料與行為。
+ * 此 Component 只保存一個 Entity 作為「可互動物件」所需的資料與行為。
  *
  * 通常會由 InteractionSystem 讀取此 Component，並負責：
- *
  * 1. 判斷玩家是否在 interactRange 內。
  * 2. 判斷 canInteract() 是否允許互動。
  * 3. 顯示 getPromptText() 回傳的互動提示。
@@ -25,23 +23,10 @@ import java.util.function.Supplier;
  *
  * 1. 提供互動提示文字 key。
  * 2. 支援動態互動提示。
- *    例如門開啟時顯示「關門」，門關閉時顯示「開門」。
- *
  * 3. 儲存互動行為。
- *    例如：
- *    - 開門
- *    - 折棉被
- *    - 穿鞋
- *    - 對話
- *    - 離開場景
- *
  * 4. 設定互動距離。
  * 5. 設定提示文字顯示位置。
  * 6. 支援互動條件。
- *    例如：
- *    - 牙刷只能刷一次。
- *    - 玩家死亡時不能互動。
- *    - 任務完成前不能離開家。
  *
  * ------------------------------------------------------------
  * 使用範例
@@ -86,8 +71,7 @@ public class InteractableComponent extends Component {
     /**
      * 預設互動距離。
      *
-     * 若沒有特別指定，
-     * 玩家與互動物件距離小於此值時可互動。
+     * 若沒有特別指定，玩家與互動物件距離小於此值時可互動。
      */
     private static final double DEFAULT_INTERACT_RANGE = 220.0;
 
@@ -118,8 +102,7 @@ public class InteractableComponent extends Component {
     /**
      * 互動提示文字 key 的供應器。
      *
-     * 回傳值不是直接顯示的文字，
-     * 而是 LanguageSystem 使用的語言 key。
+     * 回傳值是 LanguageSystem 使用的語言 key。
      *
      * 使用 Supplier 的原因：
      * - 可支援動態提示。
@@ -137,13 +120,6 @@ public class InteractableComponent extends Component {
 
     /**
      * 玩家執行互動時要觸發的行為。
-     *
-     * 例如：
-     * - 開門
-     * - 折棉被
-     * - 喝水
-     * - 對話
-     * - 進入下一個場景
      */
     private final Runnable interactAction;
 
@@ -273,7 +249,7 @@ public class InteractableComponent extends Component {
      *
      * @param promptKeySupplier 互動提示語言 key 供應器
      * @param interactAction 互動行為
-     * @param interactRange 互動距離
+     * @param interactRange 互動距離互動距離
      * @param promptOnEntity 提示是否顯示在 Entity 上
      * @param promptOffsetY 提示 Y 偏移
      */
@@ -362,17 +338,7 @@ public class InteractableComponent extends Component {
      *
      * 若 interactAction 為 null，則不執行任何事。
      *
-     * 注意：
-     * 此方法本身不會再次檢查 canInteract()。
-     * 通常應由 InteractionSystem 在呼叫前先判斷。
-     *
-     * 若你希望 Component 自己也保護，
-     * 可以改成：
-     *
-     * if (!canInteract()) return;
-     *
-     * 但為了維持原本行為，
-     * 這裡只執行 action。
+     * 本方法本身不會再次檢查 canInteract()，應由 InteractionSystem 在呼叫前先判斷。
      */
     public void interact() {
         if (interactAction != null) {
@@ -388,8 +354,7 @@ public class InteractableComponent extends Component {
     /**
      * 取得目前互動提示的語言 key。
      *
-     * 若 promptKeySupplier 是動態的，
-     * 每次呼叫可能會回傳不同 key。
+     * 若 promptKeySupplier 是動態的，每次呼叫可能會回傳不同 key。
      *
      * @return 互動提示語言 key
      */

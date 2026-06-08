@@ -9,9 +9,6 @@ package ass.example.core;
  * 1. 避免在 SaveSystem / LoadSystem / SceneSystem 中到處硬寫字串。
  * 2. 降低 key 打錯造成存檔讀不到的風險。
  * 3. 讓所有存檔欄位集中管理。
- *
- * 注意：
- * 此類別只保存常數，不允許建立實例。
  */
 public final class SaveKey {
 

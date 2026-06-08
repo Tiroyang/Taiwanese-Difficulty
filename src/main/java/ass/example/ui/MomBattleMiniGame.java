@@ -43,31 +43,15 @@ import static com.almasb.fxgl.dsl.FXGL.addUINode;
 import static com.almasb.fxgl.dsl.FXGL.removeUINode;
 
 /**
- * MomBattleMiniGame
- *
- * 媽媽戰鬥小遊戲 UI Layer。
+ * MomBattleMiniGame。
  *
  * 功能：
- * 1. 播放類似 Pokémon Encounter 的黑格逆時針過場。
+ * 1. 播放逆時針過場。
  * 2. 顯示 Undertale 風格戰鬥畫面。
  * 3. 玩家控制 Heart 在白框內移動。
  * 4. 隨機產生橫向或縱向攻擊。
  * 5. Heart 碰到正式攻擊判定後死亡。
  * 6. 根據存活時間決定死亡原因。
- *
- * 單例判斷：
- * 此 class 不適合做成單例。
- *
- * 原因：
- * - 它是一次性 UI Layer。
- * - 每次戰鬥都需要重新初始化攻擊、音樂、鍵盤、存活時間。
- * - 若做成單例，容易殘留舊 Timeline、AnimationTimer、MediaPlayer。
- *
- * 適合單例的是它依賴的系統：
- * - AudioSystem
- * - DeathSystem
- * - DialogueSystem
- * - MusicSystem
  */
 public class MomBattleMiniGame extends StackPane {
 
@@ -83,20 +67,15 @@ public class MomBattleMiniGame extends StackPane {
     // Asset Paths
     // =========================================================
 
-    private static final String MOM_BATTLE_IMAGE =
-            "/assets/textures/characters/mom/mom_battle.png";
+    private static final String MOM_BATTLE_IMAGE = "/assets/textures/characters/mom/mom_battle.png";
 
-    private static final String HEART_IMAGE =
-            "/assets/textures/Scene1/UI/heart.png";
+    private static final String HEART_IMAGE = "/assets/textures/Scene1/UI/heart.png";
 
-    private static final String HEART_DIE_GIF =
-            "/assets/textures/Scene1/UI/heart_die.gif";
+    private static final String HEART_DIE_GIF = "/assets/textures/Scene1/UI/heart_die.gif";
 
-    private static final String BATTLE_START_BGM =
-            "/assets/music/dialogue/mombattlestart.mp3";
+    private static final String BATTLE_START_BGM = "/assets/music/dialogue/mombattlestart.mp3";
 
-    private static final String BATTLE_LOOP_BGM =
-            "/assets/music/dialogue/Dark Souls III OST 10 - Vordt of the Boreal Valley.mp3";
+    private static final String BATTLE_LOOP_BGM = "/assets/music/dialogue/Dark Souls III OST 10 - Vordt of the Boreal Valley.mp3";
 
 
     // =========================================================
@@ -287,10 +266,6 @@ public class MomBattleMiniGame extends StackPane {
         setFocusTraversable(true);
         setPickOnBounds(true);
 
-        /*
-         * 不要一開始放黑底。
-         * 否則黑格過場會蓋在黑底上，看起來像沒有動畫。
-         */
         setStyle("-fx-background-color: transparent;");
     }
 
@@ -326,15 +301,12 @@ public class MomBattleMiniGame extends StackPane {
 
     /**
      * 開始媽媽戰鬥。
-     *
-     * 呼叫時機：
-     * DialogueSystem 選到「戰鬥」選項後。
      */
     public void start() {
         requestFocus();
 
         /*
-         * 停止對話 BGM，改播戰鬥音樂。
+         * 停止對話 BGM，播戰鬥音樂。
          */
         musicSystem.stopBGM();
 
@@ -343,12 +315,7 @@ public class MomBattleMiniGame extends StackPane {
     }
 
     /**
-     * 外部強制移除小遊戲時呼叫。
-     *
-     * 例如：
-     * - 切場景
-     * - 關閉 UI Layer
-     * - 玩家死亡後清理
+     * 移除小遊戲時呼叫。
      */
     public void dispose() {
         ended = true;
@@ -468,7 +435,7 @@ public class MomBattleMiniGame extends StackPane {
     // =========================================================
 
     /**
-     * 播放由外向內的黑格逆時針過場。
+     * 播放由外向內的逆時針過場。
      */
     private void playEncounterTransition() {
         transitionLayer.getChildren().clear();
@@ -1028,7 +995,7 @@ public class MomBattleMiniGame extends StackPane {
     /**
      * 將細線快速擴展回完整攻擊範圍。
      *
-     * 從這一刻開始，才加入正式攻擊判定。
+     * 加入正式攻擊判定。
      */
     private void expandAimLineIntoActiveAttack(
             Rectangle attack,
@@ -1140,7 +1107,7 @@ public class MomBattleMiniGame extends StackPane {
     }
 
     /**
-     * 攻擊判定略微縮小 2px，避免看起來沒碰到卻死亡。
+     * 攻擊判定略微縮小，避免看起來沒碰到卻死亡。
      */
     private Rectangle createAttackHitbox(Rectangle attack) {
         return new Rectangle(

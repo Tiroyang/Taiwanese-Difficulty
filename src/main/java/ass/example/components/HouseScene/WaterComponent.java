@@ -28,19 +28,7 @@ import static com.almasb.fxgl.dsl.FXGL.*;
  * 7. 延遲一段時間後觸發死亡。
  * 8. 讀檔時若 waterDrunk == true，會還原成水已被喝掉的狀態。
  *
- * 結構通常是：
- *
- * 1. water
- *    - 純視覺 Entity。
- *    - 顯示水。
- *
- * 2. water_trigger
- *    - 互動用 Entity。
- *    - 掛載 WaterComponent。
- *    - 玩家互動後會移除 water 與 water_trigger。
- *
- * 注意：
- * 這個 Component 的死亡設計是「互動後延遲死亡」。
+ * 這個 Component 的死亡設計是互動後延遲死亡。
  * 因此 drink() 不是單純喝水，而是完整處理死亡前的演出流程。
  */
 public class WaterComponent extends Component implements LoadSaveComponent {
@@ -52,8 +40,7 @@ public class WaterComponent extends Component implements LoadSaveComponent {
     /**
      * 水是否已經被喝掉的 game var key。
      *
-     * SaveSystem 需要儲存這個值。
-     * 讀檔後 applySavedState() 會根據此值還原水的狀態。
+     * SaveSystem 需要儲存這個值，讀檔後 applySavedState() 會根據此值還原水的狀態。
      */
     private static final String VAR_WATER_DRUNK = "waterDrunk";
 
@@ -65,9 +52,7 @@ public class WaterComponent extends Component implements LoadSaveComponent {
     /**
      * 喝水後延遲死亡的秒數。
      *
-     * 用途：
-     * 讓玩家先看到喝水 / 停頓效果，
-     * 再進入死亡流程。
+     * 讓玩家先看到喝水 / 停頓效果，再進入死亡流程。
      */
     private static final double DEATH_DELAY_SECONDS = 1.6;
 
@@ -88,9 +73,6 @@ public class WaterComponent extends Component implements LoadSaveComponent {
 
     /**
      * 水的視覺 Entity。
-     *
-     * 此 Component 通常掛在 water_trigger 上，
-     * 真正顯示水圖片的是 visualEntity。
      */
     private final Entity visualEntity;
 
@@ -168,10 +150,6 @@ public class WaterComponent extends Component implements LoadSaveComponent {
      *
      * 若 waterDrunk == false：
      * - 保持可互動狀態。
-     *
-     * 注意：
-     * 這裡不需要播放音效、不需要停用玩家控制，
-     * 也不需要重新觸發死亡。
      */
     @Override
     public void applySavedState() {
@@ -245,8 +223,7 @@ public class WaterComponent extends Component implements LoadSaveComponent {
     /**
      * 設定內部使用狀態。
      *
-     * 這個方法只改 used 欄位，
-     * 不會更新 game var，也不會移除 Entity。
+     * 這個方法只改 used 欄位。
      *
      * @param used true 表示水已被使用
      */

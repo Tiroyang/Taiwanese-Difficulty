@@ -23,14 +23,6 @@ import java.util.Map;
  * 7. 判斷所有故事任務是否完成。
  * 8. 管理 QuestHUD 目前可見任務。
  * 9. 管理任務完成動畫播放狀態。
- *
- * 單例判斷：
- * QuestSystem 適合做成單例。
- *
- * 原因：
- * - 故事任務是全遊戲共用狀態。
- * - 多個 Component / Factory / UI 都會需要讀取或更新任務。
- * - 例如 QuiltComponent、ShoeComponent、DialogueSystem、QuestHUD。
  */
 public class QuestSystem {
 
@@ -61,11 +53,6 @@ public class QuestSystem {
      * 預設同時顯示幾個任務。
      */
     private static final int DEFAULT_VISIBLE_QUEST_COUNT = 1;
-
-    /**
-     * 最少可見任務數量。
-     */
-    private static final int MIN_VISIBLE_QUEST_COUNT = 1;
 
 
     // =========================================================
@@ -127,8 +114,7 @@ public class QuestSystem {
     /**
      * 註冊故事任務順序。
      *
-     * 若之後要新增故事任務，
-     * 只需要在這裡調整順序。
+     * 若之後要新增故事任務，需要在這裡調整順序。
      */
     private void registerStoryQuests() {
         storyQuests.clear();
@@ -234,49 +220,10 @@ public class QuestSystem {
         return state != null && state.isCompleted();
     }
 
-    /**
-     * 判斷所有故事任務是否完成。
-     *
-     * @return true 表示所有故事任務都已完成
-     */
-    public boolean isAllStoryQuestsCompleted() {
-        for (QuestType quest : storyQuests) {
-            if (!isCompleted(quest)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /**
-     * 判斷是否可以進入下一個場景。
-     *
-     * 目前規則：
-     * - 完成所有故事任務才可以進入下一場景。
-     *
-     * @return true 表示可以進入下一場景
-     */
-    public boolean canEnterNextScene() {
-        return isAllStoryQuestsCompleted();
-    }
-
 
     // =========================================================
     // Quest HUD - Visible Quests
     // =========================================================
-
-    /**
-     * 設定 QuestHUD 同時可見任務數量。
-     *
-     * @param visibleQuestCount 可見任務數量
-     */
-    public void setVisibleQuestCount(int visibleQuestCount) {
-        this.visibleQuestCount = Math.max(
-                MIN_VISIBLE_QUEST_COUNT,
-                visibleQuestCount
-        );
-    }
 
     /**
      * 取得目前 QuestHUD 應該顯示的任務。
@@ -395,22 +342,6 @@ public class QuestSystem {
     public void setVisibleStartIndex(int visibleStartIndex) {
         this.visibleStartIndex = clampVisibleStartIndex(visibleStartIndex);
     }
-
-    /**
-     * 取得所有任務狀態。
-     *
-     * SaveSystem 需要讀寫任務狀態時使用。
-     *
-     * 注意：
-     * - 此方法回傳內部 Map。
-     * - 如果你想避免外部直接修改，可改成 Collections.unmodifiableMap(states)。
-     *
-     * @return 任務狀態表
-     */
-    public Map<QuestType, QuestState> getStates() {
-        return states;
-    }
-
 
     // =========================================================
     // Getters

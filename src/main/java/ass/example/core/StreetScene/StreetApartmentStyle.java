@@ -59,8 +59,6 @@ public enum StreetApartmentStyle {
 
     /**
      * 不生成公寓。
-     *
-     * 可用於空地、特殊障礙物區段或轉場區段。
      */
     EMPTY(
             false,

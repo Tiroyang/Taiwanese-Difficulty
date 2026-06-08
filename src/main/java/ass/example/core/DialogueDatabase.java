@@ -11,16 +11,6 @@ import java.util.Map;
  * DialogueDatabase
  *
  * 對話資料庫。
- *
- * 功能：
- * 1. 集中建立所有 DialogueLine。
- * 2. 讓 DialogueSystem 不再塞滿對話資料。
- * 3. 將「對話資料」與「對話流程控制」分離。
- *
- * 設計說明：
- * - 此類別不保存 runtime 狀態。
- * - 不需要做成單例。
- * - 使用 static create(...) 建立對話資料即可。
  */
 public final class DialogueDatabase {
 
@@ -28,17 +18,13 @@ public final class DialogueDatabase {
     // Portrait Paths - Mom
     // =========================================================
 
-    private static final String MOM_DEFAULT =
-            "/assets/textures/characters/mom/mom_chat.png";
+    private static final String MOM_DEFAULT = "/assets/textures/characters/mom/mom_chat.png";
 
-    private static final String MOM_SPEAKING =
-            "/assets/textures/characters/mom/mom_chat_speak.png";
+    private static final String MOM_SPEAKING = "/assets/textures/characters/mom/mom_chat_speak.png";
 
-    private static final String MOM_RAGE_DEFAULT =
-            "/assets/textures/characters/mom/mom_chat_rage.png";
+    private static final String MOM_RAGE_DEFAULT = "/assets/textures/characters/mom/mom_chat_rage.png";
 
-    private static final String MOM_RAGE_SPEAKING =
-            "/assets/textures/characters/mom/mom_chat_rage_speak.png";
+    private static final String MOM_RAGE_SPEAKING = "/assets/textures/characters/mom/mom_chat_rage_speak.png";
 
 
     // =========================================================

@@ -26,17 +26,6 @@ import static com.almasb.fxgl.dsl.FXGL.*;
  * 7. 穿鞋時完成 WEAR_SHOES 任務。
  * 8. 穿鞋 / 脫鞋時播放裝備音效。
  * 9. 讀檔時根據 shoesWorn 還原鞋櫃與玩家狀態。
- *
- * 結構通常是：
- *
- * 1. shoe_cabinet
- *    - 純視覺 Entity。
- *    - 顯示鞋櫃或鞋子狀態。
- *
- * 2. shoe_trigger
- *    - 互動用 Entity。
- *    - 掛載 ShoeComponent。
- *    - 玩家靠近後按互動鍵即可穿鞋或脫鞋。
  */
 public class ShoeComponent extends Component implements LoadSaveComponent {
 
@@ -47,8 +36,7 @@ public class ShoeComponent extends Component implements LoadSaveComponent {
     /**
      * 玩家是否穿鞋的 game var key。
      *
-     * SaveSystem 需要儲存這個值。
-     * 讀檔後 applySavedState() 會根據此值還原狀態。
+     * SaveSystem 需要儲存這個值，讀檔後 applySavedState() 會根據此值還原狀態。
      */
     private static final String VAR_SHOES_WORN = "shoesWorn";
 
@@ -59,10 +47,6 @@ public class ShoeComponent extends Component implements LoadSaveComponent {
 
     /**
      * 鞋櫃或鞋子視覺 Entity。
-     *
-     * 注意：
-     * 此 Component 通常掛在 shoe_trigger 上，
-     * 但真正顯示鞋櫃貼圖的是 shoeVisual。
      */
     private final Entity shoeVisual;
 
@@ -89,14 +73,14 @@ public class ShoeComponent extends Component implements LoadSaveComponent {
     /**
      * 預設鞋櫃貼圖。
      *
-     * 通常代表鞋子仍在鞋櫃中，玩家尚未穿鞋。
+     * 代表鞋子仍在鞋櫃中，玩家尚未穿鞋。
      */
     private final String defaultTexture;
 
     /**
      * 穿鞋後的鞋櫃貼圖。
      *
-     * 通常代表鞋子已被玩家穿走。
+     * 代表鞋子已被玩家穿走。
      */
     private final String wornTexture;
 
@@ -153,7 +137,7 @@ public class ShoeComponent extends Component implements LoadSaveComponent {
     /**
      * Component 被加入 Entity 時呼叫。
      *
-     * 這裡會先套用目前 game var 中的 shoesWorn 狀態。
+     * 會先套用目前 game var 中的 shoesWorn 狀態。
      *
      * 用途：
      * - 第一次載入 HouseScene 時，通常 shoesWorn 會是 false。
@@ -181,10 +165,6 @@ public class ShoeComponent extends Component implements LoadSaveComponent {
      * - 還原為未穿鞋狀態。
      * - 顯示 defaultTexture。
      * - 同步玩家赤腳外觀。
-     *
-     * 注意：
-     * restoreWornState() / restoreDefaultState() 不會播放音效，
-     * 也不會完成任務，避免讀檔時重複觸發互動效果。
      */
     @Override
     public void applySavedState() {
@@ -258,8 +238,7 @@ public class ShoeComponent extends Component implements LoadSaveComponent {
      * 6. 播放脫鞋音效。
      *
      * 注意：
-     * 脫鞋不會取消 WEAR_SHOES 任務。
-     * 因為任務通常代表「玩家曾經完成穿鞋行為」。
+     * 脫鞋不會取消以完成的 WEAR_SHOES 任務。
      */
     public void takeOff() {
         if (!worn) {
@@ -403,11 +382,7 @@ public class ShoeComponent extends Component implements LoadSaveComponent {
     /**
      * 同步玩家的穿鞋狀態。
      *
-     * PlayerComponent 會根據 shoesWorn 狀態，
-     * 決定要顯示穿鞋或赤腳版本的站立、走路圖片。
-     *
-     * 若 player 為 null，或玩家沒有 PlayerComponent，
-     * 則不做任何事。
+     * PlayerComponent 會根據 shoesWorn 狀態決定要顯示穿鞋或赤腳版本的站立、走路圖片。
      */
     private void syncPlayerShoesState() {
         if (player == null || !player.hasComponent(PlayerComponent.class)) {

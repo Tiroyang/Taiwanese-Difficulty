@@ -25,17 +25,11 @@ import static com.almasb.fxgl.dsl.FXGL.*;
  * 7. 顯示死亡畫面。
  * 8. 解鎖死亡成就。
  * 9. 處理 Street Endless 的距離紀錄。
- * 10. 處理重生與回主選單。
+ * 10. 處理重生。
  * 11. 支援從存檔還原死亡狀態。
  *
- * 單例設計：
- * DeathSystem 適合做成單例，因為整個遊戲通常只需要一個死亡管理器。
- *
- * 但它需要在遊戲初始化時呼叫：
- *
+ * 需要在遊戲初始化時呼叫：
  * DeathSystem.init(deathSystem);
- *
- * 否則其他類別呼叫 DeathSystem.getInstance() 會拋出錯誤。
  */
 public class DeathSystem {
 
@@ -45,16 +39,13 @@ public class DeathSystem {
 
     /**
      * DeathSystem 單例實體。
-     *
-     * 使用 init(...) 初始化，
-     * 使用 getInstance() 取得。
      */
     private static DeathSystem INSTANCE;
 
     /**
      * 初始化 DeathSystem 單例。
      *
-     * 通常在 Main 初始化系統時呼叫。
+     * 在 Main 初始化系統時呼叫。
      *
      * @param deathSystem 已建立好的 DeathSystem
      */
@@ -100,7 +91,7 @@ public class DeathSystem {
      * 2. 通知目前場景玩家死亡。
      * 3. 執行重生流程。
      */
-    private final SceneManager sceneManager;
+    private final SceneManager sceneManager = SceneManager.getInstance();
 
     /**
      * 死亡畫面 UI。
@@ -115,14 +106,14 @@ public class DeathSystem {
      *
      * 用於播放死亡音效。
      */
-    private final AudioSystem audioSystem;
+    private final AudioSystem audioSystem = AudioSystem.getInstance();
 
     /**
      * 成就系統。
      *
      * 用於解鎖死亡原因成就。
      */
-    private final AchievementSystem achievementSystem;
+    private final AchievementSystem achievementSystem = AchievementSystem.getInstance();
 
 
     // =========================================================
@@ -155,24 +146,10 @@ public class DeathSystem {
      * 1. 保存必要系統參考。
      * 2. 建立死亡畫面。
      * 3. 將死亡畫面加入 UI layer。
-     *
-     * @param sceneManager 場景管理器
-     * @param audioSystem 音效系統
-     * @param achievementSystem 成就系統
      */
-    public DeathSystem(
-            SceneManager sceneManager,
-            AudioSystem audioSystem,
-            AchievementSystem achievementSystem
-    ) {
-        this.sceneManager = sceneManager;
-        this.audioSystem = audioSystem;
-        this.achievementSystem = achievementSystem;
-
+    public DeathSystem() {
         this.deathScreen = new DeathScreen(
-                this::respawn,
-                this::goToMainMenu
-        );
+                this::respawn);
 
         addUINode(deathScreen, 0, 0);
     }
@@ -307,13 +284,10 @@ public class DeathSystem {
     /**
      * 從存檔還原死亡狀態。
      *
-     * 與 die(...) 不同：
      * - 不播放死亡音效。
      * - 不增加死亡次數。
      * - 不重複解鎖成就。
      * - 不更新 Street Endless 紀錄。
-     *
-     * 只負責讓畫面與狀態回到「已死亡」。
      *
      * @param reason 存檔中的死亡原因
      */
@@ -341,9 +315,7 @@ public class DeathSystem {
     /**
      * 若目前是 Street Endless 模式，更新最佳距離紀錄。
      *
-     * 注意：
-     * 必須在 deathScreen.show(...) 前執行，
-     * 因為死亡畫面可能會讀取 streetBestDistance / streetNewRecord。
+     * 必須在 deathScreen.show(...) 前執行。
      */
     private void handleStreetEndlessRecordIfNeeded() {
         if (!isStreetEndlessMode()) {
@@ -424,21 +396,6 @@ public class DeathSystem {
         if (sceneManager != null) {
             sceneManager.respawnPlayer();
         }
-    }
-
-    /**
-     * 回到主選單。
-     *
-     * 通常由 DeathScreen 的主選單按鈕呼叫。
-     */
-    private void goToMainMenu() {
-        clearInternalDeathState();
-
-        set(SaveKey.PLAYER_DEAD, false);
-
-        deathScreen.hide();
-
-        getGameController().gotoMainMenu();
     }
 
     /**

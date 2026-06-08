@@ -10,13 +10,11 @@ package ass.example.core;
  *    - 音效檔案相對路徑。
  *
  * 2. builtInVolume：
- *    - 此音效自身的預設音量倍率。
+ *    - 此音效自身的預設音量倍率，我不想額外調音效。
  *
  * AudioSystem 可使用：
- *
  * soundId.getFileName()
  * soundId.getBuiltInVolume()
- *
  * 來播放正確音效。
  */
 public enum SoundId {
@@ -105,7 +103,7 @@ public enum SoundId {
     ),
 
     /**
-     * 吃東西 / 喝水音效。
+     * 喝水音效。
      */
     EATING(
             "props/scene1/eating.wav",
@@ -129,7 +127,7 @@ public enum SoundId {
     ),
 
     /**
-     * 穿鞋 / 裝備音效。
+     * 穿鞋音效。
      */
     EQUIP(
             "props/scene1/equip.wav",
@@ -170,7 +168,7 @@ public enum SoundId {
     /**
      * 音效內建音量倍率。
      *
-     * AudioSystem 播放時可再乘上全域音效音量。
+     * AudioSystem 播放時再乘上全域音效音量。
      */
     private final double builtInVolume;
 

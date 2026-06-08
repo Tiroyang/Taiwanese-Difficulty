@@ -28,21 +28,11 @@ public class BathtubComponent extends Component {
 
     /**
      * 預設垂直下墜死亡速度門檻。
-     *
-     * FXGL velocity 通常是 px/s。
-     *
-     * 參考：
-     * - 250：較敏感，慢走或小跳也可能觸發
-     * - 450：跳落或高速移動時觸發
-     * - 600：高衝擊才觸發
      */
     private static final double DEFAULT_FALL_DEATH_SPEED_THRESHOLD = 520.0;
 
     /**
      * 水平撞擊死亡速度門檻。
-     *
-     * 只有玩家左右移動速度超過此值，
-     * 才會被視為高速撞入浴缸。
      */
     private static final double HORIZONTAL_DEATH_SPEED_THRESHOLD = 260.0;
 
@@ -86,8 +76,7 @@ public class BathtubComponent extends Component {
     /**
      * 是否已經觸發過死亡。
      *
-     * 避免玩家停留在浴缸 sensor 內時，
-     * 每一幀都重複呼叫 deathSystem.die()。
+     * 避免玩家停留在浴缸 sensor 內時，每一幀都重複呼叫 deathSystem.die()。
      */
     private boolean deathTriggered = false;
 

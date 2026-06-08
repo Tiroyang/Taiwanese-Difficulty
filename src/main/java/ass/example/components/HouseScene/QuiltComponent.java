@@ -23,21 +23,6 @@ import static com.almasb.fxgl.dsl.FXGL.*;
  * 5. 玩家折棉被後，播放折棉被音效。
  * 6. 玩家折棉被後，移除 trigger Entity，避免重複互動。
  * 7. 讀檔時根據 quiltFolded 還原棉被狀態。
- *
- * 注意：
- * 這個 Component 通常掛在 quilt_trigger 上，
- * 而真正顯示棉被圖片的是 visualEntity。
- *
- * 結構通常是：
- *
- * 1. quilt
- *    - 純視覺 Entity。
- *    - 顯示棉被圖片。
- *
- * 2. quilt_trigger
- *    - 互動用 Entity。
- *    - 掛載 QuiltComponent。
- *    - 玩家互動後會被移除。
  */
 public class QuiltComponent extends Component implements LoadSaveComponent {
 
@@ -48,8 +33,7 @@ public class QuiltComponent extends Component implements LoadSaveComponent {
     /**
      * 棉被是否已折好的 game var key。
      *
-     * SaveSystem 需要儲存這個值，
-     * 讀檔後 applySavedState() 會根據此值還原棉被狀態。
+     * SaveSystem 需要儲存這個值，讀檔後 applySavedState() 會根據此值還原棉被狀態。
      */
     private static final String VAR_QUILT_FOLDED = "quiltFolded";
 
@@ -60,10 +44,6 @@ public class QuiltComponent extends Component implements LoadSaveComponent {
 
     /**
      * 棉被的視覺 Entity。
-     *
-     * 注意：
-     * 此 Component 通常掛在互動 trigger 上，
-     * 但棉被圖片本身是由 visualEntity 顯示。
      */
     private final Entity visualEntity;
 
@@ -140,9 +120,6 @@ public class QuiltComponent extends Component implements LoadSaveComponent {
      * 預設狀態：
      * - 棉被尚未折好。
      * - 顯示 messyTexture。
-     *
-     * 注意：
-     * 若是讀檔流程，applySavedState() 之後會再依照存檔狀態覆蓋。
      */
     @Override
     public void onAdded() {
@@ -219,15 +196,9 @@ public class QuiltComponent extends Component implements LoadSaveComponent {
     /**
      * 還原為未折棉被狀態。
      *
-     * 與 fold() 不同：
      * - 不播放音效。
      * - 不完成任務。
      * - 不移除 trigger。
-     *
-     * 適合用於：
-     * - 初始生成。
-     * - 讀檔還原。
-     * - 場景重置。
      */
     private void restoreMessyState() {
         folded = false;
@@ -237,14 +208,9 @@ public class QuiltComponent extends Component implements LoadSaveComponent {
     /**
      * 還原為已折棉被狀態。
      *
-     * 與 fold() 不同：
      * - 不播放音效。
      * - 不重複完成任務。
      * - 不更新 game var。
-     *
-     * 適合用於：
-     * - 讀檔。
-     * - 場景初始化後套用狀態。
      */
     private void restoreFoldedState() {
         folded = true;
@@ -268,9 +234,6 @@ public class QuiltComponent extends Component implements LoadSaveComponent {
 
     /**
      * 播放折棉被音效。
-     *
-     * 若 audioSystem 為 null，則不播放。
-     * 這樣可以避免測試或特殊場景中未注入 AudioSystem 時發生錯誤。
      */
     private void playFoldSound() {
         if (audioSystem != null) {
@@ -300,8 +263,7 @@ public class QuiltComponent extends Component implements LoadSaveComponent {
     /**
      * 更新棉被視覺 Entity 的貼圖。
      *
-     * 這裡會先清除 visualEntity 原本的 view children，
-     * 再加入新的貼圖。
+     * 這裡會先清除 visualEntity 原本的 view children，再加入新的貼圖。
      *
      * @param texturePath 貼圖路徑
      */
@@ -322,8 +284,7 @@ public class QuiltComponent extends Component implements LoadSaveComponent {
     /**
      * 移除目前掛載 QuiltComponent 的 trigger Entity。
      *
-     * 棉被折好後，不需要再互動，
-     * 因此移除 trigger 可避免重複觸發。
+     * 棉被折好後不需要再互動，因此移除 trigger 可避免重複觸發。
      */
     private void removeTriggerFromWorld() {
         entity.removeFromWorld();

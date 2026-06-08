@@ -44,18 +44,6 @@ import java.util.Objects;
  * 3. 任務完成後可播放舊任務往上、新任務補位的 replace 動畫。
  * 4. 支援 HUD 收合到畫面左側。
  * 5. 收合後滑鼠靠近左側 hoverZone 時，只讓展開按鈕探出。
- *
- * 單例判斷：
- * QuestHUD 不建議做 Singleton。
- *
- * 原因：
- * - QuestHUD 是 JavaFX Node。
- * - Node 會被加入 / 移除不同 Scene 或 UI Layer。
- * - 做成 Singleton 容易造成舊 UI 殘留、父節點衝突、動畫狀態未清乾淨。
- *
- * 適合 Singleton 的是：
- * - QuestSystem
- * - LanguageSystem
  */
 public class QuestHUD extends Pane {
 
@@ -81,18 +69,7 @@ public class QuestHUD extends Pane {
     private static final double TOGGLE_HEIGHT = 32;
 
     /**
-     * 任務文字寬度限制。
-     *
-     * 文字會依照實際內容自動計算寬度，
-     * 但不會小於 TEXT_MIN_WIDTH，也不會大於 TEXT_MAX_WIDTH。
-     */
-    private static final double TEXT_MIN_WIDTH = 120;
-    private static final double TEXT_MAX_WIDTH = 310;
-
-    /**
      * 勾勾 icon 預留空間。
-     *
-     * 數值小一點可以讓 icon 更靠近文字。
      */
     private static final double ICON_SPACE_WIDTH = 16;
 
@@ -106,8 +83,7 @@ public class QuestHUD extends Pane {
     /**
      * HUD 起始位置。
      *
-     * questList 的 layoutX 固定 0，
-     * 因為底線希望從畫面左側延伸出來。
+     * questList 的 layoutX 固定 0，使底線得以從畫面左側延伸出來。
      */
     private static final double ROW_X = 0;
     private static final double HUD_Y = 130;
@@ -157,8 +133,7 @@ public class QuestHUD extends Pane {
     /**
      * HUD 收合後顯示的獨立展開按鈕。
      *
-     * 這顆按鈕和任務列中的 "<" 是分開的，
-     * 避免整組 questList 滑出畫面後按鈕也無法點擊。
+     * 避免整組 questList 滑出畫面後按鈕無法點擊。
      */
     private final StackPane collapsedToggleButton = new StackPane();
 
@@ -177,8 +152,7 @@ public class QuestHUD extends Pane {
     /**
      * 是否正在播放任務完成動畫。
      *
-     * 播放期間 update() 不會重複 refresh，
-     * 避免動畫中的 row 被刷新掉。
+     * 播放期間 update() 不會重複 refresh，避免動畫中的 row 被刷新掉。
      */
     private boolean playingCompletionAnimation = false;
 
@@ -280,8 +254,7 @@ public class QuestHUD extends Pane {
     /**
      * 設定左側 hoverZone。
      *
-     * hoverZone 在 HUD 展開時不接收滑鼠事件；
-     * HUD 收合後才啟用，用來讓玩家滑鼠靠近左側時喚出展開按鈕。
+     * hoverZone 在 HUD 展開時不接收滑鼠事件，HUD 收合後才啟用，用來讓玩家滑鼠靠近左側時喚出展開按鈕。
      */
     private void setupHoverZone() {
         hoverZone.setWidth(HOVER_ZONE_WIDTH);
@@ -291,9 +264,6 @@ public class QuestHUD extends Pane {
         hoverZone.setLayoutX(0);
         hoverZone.setLayoutY(HUD_Y - 30);
 
-        /*
-         * 初始 HUD 是展開狀態，所以 hoverZone 不需要接收滑鼠。
-         */
         hoverZone.setMouseTransparent(true);
 
         hoverZone.setOnMouseEntered(e -> {
@@ -379,7 +349,6 @@ public class QuestHUD extends Pane {
     /**
      * 每幀由場景呼叫。
      *
-     * 功能：
      * 1. 若正在播放完成動畫，避免重複刷新。
      * 2. 若有完成但還沒播動畫的任務，播放完成動畫。
      * 3. 否則正常刷新目前可見任務。
@@ -389,8 +358,7 @@ public class QuestHUD extends Pane {
             return;
         }
 
-        QuestType completedWaiting =
-                questSystem.getNextCompletedQuestWaitingForAnimation();
+        QuestType completedWaiting = questSystem.getNextCompletedQuestWaitingForAnimation();
 
         if (completedWaiting != null) {
             refresh();
@@ -438,8 +406,7 @@ public class QuestHUD extends Pane {
     /**
      * 收合 HUD。
      *
-     * questList 整組滑出畫面左側，
-     * 動畫結束後啟用 collapsedToggleButton。
+     * questList 整組滑出畫面左側，動畫結束後啟用 collapsedToggleButton。
      */
     private void collapseHUD() {
         if (collapsed) {
@@ -557,7 +524,7 @@ public class QuestHUD extends Pane {
      * 根據目前 row 最大寬度計算 questList 收合後的 X。
      */
     private double getHiddenQuestListX() {
-        return -currentRowWidth - 20;
+        return - currentRowWidth - 20;
     }
 
     private void moveNodeX(
@@ -766,14 +733,6 @@ public class QuestHUD extends Pane {
     private double computeTextWidth(String content) {
         double measured = measureTextWidth(content) + 24;
 
-        if (measured < TEXT_MIN_WIDTH) {
-            return TEXT_MIN_WIDTH;
-        }
-
-        if (measured > TEXT_MAX_WIDTH) {
-            return TEXT_MAX_WIDTH;
-        }
-
         return measured;
     }
 
@@ -875,8 +834,7 @@ public class QuestHUD extends Pane {
     /**
      * 建立完成動畫用的 check icon。
      *
-     * 這個 icon 會直接疊在 row 的右側，
-     * 不使用 iconSpace，避免跟文字卡在一起。
+     * 這個 icon 會直接疊在 row 的右側，不使用 iconSpace 避免跟文字卡在一起。
      */
     private ImageView createAnimatedCheckIcon() {
         ImageView checkIcon = createCheckIcon();

@@ -25,7 +25,6 @@ import static com.almasb.fxgl.dsl.FXGL.*;
  * 8. 可設定 onOpen callback，在開門後執行額外事件。
  *
  * 使用方式：
- *
  * EntityFactory 中建立門 Entity 時，可掛上此 Component：
  *
  * .with(new DoorComponent(
@@ -38,12 +37,7 @@ import static com.almasb.fxgl.dsl.FXGL.*;
  * ))
  *
  * 存檔變數格式：
- *
  * door_{id}_opened
- *
- * 例如：
- *
- * door_bathroom_opened
  */
 public class DoorComponent extends Component implements LoadSaveComponent {
 
@@ -53,9 +47,6 @@ public class DoorComponent extends Component implements LoadSaveComponent {
 
     /**
      * 門狀態存檔 key 的前綴。
-     *
-     * 實際 key 格式：
-     * door_{id}_opened
      */
     private static final String DOOR_VAR_PREFIX = "door_";
 
@@ -72,9 +63,7 @@ public class DoorComponent extends Component implements LoadSaveComponent {
     /**
      * 門關閉時生成的碰撞箱 spawn name。
      *
-     * 需要在 EntityFactory 中有對應：
-     *
-     * @Spawns("door_collider")
+     * 需要在 EntityFactory 中有 @Spawns("door_collider")
      */
     private static final String SPAWN_DOOR_COLLIDER = "door_collider";
 
@@ -89,11 +78,6 @@ public class DoorComponent extends Component implements LoadSaveComponent {
      * 用途：
      * 1. 組成存檔 key。
      * 2. 區分不同門的開關狀態。
-     *
-     * 例如：
-     * - bathroom
-     * - bedroom
-     * - living_room
      */
     private final String id;
 
@@ -229,9 +213,6 @@ public class DoorComponent extends Component implements LoadSaveComponent {
      * 1. opened = false。
      * 2. 顯示關門貼圖。
      * 3. 生成門的阻擋 collider。
-     *
-     * 注意：
-     * 若之後讀檔，applySavedState() 會再根據存檔資料覆蓋狀態。
      */
     @Override
     public void onAdded() {
@@ -408,12 +389,10 @@ public class DoorComponent extends Component implements LoadSaveComponent {
      * 若目前沒有門 collider，則建立新的阻擋 collider。
      *
      * collider 位置：
-     *
      * X = doorEntity.x + colliderOffsetX
      * Y = doorEntity.y + colliderOffsetY
      *
      * collider 尺寸：
-     *
      * width = colliderWidth
      * height = colliderHeight
      */

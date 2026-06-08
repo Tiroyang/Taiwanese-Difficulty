@@ -8,8 +8,7 @@ import com.almasb.fxgl.entity.component.Component;
  *
  * 床的資料型 Component。
  *
- * 這個 Component 本身不負責處理玩家跳床、死亡、ZIndex 切換等邏輯，
- * 而是負責保存「床物件需要用到的設定資料」。
+ * 這個 Component 不負責處理玩家跳床、死亡、ZIndex 切換等邏輯，而是保存床物件需要用到的設定資料。
  *
  * 主要用途：
  * 1. 標記目前 Entity 是床的平台區，還是床的碰撞區。
@@ -19,8 +18,6 @@ import com.almasb.fxgl.entity.component.Component;
  * 5. 保存玩家站在床上時的 ZIndex。
  * 6. 保存玩家離開床後恢復的 ZIndex。
  * 7. 保存第二次落在床上時要觸發的死亡原因。
- *
- * 常見結構：
  *
  * 一張床通常可能會拆成數個 Entity：
  *
@@ -63,23 +60,6 @@ public class BedComponent extends Component {
      * ColliderArea
      *
      * 用來描述一個矩形碰撞區的位置與尺寸。
-     *
-     * 原本程式使用：
-     * - collider1OffsetX
-     * - collider1OffsetY
-     * - collider1Width
-     * - collider1Height
-     *
-     * 以及：
-     * - collider2OffsetX
-     * - collider2OffsetY
-     * - collider2Width
-     * - collider2Height
-     *
-     * 這樣欄位會非常分散。
-     *
-     * 整理成 ColliderArea 後，
-     * 每一組碰撞區都可以被視為一個完整資料。
      */
     public static class ColliderArea {
 
@@ -166,11 +146,6 @@ public class BedComponent extends Component {
      * 床 ID。
      *
      * 用來辨識不同 Entity 是否屬於同一張床。
-     *
-     * 例如：
-     * - bed_room_main
-     * - bed_room_child
-     * - bed_living_room
      */
     private final String bedId;
 
@@ -221,12 +196,7 @@ public class BedComponent extends Component {
     /**
      * 玩家站在床上時的 ZIndex。
      *
-     * 用途：
      * 讓玩家在床上時可以顯示在正確圖層。
-     *
-     * 例如：
-     * - 玩家需要顯示在棉被上方。
-     * - 玩家需要顯示在床架後方。
      */
     private final int playerZIndexOnBed;
 
@@ -242,11 +212,6 @@ public class BedComponent extends Component {
 
     /**
      * 玩家第二次落在床上時要觸發的死亡原因。
-     *
-     * 例如：
-     * 第一次跳到床上安全，
-     * 但如果玩家又從床上跳起並再次落回床上，
-     * 就觸發「在床上跳」相關死亡。
      */
     private final DeathReason deathReasonOnSecondLanding;
 
@@ -257,12 +222,6 @@ public class BedComponent extends Component {
 
     /**
      * 建立床 Component。
-     *
-     * 這個建構子保留原本參數格式，
-     * 方便你原本 Spawn 床的程式碼不需要大幅修改。
-     *
-     * 但內部會把 collider1 / collider2 的資料整理成 ColliderArea，
-     * 避免類別內部欄位過度分散。
      *
      * @param role 此 Entity 的床角色
      * @param bedId 床 ID
@@ -329,14 +288,6 @@ public class BedComponent extends Component {
 
     /**
      * 建立床 Component。
-     *
-     * 這個版本使用 ColliderArea 作為碰撞區參數，
-     * 適合之後新的程式碼使用。
-     *
-     * 優點：
-     * 1. 參數較少。
-     * 2. collider 的資料比較集中。
-     * 3. 可讀性較高。
      *
      * @param role 此 Entity 的床角色
      * @param bedId 床 ID

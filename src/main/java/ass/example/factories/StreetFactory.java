@@ -54,7 +54,6 @@ import static com.almasb.fxgl.dsl.FXGL.getb;
  * 5. 入口互動：
  *    - entrance_door
  *
- * 設計原則：
  * - Factory 只負責組裝 Entity。
  * - 物件移動、生成時機、警告 UI、無盡街道邏輯由 StreetScene 或相關 System 處理。
  * - 致命判定透過 LethalComponent 保存 DeathReason。
@@ -107,7 +106,7 @@ public class StreetFactory implements EntityFactory {
     private static final int Z_PROTRUDING_TILE = -149;
 
     /**
-     * 機車圖層。
+     * 摩托車圖層。
      */
     private static final int Z_SCOOTER = -150;
 
@@ -203,8 +202,7 @@ public class StreetFactory implements EntityFactory {
      * - height
      *
      * 注意：
-     * 目前 width / height 沒直接用於 view，
-     * 但保留讀取語意，方便之後改成色塊或可縮放背景。
+     * 目前 width / height 沒直接用於 view，之後可用於縮放背景。
      */
     @Spawns("street_far_background")
     public Entity newStreetFarBackground(SpawnData data) {
@@ -218,8 +216,7 @@ public class StreetFactory implements EntityFactory {
     /**
      * 生成街道路面視覺。
      *
-     * 目前以色塊暫代。
-     * 之後有素材時可改成貼圖。
+     * 目前以色塊暫代，之後有素材時再改。
      *
      * SpawnData 需要：
      * - width
@@ -312,9 +309,7 @@ public class StreetFactory implements EntityFactory {
     /**
      * 生成街道變電箱視覺。
      *
-     * 目前以色塊暫代。
-     * 之後可以替換成：
-     * SceneStreet/props/TransformerBox.png
+     * 目前以色塊暫代，之後可以替換成圖片。
      *
      * SpawnData 需要：
      * - width
@@ -382,8 +377,7 @@ public class StreetFactory implements EntityFactory {
      * - fromLeft：機車是否從左往右來
      *
      * 注意：
-     * 現在使用色塊，所以 scaleX 差異不明顯。
-     * 之後換成 ImageView 時，可以沿用 fromLeft 控制方向。
+     * 之後換成 ImageView 時，可沿用 fromLeft 控制方向。
      */
     @Spawns("street_scooter")
     public Entity newStreetScooter(SpawnData data) {
@@ -639,8 +633,7 @@ public class StreetFactory implements EntityFactory {
      * - category = FALLING_OBJECT
      * - mask = FLOOR
      *
-     * 代表掉落物只會撞地板，
-     * 不會與玩家或牆壁產生物理推擠。
+     * 代表掉落物只會撞地板，不會與玩家或牆壁產生物理推擠。
      *
      * @return PhysicsComponent
      */
