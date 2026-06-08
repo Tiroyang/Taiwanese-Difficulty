@@ -39,16 +39,6 @@ import static com.almasb.fxgl.dsl.FXGL.*;
  * 7. 儲存 / 還原目前場景額外資料。
  * 8. 擷取縮圖並轉成 Base64。
  * 9. 從 Base64 還原縮圖 Image。
- *
- * 單例判斷：
- * SaveSystem 適合單例。
- *
- * 原因：
- * - 全遊戲只需要一個存讀檔系統。
- * - SaveSlotManager、PauseMenu、MainMenu 都會需要取得同一個 SaveSystem。
- *
- * 這裡使用 init(...) + getInstance()，
- * 避免還沒初始化就誤用。
  */
 public final class SaveSystem {
 
@@ -298,6 +288,7 @@ public final class SaveSystem {
     // =========================================================
     // Game Vars
     // =========================================================
+    // 新增欄位時也需要在此新增
 
     private void saveGameVars(Bundle bundle) {
         putIntIfExists(bundle, SaveKey.DEATH_COUNT);
@@ -514,7 +505,7 @@ public final class SaveSystem {
     /**
      * 將 Base64 還原成 Image。
      *
-     * 主選單顯示縮圖時使用。
+     * 目前使用 SaveSlotManager 中的方法，暫時備用。
      */
     public Image imageFromBase64(String base64) {
         if (base64 == null || base64.isBlank()) {

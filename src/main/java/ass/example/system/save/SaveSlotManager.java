@@ -28,14 +28,6 @@ import java.util.*;
  * 7. 重新命名槽位。
  * 8. 判斷目前是否有未儲存變更。
  * 9. 管理「主選單請求載入某槽位」的 pending request。
- *
- * 單例判斷：
- * SaveSlotManager 適合單例。
- *
- * 原因：
- * - 全遊戲只需要一個槽位管理器。
- * - 它保存 currentSlotIndex 與 lastLoadedHash。
- * - 若有多份 SaveSlotManager，快速存檔與未儲存判斷會不同步。
  */
 public final class SaveSlotManager {
 
@@ -481,7 +473,6 @@ public final class SaveSlotManager {
     /**
      * 計算存檔內容 hash。
      *
-     * 注意：
      * savedAt 與 thumbnailBase64 不參與 hash。
      * 因為它們每次存檔都可能改變，不能用來判斷遊戲內容是否改變。
      */
