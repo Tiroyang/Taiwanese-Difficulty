@@ -25,10 +25,8 @@ import java.util.Map;
  * 9. 管理任務完成動畫播放狀態。
  */
 public class QuestSystem {
-
-    // =========================================================
-    // Singleton
-    // =========================================================
+ 
+    // Singleton 
 
     /**
      * QuestSystem 單例。
@@ -44,20 +42,16 @@ public class QuestSystem {
         return INSTANCE;
     }
 
-
-    // =========================================================
-    // Quest Display Settings
-    // =========================================================
+ 
+    // Quest Display Settings 
 
     /**
      * 預設同時顯示幾個任務。
      */
     private static final int DEFAULT_VISIBLE_QUEST_COUNT = 1;
 
-
-    // =========================================================
-    // Quest Data
-    // =========================================================
+ 
+    // Quest Data 
 
     /**
      * 故事任務順序。
@@ -75,10 +69,8 @@ public class QuestSystem {
     private final Map<QuestType, QuestState> states =
             new EnumMap<>(QuestType.class);
 
-
-    // =========================================================
-    // Runtime UI State
-    // =========================================================
+ 
+    // Runtime UI State 
 
     /**
      * 目前 QuestHUD 從第幾個任務開始顯示。
@@ -90,10 +82,8 @@ public class QuestSystem {
      */
     private int visibleQuestCount = DEFAULT_VISIBLE_QUEST_COUNT;
 
-
-    // =========================================================
-    // Constructor
-    // =========================================================
+ 
+    // Constructor 
 
     /**
      * 建立任務系統。
@@ -106,10 +96,8 @@ public class QuestSystem {
         resetRuntimeState();
     }
 
-
-    // =========================================================
-    // Quest Registration
-    // =========================================================
+ 
+    // Quest Registration 
 
     /**
      * 註冊故事任務順序。
@@ -126,10 +114,8 @@ public class QuestSystem {
         storyQuests.add(QuestType.EXIT_HOUSE);
     }
 
-
-    // =========================================================
-    // Runtime Reset
-    // =========================================================
+ 
+    // Runtime Reset 
 
     /**
      * 重置任務執行狀態。
@@ -153,10 +139,8 @@ public class QuestSystem {
         visibleQuestCount = DEFAULT_VISIBLE_QUEST_COUNT;
     }
 
-
-    // =========================================================
-    // Quest Progress
-    // =========================================================
+ 
+    // Quest Progress 
 
     /**
      * 直接完成指定任務。
@@ -220,10 +204,8 @@ public class QuestSystem {
         return state != null && state.isCompleted();
     }
 
-
-    // =========================================================
-    // Quest HUD - Visible Quests
-    // =========================================================
+ 
+    // Quest HUD - Visible Quests 
 
     /**
      * 取得目前 QuestHUD 應該顯示的任務。
@@ -316,10 +298,8 @@ public class QuestSystem {
         advancePastCompletedQuests();
     }
 
-
-    // =========================================================
-    // Save / Load Support
-    // =========================================================
+ 
+    // Save / Load Support 
 
     /**
      * 取得目前任務顯示起始 index。
@@ -342,10 +322,8 @@ public class QuestSystem {
     public void setVisibleStartIndex(int visibleStartIndex) {
         this.visibleStartIndex = clampVisibleStartIndex(visibleStartIndex);
     }
-
-    // =========================================================
-    // Getters
-    // =========================================================
+ 
+    // Getters 
 
     /**
      * 取得故事任務順序。
@@ -366,10 +344,8 @@ public class QuestSystem {
         return states.get(quest);
     }
 
-
-    // =========================================================
-    // Helpers
-    // =========================================================
+ 
+    // Helpers 
 
     /**
      * 限制 visibleStartIndex 不小於 0，

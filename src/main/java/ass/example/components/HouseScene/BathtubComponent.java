@@ -21,10 +21,8 @@ import static com.almasb.fxgl.dsl.FXGL.getb;
  * 5. 玩家重生後重置觸發狀態，讓浴缸可以再次造成死亡。
  */
 public class BathtubComponent extends Component {
-
-    // =========================================================
-    // Constants
-    // =========================================================
+ 
+    // Constants 
 
     /**
      * 預設垂直下墜死亡速度門檻。
@@ -36,10 +34,8 @@ public class BathtubComponent extends Component {
      */
     private static final double HORIZONTAL_DEATH_SPEED_THRESHOLD = 260.0;
 
-
-    // =========================================================
-    // Dependencies
-    // =========================================================
+ 
+    // Dependencies 
 
     /**
      * 玩家 Entity。
@@ -56,10 +52,8 @@ public class BathtubComponent extends Component {
      */
     private final DeathReason deathReason;
 
-
-    // =========================================================
-    // Settings
-    // =========================================================
+ 
+    // Settings 
 
     /**
      * 垂直下墜死亡速度門檻。
@@ -68,10 +62,8 @@ public class BathtubComponent extends Component {
      */
     private final double fallDeathSpeedThreshold;
 
-
-    // =========================================================
-    // Runtime State
-    // =========================================================
+ 
+    // Runtime State 
 
     /**
      * 是否已經觸發過死亡。
@@ -87,10 +79,8 @@ public class BathtubComponent extends Component {
      */
     private boolean wasPlayerDeadLastFrame = false;
 
-
-    // =========================================================
-    // Constructors
-    // =========================================================
+ 
+    // Constructors 
 
     /**
      * 使用自訂速度門檻建立浴缸元件。
@@ -109,10 +99,8 @@ public class BathtubComponent extends Component {
         this.fallDeathSpeedThreshold = fallDeathSpeedThreshold;
     }
 
-
-    // =========================================================
-    // FXGL Lifecycle
-    // =========================================================
+ 
+    // FXGL Lifecycle 
 
     /**
      * 每幀更新浴缸死亡判定。
@@ -157,10 +145,8 @@ public class BathtubComponent extends Component {
         }
     }
 
-
-    // =========================================================
-    // Validation
-    // =========================================================
+ 
+    // Validation 
 
     /**
      * 檢查必要相依物件是否有效。
@@ -171,10 +157,8 @@ public class BathtubComponent extends Component {
         return player == null || deathSystem == null;
     }
 
-
-    // =========================================================
-    // Player Death State
-    // =========================================================
+ 
+    // Player Death State 
 
     /**
      * 處理玩家死亡與重生狀態。
@@ -209,10 +193,8 @@ public class BathtubComponent extends Component {
         return false;
     }
 
-
-    // =========================================================
-    // Bathtub Detection
-    // =========================================================
+ 
+    // Bathtub Detection 
 
     /**
      * 判斷玩家是否位於浴缸 sensor 內。
@@ -254,10 +236,8 @@ public class BathtubComponent extends Component {
         return fallingTooFast || crashingTooFast;
     }
 
-
-    // =========================================================
-    // Death Trigger
-    // =========================================================
+ 
+    // Death Trigger 
 
     /**
      * 觸發浴缸死亡。
@@ -270,10 +250,8 @@ public class BathtubComponent extends Component {
         deathSystem.die(deathReason);
     }
 
-
-    // =========================================================
-    // Reset
-    // =========================================================
+ 
+    // Reset 
 
     /**
      * 玩家重生後重置浴缸狀態。

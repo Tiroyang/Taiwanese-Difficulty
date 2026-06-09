@@ -16,20 +16,12 @@ import java.util.Map;
  * 2. 建立英文文字表。
  * 3. 回傳 Language -> texts 的總表。
  *
- * 設計說明：
- * - 此類別只保存靜態文字資料。
- * - 不保存目前語言。
- * - 不負責讀寫 Preferences。
- * - 不需要做成單例。
- *
  * 使用方式：
  * LanguageSystem 會在初始化時呼叫 LanguageTextDatabase.create()。
  */
 public final class LanguageTextDatabase {
-
-    // =========================================================
-    // Constructor
-    // =========================================================
+ 
+    // Constructor 
 
     /**
      * 工具資料類別不允許建立實例。
@@ -37,10 +29,8 @@ public final class LanguageTextDatabase {
     private LanguageTextDatabase() {
     }
 
-
-    // =========================================================
-    // Public API
-    // =========================================================
+ 
+    // Public API 
 
     /**
      * 建立所有語言文字資料。
@@ -48,8 +38,7 @@ public final class LanguageTextDatabase {
      * @return 所有語言文字表
      */
     public static Map<Language, Map<String, String>> create() {
-        Map<Language, Map<String, String>> texts =
-                new EnumMap<>(Language.class);
+        Map<Language, Map<String, String>> texts = new EnumMap<>(Language.class);
 
         Map<String, String> zhTw = new HashMap<>();
         Map<String, String> enUs = new HashMap<>();
@@ -75,10 +64,8 @@ public final class LanguageTextDatabase {
         return texts;
     }
 
-
-    // =========================================================
-    // Main Menu
-    // =========================================================
+ 
+    // Main Menu 
 
     private static void registerMainMenuTexts(
             Map<String, String> zhTw,
@@ -99,10 +86,8 @@ public final class LanguageTextDatabase {
         );
     }
 
-
-    // =========================================================
-    // Common Menu
-    // =========================================================
+ 
+    // Common Menu 
 
     private static void registerCommonMenuTexts(
             Map<String, String> zhTw,
@@ -116,10 +101,8 @@ public final class LanguageTextDatabase {
         put(zhTw, enUs, "menu.common.cancel", "取消", "Cancel");
     }
 
-
-    // =========================================================
-    // Story Mode Menu
-    // =========================================================
+ 
+    // Story Mode Menu 
 
     private static void registerStoryModeMenuTexts(
             Map<String, String> zhTw,
@@ -138,10 +121,8 @@ public final class LanguageTextDatabase {
         put(zhTw, enUs, "menu.storyMode.editSave", "編輯存檔", "Edit Saves");
     }
 
-
-    // =========================================================
-    // Mini Game Menu
-    // =========================================================
+ 
+    // Mini Game Menu 
 
     private static void registerMiniGameMenuTexts(
             Map<String, String> zhTw,
@@ -180,10 +161,8 @@ public final class LanguageTextDatabase {
         );
     }
 
-
-    // =========================================================
-    // Achievement Menu
-    // =========================================================
+ 
+    // Achievement Menu 
 
     private static void registerAchievementMenuTexts(
             Map<String, String> zhTw,
@@ -202,10 +181,8 @@ public final class LanguageTextDatabase {
         put(zhTw, enUs, "achievement.unlocked", "已解鎖", "Unlocked");
     }
 
-
-    // =========================================================
-    // Settings
-    // =========================================================
+ 
+    // Settings 
 
     private static void registerSettingsTexts(
             Map<String, String> zhTw,
@@ -345,10 +322,8 @@ public final class LanguageTextDatabase {
         put(zhTw, enUs, "menu.settings.about.credits.comma", "、", ", ");
     }
 
-
-    // =========================================================
-    // Pause Menu
-    // =========================================================
+ 
+    // Pause Menu 
 
     private static void registerPauseMenuTexts(
             Map<String, String> zhTw,
@@ -363,10 +338,8 @@ public final class LanguageTextDatabase {
         put(zhTw, enUs, "pause.save.disabled", "此模式無法使用存檔功能。", "Saving is not available in this mode.");
     }
 
-
-    // =========================================================
-    // Death Menu
-    // =========================================================
+ 
+    // Death Menu 
 
     private static void registerDeathMenuTexts(
             Map<String, String> zhTw,
@@ -379,10 +352,8 @@ public final class LanguageTextDatabase {
         put(zhTw, enUs, "menu.newRecord", "新紀錄！", "New Record!");
     }
 
-
-    // =========================================================
-    // Save System
-    // =========================================================
+ 
+    // Save System 
 
     private static void registerSaveTexts(
             Map<String, String> zhTw,
@@ -420,10 +391,8 @@ public final class LanguageTextDatabase {
         put(zhTw, enUs, "save.inputName.content", "存檔名稱：", "Save name:");
     }
 
-
-    // =========================================================
-    // Story Interaction
-    // =========================================================
+ 
+    // Story Interaction 
 
     private static void registerStoryInteractionTexts(
             Map<String, String> zhTw,
@@ -447,10 +416,8 @@ public final class LanguageTextDatabase {
         put(zhTw, enUs, "story.street.enter", "返回 家", "Go Home");
     }
 
-
-    // =========================================================
-    // Quest
-    // =========================================================
+ 
+    // Quest 
 
     private static void registerQuestTexts(
             Map<String, String> zhTw,
@@ -463,10 +430,8 @@ public final class LanguageTextDatabase {
         put(zhTw, enUs, "quest.exit_house", "離開 家", "Exit Home");
     }
 
-
-    // =========================================================
-    // Dialogue
-    // =========================================================
+ 
+    // Dialogue 
 
     private static void registerDialogueTexts(
             Map<String, String> zhTw,
@@ -487,10 +452,8 @@ public final class LanguageTextDatabase {
         put(zhTw, enUs, "dialog.mom.option.2.3", "逃跑", "Run");
     }
 
-
-    // =========================================================
-    // Mode Notice
-    // =========================================================
+ 
+    // Mode Notice 
 
     private static void registerModeNoticeTexts(
             Map<String, String> zhTw,
@@ -499,10 +462,8 @@ public final class LanguageTextDatabase {
         put(zhTw, enUs, "pause.save.disabled", "此模式無法使用存檔功能。", "Saving is not available in this mode.");
     }
 
-
-    // =========================================================
-    // Death Reasons
-    // =========================================================
+ 
+    // Death Reasons 
 
     private static void registerDeathReasonTexts(
             Map<String, String> zhTw,
@@ -689,10 +650,8 @@ public final class LanguageTextDatabase {
         );
     }
 
-
-    // =========================================================
-    // Helpers
-    // =========================================================
+ 
+    // Helpers 
 
     /**
      * 同時加入中英文文字。

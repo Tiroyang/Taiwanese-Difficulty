@@ -28,20 +28,16 @@ import com.almasb.fxgl.entity.component.Component;
  * deathSystem.die(reason);
  */
 public class LethalComponent extends Component {
-
-    // =========================================================
-    // Death Settings
-    // =========================================================
+ 
+    // Death Settings 
 
     /**
      * 此致命物件對應的死亡原因。
      */
     private final DeathReason deathReason;
 
-
-    // =========================================================
-    // Constructor
-    // =========================================================
+ 
+    // Constructor 
 
     /**
      * 建立致命物件 Component。
@@ -52,10 +48,8 @@ public class LethalComponent extends Component {
         this.deathReason = deathReason;
     }
 
-
-    // =========================================================
-    // Getters
-    // =========================================================
+ 
+    // Getters 
 
     /**
      * 取得此物件造成的死亡原因。

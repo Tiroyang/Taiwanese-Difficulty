@@ -36,10 +36,8 @@ import javafx.util.Duration;
  * 6. 播放滑入、停留、滑出動畫。
  */
 public class AchievementToast extends StackPane {
-
-    // =========================================================
-    // Layout Constants
-    // =========================================================
+ 
+    // Layout Constants 
 
     /**
      * Toast 寬度。
@@ -68,10 +66,8 @@ public class AchievementToast extends StackPane {
      */
     private static final double TEXT_RIGHT_PADDING = 18.0;
 
-
-    // =========================================================
-    // Animation Constants
-    // =========================================================
+ 
+    // Animation Constants 
 
     /**
      * Toast 出現 / 消失動畫秒數。
@@ -87,30 +83,24 @@ public class AchievementToast extends StackPane {
      * Toast 從下方滑入 / 滑出的 Y 位移。
      */
     private static final double SLIDE_OFFSET_Y = 90.0;
-
-    // =========================================================
-    // Asset Constants
-    // =========================================================
+ 
+    // Asset Constants 
 
     /**
      * 當 DeathReason 沒有 iconPath 時使用的預設 icon。
      */
     private static final String DEFAULT_ICON_PATH = "/assets/textures/ui/deathicon/achievementtoast_sample.jpg";
 
-
-    // =========================================================
-    // Dependencies
-    // =========================================================
+ 
+    // Dependencies 
 
     /**
      * 語言系統。
      */
     private final LanguageSystem languageSystem = LanguageSystem.getInstance();
 
-
-    // =========================================================
-    // UI Nodes
-    // =========================================================
+ 
+    // UI Nodes 
 
     /**
      * Toast 背景。
@@ -136,10 +126,8 @@ public class AchievementToast extends StackPane {
      */
     private final Text subtitleText = new Text();
 
-
-    // =========================================================
-    // Runtime State
-    // =========================================================
+ 
+    // Runtime State 
 
     /**
      * 目前播放中的動畫。
@@ -149,10 +137,8 @@ public class AchievementToast extends StackPane {
      */
     private SequentialTransition currentAnimation;
 
-
-    // =========================================================
-    // Constructor
-    // =========================================================
+ 
+    // Constructor 
 
     /**
      * 建立 AchievementToast。
@@ -165,10 +151,8 @@ public class AchievementToast extends StackPane {
         setupLayout();
     }
 
-
-    // =========================================================
-    // Setup
-    // =========================================================
+ 
+    // Setup 
 
     /**
      * 設定 Toast 根節點。
@@ -277,10 +261,8 @@ public class AchievementToast extends StackPane {
         return content;
     }
 
-
-    // =========================================================
-    // Public API
-    // =========================================================
+ 
+    // Public API 
 
     /**
      * 顯示成就解鎖提示。
@@ -306,10 +288,8 @@ public class AchievementToast extends StackPane {
         currentAnimation.play();
     }
 
-
-    // =========================================================
-    // Content Update
-    // =========================================================
+ 
+    // Content Update 
 
     /**
      * 更新 Toast 顯示內容。
@@ -336,10 +316,8 @@ public class AchievementToast extends StackPane {
         iconView.setImage(image);
     }
 
-
-    // =========================================================
-    // Animation
-    // =========================================================
+ 
+    // Animation 
 
     /**
      * 若目前動畫尚未播完，先停止。
@@ -432,10 +410,8 @@ public class AchievementToast extends StackPane {
         );
     }
 
-
-    // =========================================================
-    // Image Loading
-    // =========================================================
+ 
+    // Image Loading 
 
     /**
      * 載入 DeathReason 指定的 icon。

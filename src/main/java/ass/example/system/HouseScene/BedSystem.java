@@ -54,10 +54,8 @@ import static com.almasb.fxgl.dsl.FXGL.*;
  * 10. 讀檔時，如果玩家原本在床上，可以還原床 collider。
  */
 public class BedSystem {
-
-    // =========================================================
-    // Game Var Keys
-    // =========================================================
+ 
+    // Game Var Keys 
 
     /**
      * 玩家是否死亡的全域變數名稱。
@@ -71,10 +69,8 @@ public class BedSystem {
      */
     private static final String VAR_PLAYER_ON_BED_COLLIDER = "playerOnBedCollider";
 
-
-    // =========================================================
-    // Spawn Names
-    // =========================================================
+ 
+    // Spawn Names 
 
     /**
      * 動態生成床 collider 時使用的 spawn name。
@@ -83,10 +79,8 @@ public class BedSystem {
      */
     private static final String SPAWN_BED_COLLIDER = "bed_one_way_platform_collider";
 
-
-    // =========================================================
-    // Tuning Constants
-    // =========================================================
+ 
+    // Tuning Constants 
 
     /**
      * 玩家按 Shift 往下落後，暫時忽略床平台吸附的時間。
@@ -136,10 +130,8 @@ public class BedSystem {
      */
     private static final int DEFAULT_PLAYER_Z_INDEX = 0;
 
-
-    // =========================================================
-    // Dependencies
-    // =========================================================
+ 
+    // Dependencies 
 
     /**
      * 玩家 Entity。
@@ -153,10 +145,8 @@ public class BedSystem {
      */
     private final DeathSystem deathSystem = DeathSystem.getInstance();
 
-
-    // =========================================================
-    // Current Bed State
-    // =========================================================
+ 
+    // Current Bed State 
 
     /**
      * 玩家目前所在的床入口平台。
@@ -176,10 +166,8 @@ public class BedSystem {
      */
     private final List<Entity> currentBedColliders = new ArrayList<>();
 
-
-    // =========================================================
-    // Runtime Detection State
-    // =========================================================
+ 
+    // Runtime Detection State 
 
     /**
      * 上一幀玩家底部 Y 座標。
@@ -202,10 +190,8 @@ public class BedSystem {
      */
     private double resetIgnoreTimer = 0;
 
-
-    // =========================================================
-    // Bed Jump State
-    // =========================================================
+ 
+    // Bed Jump State 
 
     /**
      * 玩家是否已經確定落在床上。
@@ -228,10 +214,8 @@ public class BedSystem {
      */
     private boolean waitingForLandingAfterBedJump = false;
 
-
-    // =========================================================
-    // Constructor
-    // =========================================================
+ 
+    // Constructor 
 
     /**
      * 建立床系統。
@@ -243,10 +227,8 @@ public class BedSystem {
         this.previousPlayerBottom = getPlayerBottom();
     }
 
-
-    // =========================================================
-    // Public API
-    // =========================================================
+ 
+    // Public API 
 
     /**
      * 每幀更新床系統。
@@ -411,10 +393,8 @@ public class BedSystem {
         player.setZIndex(DEFAULT_PLAYER_Z_INDEX);
     }
 
-
-    // =========================================================
-    // Update Helpers
-    // =========================================================
+ 
+    // Update Helpers 
 
     /**
      * 判斷玩家是否死亡。
@@ -478,10 +458,8 @@ public class BedSystem {
         previousPlayerBottom = getPlayerBottom();
     }
 
-
-    // =========================================================
-    // Save / Restore
-    // =========================================================
+ 
+    // Save / Restore 
 
     /**
      * 尋找讀檔後最適合還原玩家床狀態的床平台。
@@ -570,10 +548,8 @@ public class BedSystem {
         clearCurrentBedState();
     }
 
-
-    // =========================================================
-    // Landing Detection
-    // =========================================================
+ 
+    // Landing Detection 
 
     /**
      * 尋找玩家這一幀是否可以落到某個床平台。
@@ -650,10 +626,8 @@ public class BedSystem {
         hasLandedOnBed = true;
     }
 
-
-    // =========================================================
-    // On Bed Update
-    // =========================================================
+ 
+    // On Bed Update 
 
     /**
      * 玩家已經在床 collider 上時，每幀更新床狀態。
@@ -730,10 +704,8 @@ public class BedSystem {
         set(VAR_PLAYER_ON_BED_COLLIDER, false);
     }
 
-
-    // =========================================================
-    // Bed Collider Creation / Removal
-    // =========================================================
+ 
+    // Bed Collider Creation / Removal 
 
     /**
      * 根據 BedComponent 建立目前床需要的 collider。
@@ -841,10 +813,8 @@ public class BedSystem {
                 .forEach(Entity::removeFromWorld);
     }
 
-
-    // =========================================================
-    // State Helpers
-    // =========================================================
+ 
+    // State Helpers 
 
     /**
      * 判斷玩家目前是否在動態生成的床 collider 上。
@@ -880,10 +850,8 @@ public class BedSystem {
         return currentBedPlatform.getComponent(BedComponent.class);
     }
 
-
-    // =========================================================
-    // Geometry Checks
-    // =========================================================
+ 
+    // Geometry Checks 
 
     /**
      * 判斷玩家是否仍在目前床平台的水平範圍上方。
@@ -1005,10 +973,8 @@ public class BedSystem {
                 currentPlayerBottom >= surfaceTop - LANDING_TOLERANCE;
     }
 
-
-    // =========================================================
-    // Component Getters
-    // =========================================================
+ 
+    // Component Getters 
 
     /**
      * 取得玩家底部世界座標。

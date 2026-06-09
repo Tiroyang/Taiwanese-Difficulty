@@ -44,10 +44,8 @@ import static java.lang.Math.min;
  * 10. 清理本場景所有 runtime Entity 與 UI。
  */
 public class StreetEndlessScene {
-
-    // =========================================================
-    // Scene / View Constants
-    // =========================================================
+ 
+    // Scene / View Constants 
 
     private static final double SCREEN_WIDTH = 1280;
     private static final double SCREEN_HEIGHT = 720;
@@ -59,27 +57,21 @@ public class StreetEndlessScene {
 
     private static final double MAX_CAMERA_X = 0.0;
 
-
-    // =========================================================
-    // Far Background Constants
-    // =========================================================
+ 
+    // Far Background Constants 
 
     private static final double FAR_BACKGROUND_WIDTH = 1983;
     private static final double FAR_BACKGROUND_HEIGHT = 793;
     private static final double FAR_BACKGROUND_PARALLAX = 0.18;
 
-
-    // =========================================================
-    // Endless Floor Collider Constants
-    // =========================================================
+ 
+    // Endless Floor Collider Constants 
 
     private static final double ENDLESS_FLOOR_COLLIDER_WIDTH = 6000;
     private static final double ENDLESS_FLOOR_COLLIDER_HEIGHT = 70;
 
-
-    // =========================================================
-    // Obstacle Constants
-    // =========================================================
+ 
+    // Obstacle Constants 
 
     private static final double OBSTACLE_GENERATE_AHEAD_DISTANCE = 2600.0;
     private static final double OBSTACLE_CLEANUP_RIGHT_PADDING = 900.0;
@@ -100,10 +92,8 @@ public class StreetEndlessScene {
     private static final double RAISED_TILE_WIDTH = 75.0;
     private static final double RAISED_TILE_HEIGHT = 28.0;
 
-
-    // =========================================================
-    // Scooter Constants
-    // =========================================================
+ 
+    // Scooter Constants 
 
     private static final double SCOOTER_WARNING_DURATION = 1.6;
 
@@ -123,10 +113,8 @@ public class StreetEndlessScene {
 
     private static final double WARNING_ICON_SIZE = 72.0;
 
-
-    // =========================================================
-    // Falling Object Constants
-    // =========================================================
+ 
+    // Falling Object Constants 
 
     private static final double FALLING_OBJECT_MIN_INTERVAL = 3.8;
     private static final double FALLING_OBJECT_MAX_INTERVAL = 7.2;
@@ -149,27 +137,21 @@ public class StreetEndlessScene {
 
     private static final double FALLING_FADE_OUT_SECONDS = 0.35;
 
+ 
+    // UI Paths 
 
-    // =========================================================
-    // UI Paths
-    // =========================================================
+    private static final String DANGER_ICON_PATH = "/assets/textures/scene2/UI/danger.png";
 
-    private static final String DANGER_ICON_PATH = "/assets/textures/Scene2/UI/danger.png";
-
-
-    // =========================================================
-    // Dependencies
-    // =========================================================
+ 
+    // Dependencies 
 
     /**
      * 場景設定。
      */
     private final SceneConfig config;
 
-
-    // =========================================================
-    // Runtime References
-    // =========================================================
+ 
+    // Runtime References 
 
     private Entity player;
 
@@ -181,10 +163,8 @@ public class StreetEndlessScene {
     private StackPane leftWarningIcon;
     private StackPane rightWarningIcon;
 
-
-    // =========================================================
-    // Runtime State - Random / Camera / Distance
-    // =========================================================
+ 
+    // Runtime State - Random / Camera / Distance 
 
     private final Random random = new Random();
 
@@ -194,20 +174,16 @@ public class StreetEndlessScene {
     private double currentRunDistance = 0.0;
     private double bestDistanceBeforeRun = 0.0;
 
-
-    // =========================================================
-    // Runtime State - Far Background
-    // =========================================================
+ 
+    // Runtime State - Far Background 
 
     private double leftMostFarBaseX = 0.0;
     private double rightMostFarBaseX = 0.0;
 
     private final List<FarBackgroundSegment> farBackgrounds = new ArrayList<>();
 
-
-    // =========================================================
-    // Runtime State - Segments
-    // =========================================================
+ 
+    // Runtime State - Segments 
 
     /**
      * 已生成到最左邊的位置。
@@ -218,20 +194,16 @@ public class StreetEndlessScene {
 
     private final List<StreetSegment> segments = new ArrayList<>();
 
-
-    // =========================================================
-    // Runtime State - Obstacles
-    // =========================================================
+ 
+    // Runtime State - Obstacles 
 
     private final List<StreetObstacleGroup> obstacleGroups = new ArrayList<>();
 
     private double nextTransformerCheckX = -900.0;
     private double nextRaisedTileCheckX = -700.0;
 
-
-    // =========================================================
-    // Runtime State - Scooters
-    // =========================================================
+ 
+    // Runtime State - Scooters 
 
     private final List<ScooterInstance> scooters = new ArrayList<>();
 
@@ -244,19 +216,15 @@ public class StreetEndlessScene {
     private double leftWarningTimer = 0.0;
     private double rightWarningTimer = 0.0;
 
-
-    // =========================================================
-    // Runtime State - Falling Objects
-    // =========================================================
+ 
+    // Runtime State - Falling Objects 
 
     private final List<FallingObjectInstance> fallingObjects = new ArrayList<>();
 
     private double fallingObjectTimer = 3.5;
 
-
-    // =========================================================
-    // Constructor
-    // =========================================================
+ 
+    // Constructor 
 
     /**
      * 建立 Street Endless 場景。
@@ -267,10 +235,8 @@ public class StreetEndlessScene {
         this.config = config;
     }
 
-
-    // =========================================================
-    // Load
-    // =========================================================
+ 
+    // Load 
 
     /**
      * 載入 Street Endless 場景。
@@ -345,10 +311,8 @@ public class StreetEndlessScene {
         set("streetNewRecord", false);
     }
 
-
-    // =========================================================
-    // Update
-    // =========================================================
+ 
+    // Update 
 
     /**
      * 每幀更新 Street Endless。
@@ -393,10 +357,8 @@ public class StreetEndlessScene {
         set("playerOnBedCollider", false);
     }
 
-
-    // =========================================================
-    // Far Background
-    // =========================================================
+ 
+    // Far Background 
 
     /**
      * 生成初始遠景。
@@ -529,10 +491,8 @@ public class StreetEndlessScene {
                 .orElse(0);
     }
 
-
-    // =========================================================
-    // Street Segments
-    // =========================================================
+ 
+    // Street Segments 
 
     /**
      * 生成初始街道區段。
@@ -666,10 +626,8 @@ public class StreetEndlessScene {
         });
     }
 
-
-    // =========================================================
-    // Endless Floor Collider / Boundary
-    // =========================================================
+ 
+    // Endless Floor Collider / Boundary 
 
     /**
      * 生成超長地板碰撞箱。
@@ -738,10 +696,8 @@ public class StreetEndlessScene {
         physics.overwritePosition(new Point2D(wallX, 0));
     }
 
-
-    // =========================================================
-    // Obstacles
-    // =========================================================
+ 
+    // Obstacles 
 
     /**
      * 重置障礙物生成器。
@@ -875,10 +831,8 @@ public class StreetEndlessScene {
         });
     }
 
-
-    // =========================================================
-    // Scooter System
-    // =========================================================
+ 
+    // Scooter System 
 
     /**
      * 重置左右機車計時器與警告 UI。
@@ -1135,10 +1089,8 @@ public class StreetEndlessScene {
         return randomRange(SCOOTER_MIN_INTERVAL, SCOOTER_MAX_INTERVAL);
     }
 
-
-    // =========================================================
-    // Warning Icon
-    // =========================================================
+ 
+    // Warning Icon 
 
     /**
      * 建立通用危險警告 Icon。
@@ -1205,10 +1157,8 @@ public class StreetEndlessScene {
         icon.setOpacity(0.72 + progress * 0.28 + pulse);
     }
 
-
-    // =========================================================
-    // Falling Object System
-    // =========================================================
+ 
+    // Falling Object System 
 
     /**
      * 重置掉落物系統。
@@ -1639,10 +1589,8 @@ public class StreetEndlessScene {
         return variant.getHeight() * FALLING_TRIGGER_SCALE;
     }
 
-
-    // =========================================================
-    // Distance UI
-    // =========================================================
+ 
+    // Distance UI 
 
     /**
      * 建立距離 UI。
@@ -1698,10 +1646,8 @@ public class StreetEndlessScene {
         }
     }
 
-
-    // =========================================================
-    // Camera
-    // =========================================================
+ 
+    // Camera 
 
     /**
      * 設定無盡模式攝影機。
@@ -1746,10 +1692,8 @@ public class StreetEndlessScene {
         getGameScene().getViewport().setY(0);
     }
 
-
-    // =========================================================
-    // Cleanup
-    // =========================================================
+ 
+    // Cleanup 
 
     /**
      * 清理 Street Endless 場景。
@@ -1817,10 +1761,8 @@ public class StreetEndlessScene {
         fallingObjects.clear();
     }
 
-
-    // =========================================================
-    // Utility
-    // =========================================================
+ 
+    // Utility 
 
     private double randomRange(double min, double max) {
         return min + random.nextDouble() * (max - min);
@@ -1851,10 +1793,8 @@ public class StreetEndlessScene {
         }
     }
 
-
-    // =========================================================
-    // Data Records
-    // =========================================================
+ 
+    // Data Records 
 
     private record FarBackgroundSegment(
             double baseX,
@@ -1885,10 +1825,8 @@ public class StreetEndlessScene {
     ) {
     }
 
-
-    // =========================================================
-    // Mutable Data Class
-    // =========================================================
+ 
+    // Mutable Data Class 
 
     /**
      * FallingObjectInstance

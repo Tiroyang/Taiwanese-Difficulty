@@ -65,10 +65,8 @@ public enum StreetApartmentStyle {
             false
     );
 
-
-    // =========================================================
-    // Connection Settings
-    // =========================================================
+ 
+    // Connection Settings 
 
     /**
      * 是否需要與左側建築銜接。
@@ -80,10 +78,8 @@ public enum StreetApartmentStyle {
      */
     private final boolean connectsRight;
 
-
-    // =========================================================
-    // Constructor
-    // =========================================================
+ 
+    // Constructor 
 
     /**
      * 建立公寓排列樣式。
@@ -99,10 +95,8 @@ public enum StreetApartmentStyle {
         this.connectsRight = connectsRight;
     }
 
-
-    // =========================================================
-    // Getters
-    // =========================================================
+ 
+    // Getters 
 
     /**
      * 是否需要與左側建築銜接。

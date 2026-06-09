@@ -26,10 +26,8 @@ import java.util.List;
  * - DialogueSystem 負責切換 DialogueLine。
  */
 public class DialogueLine {
-
-    // =========================================================
-    // Basic Data
-    // =========================================================
+ 
+    // Basic Data 
 
     /**
      * 對話 ID。
@@ -62,10 +60,8 @@ public class DialogueLine {
      */
     private final String textKey;
 
-
-    // =========================================================
-    // Flow Settings
-    // =========================================================
+ 
+    // Flow Settings 
 
     /**
      * 是否允許玩家點擊進入下一句。
@@ -86,30 +82,24 @@ public class DialogueLine {
      */
     private final boolean endDialogue;
 
-
-    // =========================================================
-    // Runtime Callback
-    // =========================================================
+ 
+    // Runtime Callback 
 
     /**
      * 此句結束時要執行的事件。
      */
     private Runnable onFinish;
 
-
-    // =========================================================
-    // Buttons
-    // =========================================================
+ 
+    // Buttons 
 
     /**
      * 此句對話的選項按鈕。
      */
     private final List<DialogueButton> buttons = new ArrayList<>();
 
-
-    // =========================================================
-    // Constructor
-    // =========================================================
+ 
+    // Constructor 
 
     /**
      * 建立對話行。
@@ -143,10 +133,8 @@ public class DialogueLine {
         this.endDialogue = endDialogue;
     }
 
-
-    // =========================================================
-    // Builder Methods
-    // =========================================================
+ 
+    // Builder Methods 
 
     /**
      * 設定此句結束時要執行的事件。
@@ -187,10 +175,8 @@ public class DialogueLine {
         return addButton(new DialogueButton(textKey, action));
     }
 
-
-    // =========================================================
-    // Runtime Methods
-    // =========================================================
+ 
+    // Runtime Methods 
 
     /**
      * 執行此句結束事件。
@@ -210,10 +196,8 @@ public class DialogueLine {
         return !buttons.isEmpty();
     }
 
-
-    // =========================================================
-    // Getters
-    // =========================================================
+ 
+    // Getters 
 
     public String getId() {
         return id;
@@ -256,10 +240,8 @@ public class DialogueLine {
         return Collections.unmodifiableList(buttons);
     }
 
-
-    // =========================================================
-    // Nested Class - DialogueButton
-    // =========================================================
+ 
+    // Nested Class - DialogueButton 
 
     /**
      * DialogueButton

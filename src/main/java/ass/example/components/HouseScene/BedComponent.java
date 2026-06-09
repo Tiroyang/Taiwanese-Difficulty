@@ -30,10 +30,8 @@ import com.almasb.fxgl.entity.component.Component;
  * 這些 Entity 可以透過相同的 bedId 判定屬於同一張床。
  */
 public class BedComponent extends Component {
-
-    // =========================================================
-    // Enums
-    // =========================================================
+ 
+    // Enums 
 
     /**
      * 床 Entity 的角色。
@@ -51,10 +49,8 @@ public class BedComponent extends Component {
         COLLIDER
     }
 
-
-    // =========================================================
-    // Nested Data Classes
-    // =========================================================
+ 
+    // Nested Data Classes 
 
     /**
      * ColliderArea
@@ -132,10 +128,8 @@ public class BedComponent extends Component {
         }
     }
 
-
-    // =========================================================
-    // Basic Bed Settings
-    // =========================================================
+ 
+    // Basic Bed Settings 
 
     /**
      * 此 Entity 在床系統中的角色。
@@ -149,10 +143,8 @@ public class BedComponent extends Component {
      */
     private final String bedId;
 
-
-    // =========================================================
-    // Platform Settings
-    // =========================================================
+ 
+    // Platform Settings 
 
     /**
      * 床平台寬度。
@@ -168,10 +160,8 @@ public class BedComponent extends Component {
      */
     private final double platformHeight;
 
-
-    // =========================================================
-    // Collider Settings
-    // =========================================================
+ 
+    // Collider Settings 
 
     /**
      * 第一組床碰撞區。
@@ -188,10 +178,8 @@ public class BedComponent extends Component {
      */
     private final ColliderArea secondColliderArea;
 
-
-    // =========================================================
-    // Player Layer Settings
-    // =========================================================
+ 
+    // Player Layer Settings 
 
     /**
      * 玩家站在床上時的 ZIndex。
@@ -205,20 +193,16 @@ public class BedComponent extends Component {
      */
     private final int normalPlayerZIndex;
 
-
-    // =========================================================
-    // Death Settings
-    // =========================================================
+ 
+    // Death Settings 
 
     /**
      * 玩家第二次落在床上時要觸發的死亡原因。
      */
     private final DeathReason deathReasonOnSecondLanding;
 
-
-    // =========================================================
-    // Constructors
-    // =========================================================
+ 
+    // Constructors 
 
     /**
      * 建立床 Component。
@@ -321,10 +305,8 @@ public class BedComponent extends Component {
         this.deathReasonOnSecondLanding = deathReasonOnSecondLanding;
     }
 
-
-    // =========================================================
-    // Role Checks
-    // =========================================================
+ 
+    // Role Checks 
 
     /**
      * 判斷此 Entity 是否為床平台。
@@ -344,10 +326,8 @@ public class BedComponent extends Component {
         return role == Role.COLLIDER;
     }
 
-
-    // =========================================================
-    // Collider Checks
-    // =========================================================
+ 
+    // Collider Checks 
 
     /**
      * 判斷是否有有效的第一組碰撞區。
@@ -367,10 +347,8 @@ public class BedComponent extends Component {
         return secondColliderArea != null && secondColliderArea.isValid();
     }
 
-
-    // =========================================================
-    // Basic Getters
-    // =========================================================
+ 
+    // Basic Getters 
 
     public Role getRole() {
         return role;
@@ -380,10 +358,8 @@ public class BedComponent extends Component {
         return bedId;
     }
 
-
-    // =========================================================
-    // Platform Getters
-    // =========================================================
+ 
+    // Platform Getters 
 
     public double getPlatformWidth() {
         return platformWidth;
@@ -393,10 +369,8 @@ public class BedComponent extends Component {
         return platformHeight;
     }
 
-
-    // =========================================================
-    // Collider Getters
-    // =========================================================
+ 
+    // Collider Getters 
 
     public ColliderArea getFirstColliderArea() {
         return firstColliderArea;
@@ -406,10 +380,8 @@ public class BedComponent extends Component {
         return secondColliderArea;
     }
 
-
-    // =========================================================
-    // Player Layer Getters
-    // =========================================================
+ 
+    // Player Layer Getters 
 
     public int getPlayerZIndexOnBed() {
         return playerZIndexOnBed;
@@ -419,10 +391,8 @@ public class BedComponent extends Component {
         return normalPlayerZIndex;
     }
 
-
-    // =========================================================
-    // Death Getters
-    // =========================================================
+ 
+    // Death Getters 
 
     public DeathReason getDeathReasonOnSecondLanding() {
         return deathReasonOnSecondLanding;

@@ -74,21 +74,10 @@ import static com.almasb.fxgl.dsl.FXGLForKtKt.getGameController;
  * 4. 管理主選單內的子頁切換。
  * 5. 管理音量、視窗、語言、開發者模式、重置資料等設定頁。
  * 6. 管理成就列表展示。
- *
- * 單例判斷：
- * MainMenu 不適合做成單例。
- *
- * 原因：
- * - 它繼承 FXGLMenu，生命週期由 FXGL 管理。
- * - 它是 UI 畫面本身，不是純資料或全域系統。
- * - 它持有 pageLayer、selectedSettingsButton、expandedAchievementCell 等 UI 狀態。
- * - 若做成單例，切換 Scene 或重新建立 Menu 時容易殘留舊 UI 狀態。
  */
 public class MainMenu extends FXGLMenu {
-
-    // =========================================================
-    // Layout Constants
-    // =========================================================
+ 
+    // Layout Constants 
 
     private static final double SCREEN_WIDTH = 1280.0;
     private static final double SCREEN_HEIGHT = 720.0;
@@ -102,10 +91,8 @@ public class MainMenu extends FXGLMenu {
     private static final double SETTINGS_SIDE_BUTTON_WIDTH = 240.0;
     private static final double SETTINGS_SIDE_BUTTON_HEIGHT = 46.0;
 
-
-    // =========================================================
-    // Assets
-    // =========================================================
+ 
+    // Assets 
 
     private static final String MAIN_MENU_BG_PATH = "/assets/textures/ui/mainmenu/titlescreen_bg.png";
 
@@ -113,10 +100,8 @@ public class MainMenu extends FXGLMenu {
 
     private static final String MAIN_MENU_BGM_PATH = "/assets/music/mainmenu/Happy Wheels Theme.mp3";
 
-
-    // =========================================================
-    // Dependencies
-    // =========================================================
+ 
+    // Dependencies 
 
     private final AchievementSystem achievementSystem =
             AchievementSystem.getInstance();
@@ -133,10 +118,8 @@ public class MainMenu extends FXGLMenu {
     private final AudioSystem audioSystem =
             AudioSystem.getInstance();
 
-
-    // =========================================================
-    // Root UI
-    // =========================================================
+ 
+    // Root UI 
 
     private final StackPane root = new StackPane();
 
@@ -149,10 +132,8 @@ public class MainMenu extends FXGLMenu {
 
     private Label devModeLabel;
 
-
-    // =========================================================
-    // Page State
-    // =========================================================
+ 
+    // Page State 
 
     private StackPane selectedSettingsButton;
     private StackPane expandedAchievementCell;
@@ -160,19 +141,15 @@ public class MainMenu extends FXGLMenu {
     private boolean firstCreate = true;
     private boolean cutscene = true;
 
-
-    // =========================================================
-    // Cached Images
-    // =========================================================
+ 
+    // Cached Images 
 
     private Image volumeIcon;
     private Image volumeDownIcon;
     private Image volumeMuteIcon;
 
-
-    // =========================================================
-    // Constructor / FXGL Lifecycle
-    // =========================================================
+ 
+    // Constructor / FXGL Lifecycle 
 
     public MainMenu() {
         super(MenuType.MAIN_MENU);
@@ -227,10 +204,8 @@ public class MainMenu extends FXGLMenu {
         musicSystem.stopBGM();
     }
 
-
-    // =========================================================
-    // Basic Setup
-    // =========================================================
+ 
+    // Basic Setup 
 
     private void setupRoot() {
         root.setPrefSize(SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -340,10 +315,8 @@ public class MainMenu extends FXGLMenu {
         root.getChildren().add(devModeLabel);
     }
 
-
-    // =========================================================
-    // Main Menu Animation
-    // =========================================================
+ 
+    // Main Menu Animation 
 
     /**
      * 播放第一次進入主選單的動畫。
@@ -424,10 +397,8 @@ public class MainMenu extends FXGLMenu {
         return new ParallelTransition(fade, move);
     }
 
-
-    // =========================================================
-    // Page Navigation
-    // =========================================================
+ 
+    // Page Navigation 
 
     /**
      * 顯示子頁。
@@ -543,10 +514,8 @@ public class MainMenu extends FXGLMenu {
         page.setCenter(content);
     }
 
-
-    // =========================================================
-    // Story Mode Page
-    // =========================================================
+ 
+    // Story Mode Page 
 
     private void showStoryModePage() {
         BorderPane page = createSubPageBase();
@@ -599,10 +568,8 @@ public class MainMenu extends FXGLMenu {
         fireNewGame();
     }
 
-
-    // =========================================================
-    // Mini Game Page
-    // =========================================================
+ 
+    // Mini Game Page 
 
     private void showMiniGameModePage() {
         BorderPane page = createSubPageBase();
@@ -662,10 +629,8 @@ public class MainMenu extends FXGLMenu {
         );
     }
 
-
-    // =========================================================
-    // Achievement Page
-    // =========================================================
+ 
+    // Achievement Page 
 
     private void showAchievementPage() {
         StackPane page = new StackPane();
@@ -1055,10 +1020,8 @@ public class MainMenu extends FXGLMenu {
         expandedAchievementCell = null;
     }
 
-
-    // =========================================================
-    // Settings Page
-    // =========================================================
+ 
+    // Settings Page 
 
     private void showSettingsPage() {
         BorderPane page = createSubPageBase();
@@ -1239,13 +1202,11 @@ public class MainMenu extends FXGLMenu {
     ) {
     }
 
-
-    // =========================================================
-    // Key Config Panel
-    // =========================================================
+ 
+    // Key Config Panel 
 
     private VBox createKeyConfigPanel() {
-        VBox box = createPanelBox();
+            VBox box = createPanelBox();
 
         box.getChildren().addAll(
                 createKeyConfigRow(
@@ -1333,10 +1294,8 @@ public class MainMenu extends FXGLMenu {
         return text;
     }
 
-
-    // =========================================================
-    // Volume Panel
-    // =========================================================
+ 
+    // Volume Panel 
 
     @FunctionalInterface
     private interface VolumeSetter {
@@ -1507,7 +1466,7 @@ public class MainMenu extends FXGLMenu {
 
         slider.sceneProperty().addListener((observable, oldScene, newScene) -> {
             if (newScene != null) {
-                slider.applyCss();
+                    slider.applyCss();
                 updateSliderProgressStyle(slider);
             }
         });
@@ -1648,10 +1607,8 @@ public class MainMenu extends FXGLMenu {
         }
     }
 
-
-    // =========================================================
-    // Toggle Switch
-    // =========================================================
+ 
+    // Toggle Switch 
 
     @FunctionalInterface
     private interface ToggleAction {
@@ -1802,10 +1759,8 @@ public class MainMenu extends FXGLMenu {
         toggle.setUserData(new ToggleSwitchState(track, knob, enabled));
     }
 
-
-    // =========================================================
-    // Window Size Panel
-    // =========================================================
+ 
+    // Window Size Panel 
 
     private VBox createWindowSizePanel() {
         VBox box = createPanelBox();
@@ -1870,10 +1825,8 @@ public class MainMenu extends FXGLMenu {
         return modeBox;
     }
 
-
-    // =========================================================
-    // Language Panel
-    // =========================================================
+ 
+    // Language Panel 
 
     private VBox createLanguagePanel() {
         VBox box = createPanelBox();
@@ -1945,10 +1898,8 @@ public class MainMenu extends FXGLMenu {
         );
     }
 
-
-    // =========================================================
-    // Reset Panel
-    // =========================================================
+ 
+    // Reset Panel 
 
     private VBox createResetGamePanel() {
         VBox box = createPanelBox();
@@ -2051,10 +2002,8 @@ public class MainMenu extends FXGLMenu {
         }
     }
 
-
-    // =========================================================
-    // Developer Mode Panel
-    // =========================================================
+ 
+    // Developer Mode Panel 
 
     @FunctionalInterface
     private interface TogglePressedAction {
@@ -2220,10 +2169,8 @@ public class MainMenu extends FXGLMenu {
         button.setEffect(null);
     }
 
-
-    // =========================================================
-    // About Page
-    // =========================================================
+ 
+    // About Page 
 
     private VBox createAboutGamePanel() {
         VBox box = createPanelBox();
@@ -2416,10 +2363,8 @@ public class MainMenu extends FXGLMenu {
         return line;
     }
 
-
-    // =========================================================
-    // Common Page UI
-    // =========================================================
+ 
+    // Common Page UI 
 
     private BorderPane createSubPageBase() {
         BorderPane page = new BorderPane();
@@ -2521,10 +2466,8 @@ public class MainMenu extends FXGLMenu {
         return text;
     }
 
-
-    // =========================================================
-    // Common Buttons
-    // =========================================================
+ 
+    // Common Buttons 
 
     private StackPane createMenuButton(
             String value,
@@ -2770,10 +2713,8 @@ public class MainMenu extends FXGLMenu {
         );
     }
 
-
-    // =========================================================
-    // Popup / Notice
-    // =========================================================
+ 
+    // Popup / Notice 
 
     private void showTextNotice(String value) {
         Label notice = new Label(value);
@@ -2856,10 +2797,8 @@ public class MainMenu extends FXGLMenu {
         pageLayer.getChildren().add(popup);
     }
 
-
-    // =========================================================
-    // Main Menu Reset / Exit
-    // =========================================================
+ 
+    // Main Menu Reset / Exit 
 
     private void resetToMainMenuFirst() {
         cutscene = true;
@@ -2930,10 +2869,8 @@ public class MainMenu extends FXGLMenu {
         );
     }
 
-
-    // =========================================================
-    // Utility
-    // =========================================================
+ 
+    // Utility 
 
     private FadeTransition createFadeTransition(
             Node node,

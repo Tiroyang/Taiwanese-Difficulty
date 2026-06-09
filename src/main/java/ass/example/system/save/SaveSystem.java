@@ -41,10 +41,8 @@ import static com.almasb.fxgl.dsl.FXGL.*;
  * 9. 從 Base64 還原縮圖 Image。
  */
 public final class SaveSystem {
-
-    // =========================================================
-    // Singleton
-    // =========================================================
+ 
+    // Singleton 
 
     private static SaveSystem INSTANCE;
 
@@ -64,39 +62,31 @@ public final class SaveSystem {
         return INSTANCE != null;
     }
 
-
-    // =========================================================
-    // Screenshot Settings
-    // =========================================================
+ 
+    // Screenshot Settings 
 
     private static final int THUMBNAIL_WIDTH = 1280;
     private static final int THUMBNAIL_HEIGHT = 720;
 
     private static final String THUMBNAIL_FORMAT = "png";
 
-
-    // =========================================================
-    // Dependencies
-    // =========================================================
+ 
+    // Dependencies 
 
     /**
      * 場景管理器。
      */
     private final SceneManager sceneManager;
 
-
-    // =========================================================
-    // Constructor
-    // =========================================================
+ 
+    // Constructor 
 
     public SaveSystem(SceneManager sceneManager) {
         this.sceneManager = sceneManager;
     }
 
-
-    // =========================================================
-    // Create Save Bundle
-    // =========================================================
+ 
+    // Create Save Bundle 
 
     public Bundle createSaveBundle() {
         return createSaveBundle(null);
@@ -153,10 +143,8 @@ public final class SaveSystem {
         bundle.put(SaveKey.SAVED_AT, System.currentTimeMillis());
     }
 
-
-    // =========================================================
-    // Load From Bundle
-    // =========================================================
+ 
+    // Load From Bundle 
 
     /**
      * 從 Bundle 還原遊戲。
@@ -230,10 +218,8 @@ public final class SaveSystem {
         playerComponent.respawnAt(playerX + 50, playerY);
     }
 
-
-    // =========================================================
-    // Death State Restore
-    // =========================================================
+ 
+    // Death State Restore 
 
     /**
      * 根據存檔內容恢復死亡狀態。
@@ -284,10 +270,8 @@ public final class SaveSystem {
         sceneManager.clearDeathStateForLoad();
     }
 
-
-    // =========================================================
-    // Game Vars
-    // =========================================================
+ 
+    // Game Vars 
     // 新增欄位時也需要在此新增
 
     private void saveGameVars(Bundle bundle) {
@@ -325,10 +309,8 @@ public final class SaveSystem {
         setStringIfExists(bundle, SaveKey.LAST_DEATH_REASON);
     }
 
-
-    // =========================================================
-    // Death Achievements
-    // =========================================================
+ 
+    // Death Achievements 
 
     private void saveDeathAchievements(Bundle bundle) {
         for (DeathReason reason : DeathReason.values()) {
@@ -344,10 +326,8 @@ public final class SaveSystem {
         }
     }
 
-
-    // =========================================================
-    // Quests
-    // =========================================================
+ 
+    // Quests 
 
     private void saveQuests(Bundle bundle) {
         QuestSystem questSystem = QuestSystem.getInstance();
@@ -430,10 +410,8 @@ public final class SaveSystem {
         );
     }
 
-
-    // =========================================================
-    // Thumbnail
-    // =========================================================
+ 
+    // Thumbnail 
 
     /**
      * 擷取遊戲畫面並轉為 Base64。
@@ -520,10 +498,8 @@ public final class SaveSystem {
         }
     }
 
-
-    // =========================================================
-    // Bundle Write Helpers
-    // =========================================================
+ 
+    // Bundle Write Helpers 
 
     private void putBoolIfExists(Bundle bundle, String key) {
         try {
@@ -546,10 +522,8 @@ public final class SaveSystem {
         }
     }
 
-
-    // =========================================================
-    // Bundle Read Helpers
-    // =========================================================
+ 
+    // Bundle Read Helpers 
 
     private void setBoolIfExists(Bundle bundle, String key) {
         try {

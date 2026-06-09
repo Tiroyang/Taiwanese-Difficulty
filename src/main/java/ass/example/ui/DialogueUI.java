@@ -51,18 +51,14 @@ import java.net.URL;
  * 8. 處理玩家點擊選項按鈕。
  */
 public class DialogueUI extends StackPane {
-
-    // =========================================================
-    // Screen Settings
-    // =========================================================
+ 
+    // Screen Settings 
 
     private static final double SCREEN_WIDTH = 1280.0;
     private static final double SCREEN_HEIGHT = 720.0;
 
-
-    // =========================================================
-    // Portrait Settings
-    // =========================================================
+ 
+    // Portrait Settings 
 
     private static final double PORTRAIT_HEIGHT = 1000.0;
 
@@ -72,10 +68,8 @@ public class DialogueUI extends StackPane {
     private static final double PORTRAIT_SPEAK_SCALE = 1.03;
     private static final double PORTRAIT_SCALE_DURATION = 0.14;
 
-
-    // =========================================================
-    // Dialogue Box Settings
-    // =========================================================
+ 
+    // Dialogue Box Settings 
 
     private static final double DIALOGUE_BOX_WIDTH = 980.0;
     private static final double DIALOGUE_BOX_HEIGHT = 168.0;
@@ -84,28 +78,22 @@ public class DialogueUI extends StackPane {
 
     private static final double DIALOGUE_BOX_BOTTOM_MARGIN = 36.0;
 
-
-    // =========================================================
-    // Name Box Settings
-    // =========================================================
+ 
+    // Name Box Settings 
 
     private static final double NAME_BOX_WIDTH = 110.0;
     private static final double NAME_BOX_HEIGHT = 46.0;
 
-
-    // =========================================================
-    // Choice Button Settings
-    // =========================================================
+ 
+    // Choice Button Settings 
 
     private static final double BUTTON_BOX_GAP = 14.0;
 
     private static final double CHOICE_BUTTON_WIDTH = 156.0;
     private static final double CHOICE_BUTTON_HEIGHT = 44.0;
 
-
-    // =========================================================
-    // Animation Settings
-    // =========================================================
+ 
+    // Animation Settings 
 
     private static final double LINE_ENTER_DURATION = 0.14;
     private static final double LINE_ENTER_OFFSET_Y = 18.0;
@@ -114,10 +102,8 @@ public class DialogueUI extends StackPane {
 
     private static final double BUTTON_FADE_DURATION = 0.16;
 
-
-    // =========================================================
-    // Dependencies
-    // =========================================================
+ 
+    // Dependencies 
 
     /**
      * 對話流程控制器。
@@ -138,10 +124,8 @@ public class DialogueUI extends StackPane {
      */
     private final LanguageSystem languageSystem = LanguageSystem.getInstance();
 
-
-    // =========================================================
-    // UI Nodes
-    // =========================================================
+ 
+    // UI Nodes 
 
     /**
      * 角色立繪。
@@ -197,10 +181,8 @@ public class DialogueUI extends StackPane {
      */
     private final HBox buttonBox = new HBox(BUTTON_BOX_GAP);
 
-
-    // =========================================================
-    // Runtime State
-    // =========================================================
+ 
+    // Runtime State 
 
     /**
      * 目前正在顯示的對話行。
@@ -227,10 +209,8 @@ public class DialogueUI extends StackPane {
      */
     private int currentCharIndex = 0;
 
-
-    // =========================================================
-    // Constructor
-    // =========================================================
+ 
+    // Constructor 
 
     /**
      * 建立對話 UI。
@@ -270,10 +250,8 @@ public class DialogueUI extends StackPane {
         });
     }
 
-
-    // =========================================================
-    // Public API
-    // =========================================================
+ 
+    // Public API 
 
     /**
      * 顯示指定對話行。
@@ -303,10 +281,8 @@ public class DialogueUI extends StackPane {
         startTypewriter(line);
     }
 
-
-    // =========================================================
-    // Setup UI
-    // =========================================================
+ 
+    // Setup UI 
 
     /**
      * 設定黑色半透明背景。
@@ -424,10 +400,8 @@ public class DialogueUI extends StackPane {
         );
     }
 
-
-    // =========================================================
-    // Line Display
-    // =========================================================
+ 
+    // Line Display 
 
     /**
      * 更新角色名稱框顯示。
@@ -507,10 +481,8 @@ public class DialogueUI extends StackPane {
         ).play();
     }
 
-
-    // =========================================================
-    // Typewriter
-    // =========================================================
+ 
+    // Typewriter 
 
     /**
      * 開始打字機效果。
@@ -597,10 +569,8 @@ public class DialogueUI extends StackPane {
         }
     }
 
-
-    // =========================================================
-    // Portrait Effects
-    // =========================================================
+ 
+    // Portrait Effects 
 
     /**
      * 開始說話立繪效果。
@@ -646,10 +616,8 @@ public class DialogueUI extends StackPane {
         scaleBack.play();
     }
 
-
-    // =========================================================
-    // Dialogue Click Handling
-    // =========================================================
+ 
+    // Dialogue Click Handling 
 
     /**
      * 處理對話畫面點擊。
@@ -693,10 +661,8 @@ public class DialogueUI extends StackPane {
         return false;
     }
 
-
-    // =========================================================
-    // Buttons
-    // =========================================================
+ 
+    // Buttons 
 
     /**
      * 清空並隱藏選項按鈕。
@@ -838,10 +804,8 @@ public class DialogueUI extends StackPane {
         });
     }
 
-
-    // =========================================================
-    // Portrait Loading
-    // =========================================================
+ 
+    // Portrait Loading 
 
     /**
      * 載入角色立繪。
@@ -871,10 +835,8 @@ public class DialogueUI extends StackPane {
         }
     }
 
-
-    // =========================================================
-    // Pattern / Style Helpers
-    // =========================================================
+ 
+    // Pattern / Style Helpers 
 
     /**
      * 建立背景樣式，用於對話框背景。
@@ -912,10 +874,8 @@ public class DialogueUI extends StackPane {
         );
     }
 
-
-    // =========================================================
-    // Animation Helpers
-    // =========================================================
+ 
+    // Animation Helpers 
 
     /**
      * 建立淡入淡出動畫。
@@ -958,10 +918,8 @@ public class DialogueUI extends StackPane {
         return transition;
     }
 
-
-    // =========================================================
-    // Language Helpers
-    // =========================================================
+ 
+    // Language Helpers 
 
     /**
      * 取得目前語言文字。

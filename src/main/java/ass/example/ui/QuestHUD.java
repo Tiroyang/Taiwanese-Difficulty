@@ -46,10 +46,8 @@ import java.util.Objects;
  * 5. 收合後滑鼠靠近左側 hoverZone 時，只讓展開按鈕探出。
  */
 public class QuestHUD extends Pane {
-
-    // =========================================================
-    // System References
-    // =========================================================
+ 
+    // System References 
 
     private final QuestSystem questSystem =
             QuestSystem.getInstance();
@@ -57,10 +55,8 @@ public class QuestHUD extends Pane {
     private final LanguageSystem languageSystem =
             LanguageSystem.getInstance();
 
-
-    // =========================================================
-    // Layout Constants
-    // =========================================================
+ 
+    // Layout Constants 
 
     /**
      * 展開 / 收合按鈕尺寸。
@@ -113,10 +109,8 @@ public class QuestHUD extends Pane {
     private static final double COLLAPSED_BUTTON_HIDDEN_X = -TOGGLE_WIDTH - 10;
     private static final double COLLAPSED_BUTTON_PEEK_X = 10;
 
-
-    // =========================================================
-    // UI Nodes
-    // =========================================================
+ 
+    // UI Nodes 
 
     /**
      * 任務列表本體。
@@ -137,10 +131,8 @@ public class QuestHUD extends Pane {
      */
     private final StackPane collapsedToggleButton = new StackPane();
 
-
-    // =========================================================
-    // Runtime State
-    // =========================================================
+ 
+    // Runtime State 
 
     /**
      * 每個 QuestType 對應目前畫面上的 row。
@@ -175,10 +167,8 @@ public class QuestHUD extends Pane {
      */
     private double currentRowWidth = 360;
 
-
-    // =========================================================
-    // Constructor
-    // =========================================================
+ 
+    // Constructor 
 
     public QuestHUD() {
         setupRoot();
@@ -195,10 +185,8 @@ public class QuestHUD extends Pane {
         refresh();
     }
 
-
-    // =========================================================
-    // Basic Helpers
-    // =========================================================
+ 
+    // Basic Helpers 
 
     private String text(String key) {
         return languageSystem.text(key);
@@ -220,10 +208,8 @@ public class QuestHUD extends Pane {
         return state != null && state.isCompletionAnimationPlayed();
     }
 
-
-    // =========================================================
-    // Setup
-    // =========================================================
+ 
+    // Setup 
 
     /**
      * 設定整個 HUD Pane。
@@ -341,10 +327,8 @@ public class QuestHUD extends Pane {
         });
     }
 
-
-    // =========================================================
-    // Public Update / Refresh
-    // =========================================================
+ 
+    // Public Update / Refresh 
 
     /**
      * 每幀由場景呼叫。
@@ -398,10 +382,8 @@ public class QuestHUD extends Pane {
         }
     }
 
-
-    // =========================================================
-    // HUD Collapse / Expand
-    // =========================================================
+ 
+    // HUD Collapse / Expand 
 
     /**
      * 收合 HUD。
@@ -539,10 +521,8 @@ public class QuestHUD extends Pane {
         move.play();
     }
 
-
-    // =========================================================
-    // Quest Row Creation
-    // =========================================================
+ 
+    // Quest Row Creation 
 
     /**
      * 建立單列任務。
@@ -718,10 +698,8 @@ public class QuestHUD extends Pane {
         return text(quest.getTitleKey()) + "  (" + amount + "/" + required + ")";
     }
 
-
-    // =========================================================
-    // Text / Width Calculation
-    // =========================================================
+ 
+    // Text / Width Calculation 
 
     private double measureTextWidth(String content) {
         Text measure = new Text(content);
@@ -745,10 +723,8 @@ public class QuestHUD extends Pane {
                 + ICON_SPACE_WIDTH;
     }
 
-
-    // =========================================================
-    // Quest Completion Animation
-    // =========================================================
+ 
+    // Quest Completion Animation 
 
     /**
      * 播放任務完成勾勾動畫。
@@ -864,10 +840,8 @@ public class QuestHUD extends Pane {
         return icon;
     }
 
-
-    // =========================================================
-    // Quest Page Replace Animation
-    // =========================================================
+ 
+    // Quest Page Replace Animation 
 
     /**
      * 任務完成後，把舊任務往上滑出，新任務從下方補進來。

@@ -32,10 +32,8 @@ import static com.almasb.fxgl.dsl.FXGL.*;
  * DeathSystem.init(deathSystem);
  */
 public class DeathSystem {
-
-    // =========================================================
-    // Singleton
-    // =========================================================
+ 
+    // Singleton 
 
     /**
      * DeathSystem 單例實體。
@@ -78,10 +76,8 @@ public class DeathSystem {
         return INSTANCE != null;
     }
 
-
-    // =========================================================
-    // Dependencies
-    // =========================================================
+ 
+    // Dependencies 
 
     /**
      * 場景管理器。
@@ -115,10 +111,8 @@ public class DeathSystem {
      */
     private final AchievementSystem achievementSystem = AchievementSystem.getInstance();
 
-
-    // =========================================================
-    // Runtime State
-    // =========================================================
+ 
+    // Runtime State 
 
     /**
      * 玩家目前是否處於死亡狀態。
@@ -134,10 +128,8 @@ public class DeathSystem {
      */
     private DeathReason currentReason;
 
-
-    // =========================================================
-    // Constructor
-    // =========================================================
+ 
+    // Constructor 
 
     /**
      * 建立死亡系統。
@@ -154,10 +146,8 @@ public class DeathSystem {
         addUINode(deathScreen, 0, 0);
     }
 
-
-    // =========================================================
-    // Death Entry
-    // =========================================================
+ 
+    // Death Entry 
 
     /**
      * 觸發玩家死亡。
@@ -276,10 +266,8 @@ public class DeathSystem {
         deathScreen.show(reason, geti(SaveKey.DEATH_COUNT));
     }
 
-
-    // =========================================================
-    // Restore Death From Save
-    // =========================================================
+ 
+    // Restore Death From Save 
 
     /**
      * 從存檔還原死亡狀態。
@@ -307,10 +295,8 @@ public class DeathSystem {
         deathScreen.show(reason, geti(SaveKey.DEATH_COUNT));
     }
 
-
-    // =========================================================
-    // Street Endless Record
-    // =========================================================
+ 
+    // Street Endless Record 
 
     /**
      * 若目前是 Street Endless 模式，更新最佳距離紀錄。
@@ -341,10 +327,8 @@ public class DeathSystem {
         set("streetNewRecord", newRecord);
     }
 
-
-    // =========================================================
-    // Achievement
-    // =========================================================
+ 
+    // Achievement 
 
     /**
      * 若成就沒有被禁用，嘗試解鎖死亡原因成就。
@@ -367,10 +351,8 @@ public class DeathSystem {
         }
     }
 
-
-    // =========================================================
-    // Respawn / Exit
-    // =========================================================
+ 
+    // Respawn / Exit 
 
     /**
      * 玩家按下死亡畫面的重生按鈕時呼叫。
@@ -422,10 +404,8 @@ public class DeathSystem {
         deathScreen.hide();
     }
 
-
-    // =========================================================
-    // Current Player Helpers
-    // =========================================================
+ 
+    // Current Player Helpers 
 
     /**
      * 取得目前玩家的 PlayerComponent。
@@ -446,10 +426,8 @@ public class DeathSystem {
         return player.getComponent(PlayerComponent.class);
     }
 
-
-    // =========================================================
-    // Game Var Helpers
-    // =========================================================
+ 
+    // Game Var Helpers 
 
     /**
      * 判斷目前是否為 Street Endless 模式。
@@ -505,10 +483,8 @@ public class DeathSystem {
         }
     }
 
-
-    // =========================================================
-    // Getters
-    // =========================================================
+ 
+    // Getters 
 
     /**
      * 取得目前是否死亡。

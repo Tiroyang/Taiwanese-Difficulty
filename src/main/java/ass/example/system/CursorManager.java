@@ -25,46 +25,34 @@ import java.util.WeakHashMap;
  * 4. 滑鼠閒置一段時間後自動隱藏。
  * 5. 滑鼠移動、拖曳、點擊、進入畫面時重新顯示。
  *
- * 為什麼不用單一 installedRoot：
  * - FXGLMenu、DeathScreen、DialogueUI 可能是不同 UI root。
  * - 如果只記錄一個 root，後安裝的 UI 可能會讓前一個 UI 的游標狀態失效。
  * - 使用 WeakHashMap 可以避免 root 被銷毀後仍被 CursorManager 強制保留。
  */
 public final class CursorManager {
-
-    // =========================================================
-    // Cursor Settings
-    // =========================================================
+ 
+    // Cursor Settings 
 
     /**
      * 自訂游標圖片路徑。
      */
-    private static final String CURSOR_PATH =
-            "/assets/textures/ui/cursor/cursor.png";
+    private static final String CURSOR_PATH = "/assets/textures/ui/cursor/cursor.png";
 
     /**
      * 滑鼠閒置幾秒後隱藏。
-     *
-     * 如果你不想自動隱藏，可以把秒數改很大，
-     * 或在 install() 裡不要呼叫 restartIdleTimer()。
      */
     private static final double IDLE_HIDE_SECONDS = 2.0;
 
     /**
      * 游標熱點。
      *
-     * 這是實際點擊判定的位置。
-     * 依你的圖片調整：
-     * - 左上角點擊：0, 0
-     * - 圖片尖端在 x=25, y=0：25, 0
+     * 實際點擊判定的位置。
      */
     private static final double HOTSPOT_X = 25;
     private static final double HOTSPOT_Y = 0;
 
-
-    // =========================================================
-    // Runtime State
-    // =========================================================
+ 
+    // Runtime State 
 
     private static Cursor customCursor;
 
@@ -80,30 +68,21 @@ public final class CursorManager {
      * 使用 WeakHashMap：
      * root 被 JavaFX 回收後，這裡不會硬保留引用。
      */
-    private static final Set<Node> installedRoots =
-            Collections.newSetFromMap(new WeakHashMap<>());
+    private static final Set<Node> installedRoots = Collections.newSetFromMap(new WeakHashMap<>());
 
-
-    // =========================================================
-    // Constructor
-    // =========================================================
+ 
+    // Constructor 
 
     private CursorManager() {
     }
 
-
-    // =========================================================
-    // Public API
-    // =========================================================
+ 
+    // Public API 
 
     /**
      * 安裝自訂游標。
      *
-     * 建議在以下地方呼叫：
-     * - MainMenu constructor / onCreate
-     * - PauseMenu constructor / onCreate
-     * - DeathScreen constructor
-     * - DialogueUI constructor
+     * 在 UI 的 constructor / onCreate 呼叫
      *
      * @param root 要套用自訂游標的 UI root
      */
@@ -117,15 +96,12 @@ public final class CursorManager {
         currentActiveRoot = root;
 
         /*
-         * 關鍵：
-         * 不只 root，要連子節點一起套用。
-         * 否則滑鼠移到 button、overlay、VBox、StackPane 上時，
-         * 可能仍然顯示預設游標或看不到游標。
+         * 要連子節點一起套用。
          */
         applyCursorRecursively(root, customCursor);
 
         /*
-         * 同一個 root 只安裝一次事件監聽，避免事件重複觸發。
+         * 同一個 root 只安裝一次事件監聽。
          */
         if (!installedRoots.contains(root)) {
             installedRoots.add(root);
@@ -138,11 +114,6 @@ public final class CursorManager {
 
     /**
      * 重新把游標套用到目前 active root。
-     *
-     * 適合用在：
-     * - 動態新增子頁面後
-     * - 動態新增 button / popup 後
-     * - 切換語言重新建立按鈕後
      */
     public static void refresh() {
         if (currentActiveRoot == null) {
@@ -213,10 +184,8 @@ public final class CursorManager {
         cursorVisible = true;
     }
 
-
-    // =========================================================
-    // Cursor Loading
-    // =========================================================
+ 
+    // Cursor Loading 
 
     private static void ensureCursorLoaded() {
         if (customCursor != null) {
@@ -250,10 +219,8 @@ public final class CursorManager {
         }
     }
 
-
-    // =========================================================
-    // Activity / Idle Handling
-    // =========================================================
+ 
+    // Activity / Idle Handling 
 
     private static void installActivityListeners(Node root) {
         root.addEventFilter(MouseEvent.MOUSE_MOVED, event -> onMouseActivity(root));
@@ -289,7 +256,6 @@ public final class CursorManager {
         idleTimer.setOnFinished(event -> {
             /*
              * 只隱藏目前 active root。
-             * 避免 DeathScreen / DialogueUI 關閉後，把其他 UI root 的游標一起弄亂。
              */
             if (currentActiveRoot != null) {
                 hideCursor(currentActiveRoot);
@@ -299,15 +265,11 @@ public final class CursorManager {
         idleTimer.playFromStart();
     }
 
-
-    // =========================================================
-    // Recursive Cursor Apply
-    // =========================================================
+ 
+    // Recursive Cursor Apply 
 
     /**
      * 將游標套用到 node 與其所有子節點。
-     *
-     * 這是修正 PauseMenu / DeathScreen / DialogueUI 游標不出現的關鍵。
      */
     private static void applyCursorRecursively(Node node, Cursor cursor) {
         if (node == null) {

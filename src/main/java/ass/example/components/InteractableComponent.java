@@ -63,10 +63,8 @@ import java.util.function.Supplier;
  * )
  */
 public class InteractableComponent extends Component {
-
-    // =========================================================
-    // Default Settings
-    // =========================================================
+ 
+    // Default Settings 
 
     /**
      * 預設互動距離。
@@ -94,10 +92,8 @@ public class InteractableComponent extends Component {
      */
     private static final double DEFAULT_PROMPT_OFFSET_Y = 30.0;
 
-
-    // =========================================================
-    // Prompt Settings
-    // =========================================================
+ 
+    // Prompt Settings 
 
     /**
      * 互動提示文字 key 的供應器。
@@ -113,20 +109,16 @@ public class InteractableComponent extends Component {
      */
     private final Supplier<String> promptKeySupplier;
 
-
-    // =========================================================
-    // Interaction Action
-    // =========================================================
+ 
+    // Interaction Action 
 
     /**
      * 玩家執行互動時要觸發的行為。
      */
     private final Runnable interactAction;
 
-
-    // =========================================================
-    // Interaction Range Settings
-    // =========================================================
+ 
+    // Interaction Range Settings 
 
     /**
      * 玩家可互動距離。
@@ -154,10 +146,8 @@ public class InteractableComponent extends Component {
      */
     private final double promptOffsetY;
 
-
-    // =========================================================
-    // Interaction Condition
-    // =========================================================
+ 
+    // Interaction Condition 
 
     /**
      * 是否允許互動的條件。
@@ -178,10 +168,8 @@ public class InteractableComponent extends Component {
      */
     private final Supplier<Boolean> canInteractCondition;
 
-
-    // =========================================================
-    // Constructors - Simple
-    // =========================================================
+ 
+    // Constructors - Simple 
 
     /**
      * 建立最簡單的互動 Component。
@@ -233,10 +221,8 @@ public class InteractableComponent extends Component {
         );
     }
 
-
-    // =========================================================
-    // Constructors - Dynamic Prompt
-    // =========================================================
+ 
+    // Constructors - Dynamic Prompt 
 
     /**
      * 建立支援動態提示文字的互動 Component。
@@ -310,10 +296,8 @@ public class InteractableComponent extends Component {
                 : () -> true;
     }
 
-
-    // =========================================================
-    // Interaction State
-    // =========================================================
+ 
+    // Interaction State 
 
     /**
      * 判斷目前是否允許互動。
@@ -328,10 +312,8 @@ public class InteractableComponent extends Component {
         return canInteractCondition.get();
     }
 
-
-    // =========================================================
-    // Interaction Execute
-    // =========================================================
+ 
+    // Interaction Execute 
 
     /**
      * 執行互動行為。
@@ -346,10 +328,8 @@ public class InteractableComponent extends Component {
         }
     }
 
-
-    // =========================================================
-    // Prompt Text
-    // =========================================================
+ 
+    // Prompt Text 
 
     /**
      * 取得目前互動提示的語言 key。
@@ -373,10 +353,8 @@ public class InteractableComponent extends Component {
         return LanguageSystem.getInstance().text(getPromptKey());
     }
 
-
-    // =========================================================
-    // Getters
-    // =========================================================
+ 
+    // Getters 
 
     /**
      * 取得互動距離。

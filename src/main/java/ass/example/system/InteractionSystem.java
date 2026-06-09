@@ -44,10 +44,8 @@ import static com.almasb.fxgl.dsl.FXGL.*;
  * 6. 支援全域互動鎖，避免轉場前後連續觸發互動。
  */
 public class InteractionSystem {
-
-    // =========================================================
-    // UI Constants
-    // =========================================================
+ 
+    // UI Constants 
 
     /**
      * 互動提示框左右 padding。
@@ -73,10 +71,8 @@ public class InteractionSystem {
      */
     private static final String KEY_ICON_PATH = "/assets/textures/ui/keys/key-f.png";
 
-
-    // =========================================================
-    // Animation Constants
-    // =========================================================
+ 
+    // Animation Constants 
 
     /**
      * 提示框出現動畫秒數。
@@ -108,10 +104,8 @@ public class InteractionSystem {
      */
     private static final double PROMPT_PULSE_FULL_SECONDS = 1.3;
 
-
-    // =========================================================
-    // Interaction Constants
-    // =========================================================
+ 
+    // Interaction Constants 
 
     /**
      * 互動冷卻時間。
@@ -120,10 +114,8 @@ public class InteractionSystem {
      */
     private static final double INTERACT_COOLDOWN_SECONDS = 0.25;
 
-
-    // =========================================================
-    // Global Interaction Lock
-    // =========================================================
+ 
+    // Global Interaction Lock 
 
     /**
      * 全域互動鎖結束時間。
@@ -132,20 +124,16 @@ public class InteractionSystem {
      */
     private static long globalInteractLockedUntilNanos = 0L;
 
-
-    // =========================================================
-    // Dependencies
-    // =========================================================
+ 
+    // Dependencies 
 
     /**
      * 目前場景的玩家 Entity。
      */
     private final Entity player;
 
-
-    // =========================================================
-    // UI Nodes
-    // =========================================================
+ 
+    // UI Nodes 
 
     /**
      * 提示框根容器。
@@ -169,10 +157,8 @@ public class InteractionSystem {
      */
     private final Text actionText = new Text();
 
-
-    // =========================================================
-    // Runtime State
-    // =========================================================
+ 
+    // Runtime State 
 
     /**
      * 目前正在顯示提示的目標。
@@ -191,10 +177,8 @@ public class InteractionSystem {
      */
     private double interactTimer = 0.0;
 
-
-    // =========================================================
-    // Constructor
-    // =========================================================
+ 
+    // Constructor 
 
     /**
      * 建立互動系統。
@@ -209,10 +193,8 @@ public class InteractionSystem {
         addUINode(promptBox, 0, 0);
     }
 
-
-    // =========================================================
-    // Update
-    // =========================================================
+ 
+    // Update 
 
     /**
      * 每幀更新互動系統。
@@ -264,10 +246,8 @@ public class InteractionSystem {
         }
     }
 
-
-    // =========================================================
-    // Interact
-    // =========================================================
+ 
+    // Interact 
 
     /**
      * 嘗試執行互動。
@@ -309,10 +289,8 @@ public class InteractionSystem {
         });
     }
 
-
-    // =========================================================
-    // Prompt UI Setup
-    // =========================================================
+ 
+    // Prompt UI Setup 
 
     /**
      * 建立提示 UI。
@@ -396,10 +374,8 @@ public class InteractionSystem {
         );
     }
 
-
-    // =========================================================
-    // Prompt Display
-    // =========================================================
+ 
+    // Prompt Display 
 
     /**
      * 顯示互動提示。
@@ -499,10 +475,8 @@ public class InteractionSystem {
         promptBox.setTranslateY(y);
     }
 
-
-    // =========================================================
-    // Prompt Animations
-    // =========================================================
+ 
+    // Prompt Animations 
 
     /**
      * 建立提示框呼吸動畫。
@@ -594,10 +568,8 @@ public class InteractionSystem {
         promptBox.setScaleY(1.0);
     }
 
-
-    // =========================================================
-    // Interactable Search
-    // =========================================================
+ 
+    // Interactable Search 
 
     /**
      * 尋找玩家附近最近的可互動物件。
@@ -684,10 +656,8 @@ public class InteractionSystem {
         return Math.abs(ax - bx);
     }
 
-
-    // =========================================================
-    // Global Interaction Lock
-    // =========================================================
+ 
+    // Global Interaction Lock 
 
     /**
      * 鎖住所有互動一段時間。
@@ -711,10 +681,8 @@ public class InteractionSystem {
         return System.nanoTime() < globalInteractLockedUntilNanos;
     }
 
-
-    // =========================================================
-    // Lifecycle
-    // =========================================================
+ 
+    // Lifecycle 
 
     /**
      * 釋放互動系統。
@@ -737,10 +705,8 @@ public class InteractionSystem {
         removeUINode(promptBox);
     }
 
-
-    // =========================================================
-    // Helpers
-    // =========================================================
+ 
+    // Helpers 
 
     /**
      * 判斷目前是否應停用互動。

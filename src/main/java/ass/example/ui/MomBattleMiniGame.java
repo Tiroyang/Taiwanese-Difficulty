@@ -54,33 +54,27 @@ import static com.almasb.fxgl.dsl.FXGL.removeUINode;
  * 6. 根據存活時間決定死亡原因。
  */
 public class MomBattleMiniGame extends StackPane {
-
-    // =========================================================
-    // Screen Constants
-    // =========================================================
+ 
+    // Screen Constants 
 
     private static final double SCREEN_WIDTH = 1280.0;
     private static final double SCREEN_HEIGHT = 720.0;
 
-
-    // =========================================================
-    // Asset Paths
-    // =========================================================
+ 
+    // Asset Paths 
 
     private static final String MOM_BATTLE_IMAGE = "/assets/textures/characters/mom/mom_battle.png";
 
-    private static final String HEART_IMAGE = "/assets/textures/Scene1/UI/heart.png";
+    private static final String HEART_IMAGE = "/assets/textures/scene1/UI/heart.png";
 
-    private static final String HEART_DIE_GIF = "/assets/textures/Scene1/UI/heart_die.gif";
+    private static final String HEART_DIE_GIF = "/assets/textures/scene1/UI/heart_die.gif";
 
     private static final String BATTLE_START_BGM = "/assets/music/dialogue/mombattlestart.mp3";
 
     private static final String BATTLE_LOOP_BGM = "/assets/music/dialogue/Dark Souls III OST 10 - Vordt of the Boreal Valley.mp3";
 
-
-    // =========================================================
-    // Arena Constants
-    // =========================================================
+ 
+    // Arena Constants 
 
     /**
      * 戰鬥白框大小。
@@ -94,10 +88,8 @@ public class MomBattleMiniGame extends StackPane {
 
     private static final double ARENA_Y = 360.0;
 
-
-    // =========================================================
-    // Heart Constants
-    // =========================================================
+ 
+    // Heart Constants 
 
     /**
      * heart.png 原圖很大，但有效圖案在中心。
@@ -119,10 +111,8 @@ public class MomBattleMiniGame extends StackPane {
 
     private static final double HEART_SPEED = 250.0;
 
-
-    // =========================================================
-    // Transition Constants
-    // =========================================================
+ 
+    // Transition Constants 
 
     private static final int TRANSITION_COLUMNS = 22;
     private static final int TRANSITION_ROWS = 12;
@@ -130,10 +120,8 @@ public class MomBattleMiniGame extends StackPane {
     private static final double TRANSITION_STEP_SECONDS = 0.010;
     private static final double TRANSITION_BLACK_HOLD_SECONDS = 0.25;
 
-
-    // =========================================================
-    // Attack Constants
-    // =========================================================
+ 
+    // Attack Constants 
 
     private static final double ATTACK_INTERVAL_SECONDS = 1.15;
 
@@ -149,10 +137,8 @@ public class MomBattleMiniGame extends StackPane {
 
     private static final String ACTIVE_ATTACK_TAG = "ACTIVE_ATTACK";
 
-
-    // =========================================================
-    // Death Thresholds
-    // =========================================================
+ 
+    // Death Thresholds 
 
     /**
      * 存活不到 60 秒：死亡 A。
@@ -162,10 +148,8 @@ public class MomBattleMiniGame extends StackPane {
     private static final double DEATH_A_TIME_LIMIT = 60.0;
     private static final double DEATH_C_TIME_LIMIT = 120.0;
 
-
-    // =========================================================
-    // Systems
-    // =========================================================
+ 
+    // Systems 
 
     private final AudioSystem audioSystem =
             AudioSystem.getInstance();
@@ -179,19 +163,15 @@ public class MomBattleMiniGame extends StackPane {
     private final MusicSystem musicSystem =
             MusicSystem.getInstance();
 
-
-    // =========================================================
-    // Death Result
-    // =========================================================
+ 
+    // Death Result 
 
     private final DeathReason deathA;
     private final DeathReason deathB;
     private final DeathReason deathC;
 
-
-    // =========================================================
-    // Runtime State
-    // =========================================================
+ 
+    // Runtime State 
 
     private final Random random = new Random();
     private final Set<KeyCode> pressedKeys = new HashSet<>();
@@ -204,29 +184,23 @@ public class MomBattleMiniGame extends StackPane {
 
     private double aliveTime = 0.0;
 
-
-    // =========================================================
-    // Layers
-    // =========================================================
+ 
+    // Layers 
 
     private final Pane battleLayer = new Pane();
     private final Pane attackLayer = new Pane();
     private final Pane transitionLayer = new Pane();
 
-
-    // =========================================================
-    // UI Nodes
-    // =========================================================
+ 
+    // UI Nodes 
 
     private ImageView momView;
     private ImageView heartView;
 
     private Rectangle arenaBorder;
 
-
-    // =========================================================
-    // Animations / Music
-    // =========================================================
+ 
+    // Animations / Music 
 
     private AnimationTimer gameLoop;
     private Timeline attackLoop;
@@ -234,10 +208,8 @@ public class MomBattleMiniGame extends StackPane {
     private MediaPlayer startMusic;
     private MediaPlayer battleMusic;
 
-
-    // =========================================================
-    // Constructor
-    // =========================================================
+ 
+    // Constructor 
 
     public MomBattleMiniGame(
             DeathReason deathA,
@@ -253,10 +225,8 @@ public class MomBattleMiniGame extends StackPane {
         setupKeyboardInput();
     }
 
-
-    // =========================================================
-    // Initial Setup
-    // =========================================================
+ 
+    // Initial Setup 
 
     private void setupRoot() {
         setPrefSize(SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -294,10 +264,8 @@ public class MomBattleMiniGame extends StackPane {
         );
     }
 
-
-    // =========================================================
-    // Public API
-    // =========================================================
+ 
+    // Public API 
 
     /**
      * 開始媽媽戰鬥。
@@ -330,10 +298,8 @@ public class MomBattleMiniGame extends StackPane {
         transitionLayer.getChildren().clear();
     }
 
-
-    // =========================================================
-    // Music
-    // =========================================================
+ 
+    // Music 
 
     private void playStartMusic() {
         stopOwnMusic();
@@ -429,10 +395,8 @@ public class MomBattleMiniGame extends StackPane {
         battleMusic = null;
     }
 
-
-    // =========================================================
-    // Encounter Transition
-    // =========================================================
+ 
+    // Encounter Transition 
 
     /**
      * 播放由外向內的逆時針過場。
@@ -565,10 +529,8 @@ public class MomBattleMiniGame extends StackPane {
     ) {
     }
 
-
-    // =========================================================
-    // Battle Screen Setup
-    // =========================================================
+ 
+    // Battle Screen Setup 
 
     private void setupBattleScreen() {
         battleLayer.getChildren().clear();
@@ -700,10 +662,8 @@ public class MomBattleMiniGame extends StackPane {
         ).play();
     }
 
-
-    // =========================================================
-    // Battle Start / Loops
-    // =========================================================
+ 
+    // Battle Start / Loops 
 
     private void startBattle() {
         battleStarted = true;
@@ -778,10 +738,8 @@ public class MomBattleMiniGame extends StackPane {
         }
     }
 
-
-    // =========================================================
-    // Battle Update
-    // =========================================================
+ 
+    // Battle Update 
 
     private void updateBattle(double tpf) {
         aliveTime += tpf;
@@ -861,10 +819,8 @@ public class MomBattleMiniGame extends StackPane {
         heartView.setLayoutY(heartY);
     }
 
-
-    // =========================================================
-    // Attack Spawning
-    // =========================================================
+ 
+    // Attack Spawning 
 
     private void spawnRandomAttack() {
         if (ended) {
@@ -1065,10 +1021,8 @@ public class MomBattleMiniGame extends StackPane {
         }
     }
 
-
-    // =========================================================
-    // Collision
-    // =========================================================
+ 
+    // Collision 
 
     private void checkAttackCollision() {
         if (ended || heartView == null) {
@@ -1118,10 +1072,8 @@ public class MomBattleMiniGame extends StackPane {
         );
     }
 
-
-    // =========================================================
-    // Game Over / Death
-    // =========================================================
+ 
+    // Game Over / Death 
 
     private void triggerGameOver() {
         if (ended) {
@@ -1184,10 +1136,8 @@ public class MomBattleMiniGame extends StackPane {
         return deathB;
     }
 
-
-    // =========================================================
-    // Utility
-    // =========================================================
+ 
+    // Utility 
 
     private Image loadImage(String path) {
         try {

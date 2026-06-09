@@ -17,48 +17,27 @@ import java.util.prefs.Preferences;
  * 4. 根據 key 取得目前語言的文字。
  * 5. 支援中英文切換。
  * 6. 支援恢復預設語言。
- *
- * 單例判斷：
- * LanguageSystem 適合做成單例。
- *
- * 原因：
- * - 語言設定是全遊戲共用狀態。
- * - MainMenu、PauseMenu、QuestHUD、DialogueUI、DeathScreen 都需要讀取同一份語言設定。
- * - 若建立多份 LanguageSystem，可能導致不同 UI 顯示不同語言。
- *
- * 翻譯資料：
- * - 已獨立到 LanguageTextDatabase。
- * - LanguageSystem 只負責查詢與切換，不負責維護大量翻譯內容。
  */
 public final class LanguageSystem {
-
-    // =========================================================
-    // Preferences Keys
-    // =========================================================
+ 
+    // Preferences Keys 
 
     /**
      * Preferences 中保存語言設定的 key。
      */
     private static final String KEY_LANGUAGE = "language";
-
-    // =========================================================
-    // Default Settings
-    // =========================================================
+ 
+    // Default Settings 
 
     /**
      * 預設語言。
      */
     private static final Language DEFAULT_LANGUAGE = Language.ZH_TW;
-
-    // =========================================================
-    // Singleton
-    // =========================================================
+ 
+    // Singleton 
 
     /**
      * LanguageSystem 單例。
-     *
-     * LanguageSystem 不依賴其他需要初始化順序的系統，
-     * 所以可以直接使用 static final 建立。
      */
     private static final LanguageSystem INSTANCE = new LanguageSystem();
 
@@ -70,10 +49,8 @@ public final class LanguageSystem {
     public static LanguageSystem getInstance() {
         return INSTANCE;
     }
-
-    // =========================================================
-    // Runtime State
-    // =========================================================
+ 
+    // Runtime State 
 
     /**
      * Java Preferences。
@@ -100,10 +77,8 @@ public final class LanguageSystem {
      */
     private final Map<Language, Map<String, String>> texts;
 
-
-    // =========================================================
-    // Constructor
-    // =========================================================
+ 
+    // Constructor 
 
     /**
      * 建立語言系統。
@@ -116,10 +91,8 @@ public final class LanguageSystem {
         loadSettings();
     }
 
-
-    // =========================================================
-    // Text Query
-    // =========================================================
+ 
+    // Text Query 
 
     /**
      * 根據 key 取得目前語言文字。
@@ -163,10 +136,8 @@ public final class LanguageSystem {
         );
     }
 
-
-    // =========================================================
-    // Language Control
-    // =========================================================
+ 
+    // Language Control 
 
     /**
      * 設定目前語言。
@@ -184,10 +155,6 @@ public final class LanguageSystem {
 
     /**
      * 切換語言。
-     *
-     * 目前支援：
-     * - 繁體中文
-     * - 英文
      */
     public void toggleLanguage() {
         if (currentLanguage == Language.ZH_TW) {
@@ -208,10 +175,8 @@ public final class LanguageSystem {
         saveSettings();
     }
 
-
-    // =========================================================
-    // Load / Save Settings
-    // =========================================================
+ 
+    // Load / Save Settings 
 
     /**
      * 從 Preferences 讀取語言設定。
@@ -236,10 +201,8 @@ public final class LanguageSystem {
         prefs.put(KEY_LANGUAGE, currentLanguage.name());
     }
 
-
-    // =========================================================
-    // Getters
-    // =========================================================
+ 
+    // Getters 
 
     /**
      * 取得目前語言。

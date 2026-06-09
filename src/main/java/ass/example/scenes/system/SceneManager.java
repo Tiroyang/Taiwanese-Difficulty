@@ -42,10 +42,8 @@ public class SceneManager {
     public static SceneManager getInstance() {
         return INSTANCE;
     }
-
-    // =========================================================
-    // View / Transition Constants
-    // =========================================================
+ 
+    // View / Transition Constants 
 
     /**
      * 遊戲視窗寬度。
@@ -81,10 +79,8 @@ public class SceneManager {
      */
     private static final double INTERACTION_LOCK_SECONDS = 1.2;
 
-
-    // =========================================================
-    // Music Paths
-    // =========================================================
+ 
+    // Music Paths 
 
     /**
      * House 使用的 BGM。
@@ -96,10 +92,8 @@ public class SceneManager {
      */
     private static final String STREET_BGM_PATH = "/assets/music/scene2/轟はじめ OP.mp3";
 
-
-    // =========================================================
-    // House Return Position
-    // =========================================================
+ 
+    // House Return Position 
 
     /**
      * 從街道回家時，玩家出現在家中的 X 和 Y。
@@ -107,10 +101,8 @@ public class SceneManager {
     private static final double HOUSE_RETURN_X = 43.0;
     private static final double HOUSE_RETURN_Y = 452.0;
 
-
-    // =========================================================
-    // Pending Start Scene
-    // =========================================================
+ 
+    // Pending Start Scene 
 
     /**
      * 待啟動的場景。
@@ -119,10 +111,8 @@ public class SceneManager {
      */
     private static SceneType pendingStartSceneType = null;
 
-
-    // =========================================================
-    // Scene Runtime References
-    // =========================================================
+ 
+    // Scene Runtime References 
 
     /**
      * 目前場景中的玩家 Entity。
@@ -150,10 +140,8 @@ public class SceneManager {
      * 目前所在場景類型。
      */
     private SceneType currentSceneType;
-
-    // =========================================================
-    // Runtime Flags
-    // =========================================================
+ 
+    // Runtime Flags 
 
     /**
      * 是否正在播放場景轉場。
@@ -162,10 +150,8 @@ public class SceneManager {
      */
     private boolean sceneTransitionPlaying = false;
 
-
-    // =========================================================
-    // Constructor
-    // =========================================================
+ 
+    // Constructor 
 
     /**
      * 建立 SceneManager。
@@ -174,10 +160,8 @@ public class SceneManager {
      */
     private SceneManager() {
     }
-
-    // =========================================================
-    // Pending Start Scene API
-    // =========================================================
+ 
+    // Pending Start Scene API 
 
     /**
      * 指定待啟動場景。
@@ -217,10 +201,8 @@ public class SceneManager {
         pendingStartSceneType = null;
     }
 
-
-    // =========================================================
-    // Scene Loading - Entry Points
-    // =========================================================
+ 
+    // Scene Loading - Entry Points 
 
     /**
      * 依照讀檔中的 SceneType 載入場景。
@@ -248,10 +230,8 @@ public class SceneManager {
         }
     }
 
-
-    // =========================================================
-    // Scene Loading - House
-    // =========================================================
+ 
+    // Scene Loading - House 
 
     /**
      * 載入 HouseScene。
@@ -360,10 +340,8 @@ public class SceneManager {
         playerComponent.respawnAt(overridePlayerX, overridePlayerY);
     }
 
-
-    // =========================================================
-    // Scene Loading - Story Street
-    // =========================================================
+ 
+    // Scene Loading - Story Street 
 
     /**
      * 載入 Story Mode StreetScene。
@@ -401,10 +379,8 @@ public class SceneManager {
         set(SaveKey.PLAYER_ON_BED_COLLIDER, false);
     }
 
-
-    // =========================================================
-    // Scene Loading - Street Endless
-    // =========================================================
+ 
+    // Scene Loading - Street Endless 
 
     /**
      * 載入 Street Endless 小遊戲。
@@ -457,10 +433,8 @@ public class SceneManager {
         set(SaveKey.SHOES_WORN, true);
     }
 
-
-    // =========================================================
-    // Scene Loading - Shared Helpers
-    // =========================================================
+ 
+    // Scene Loading - Shared Helpers 
 
     /**
      * 載入任何新場景前都要先做的清理。
@@ -501,10 +475,8 @@ public class SceneManager {
         );
     }
 
-
-    // =========================================================
-    // Scene Transition
-    // =========================================================
+ 
+    // Scene Transition 
 
     /**
      * 播放 House -> Street 轉場。
@@ -651,10 +623,8 @@ public class SceneManager {
         }
     }
 
-
-    // =========================================================
-    // Player Control Helpers
-    // =========================================================
+ 
+    // Player Control Helpers 
 
     /**
      * 暫停目前玩家控制。
@@ -705,10 +675,8 @@ public class SceneManager {
         return player.getComponent(PlayerComponent.class);
     }
 
-
-    // =========================================================
-    // Cleanup
-    // =========================================================
+ 
+    // Cleanup 
 
     /**
      * 清理目前場景物件與 UI。
@@ -739,10 +707,8 @@ public class SceneManager {
                 .forEach(Entity::removeFromWorld);
     }
 
-
-    // =========================================================
-    // Save / Load State
-    // =========================================================
+ 
+    // Save / Load State 
 
     /**
      * 套用目前場景的存檔狀態。
@@ -826,10 +792,8 @@ public class SceneManager {
         }
     }
 
-
-    // =========================================================
-    // Per Frame Update
-    // =========================================================
+ 
+    // Per Frame Update 
 
     /**
      * 每幀更新目前場景。
@@ -852,10 +816,8 @@ public class SceneManager {
         }
     }
 
-
-    // =========================================================
-    // Input Forwarding
-    // =========================================================
+ 
+    // Input Forwarding 
 
     /**
      * 嘗試與目前場景附近物件互動。
@@ -894,10 +856,8 @@ public class SceneManager {
         }
     }
 
-
-    // =========================================================
-    // Death / Respawn
-    // =========================================================
+ 
+    // Death / Respawn 
 
     /**
      * 玩家死亡時呼叫。
@@ -1035,10 +995,8 @@ public class SceneManager {
         refreshPlayerGroundContacts();
     }
 
-
-    // =========================================================
-    // Getters
-    // =========================================================
+ 
+    // Getters 
 
     /**
      * 取得目前場景設定。

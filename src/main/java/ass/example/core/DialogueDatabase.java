@@ -13,10 +13,8 @@ import java.util.Map;
  * 對話資料庫。
  */
 public final class DialogueDatabase {
-
-    // =========================================================
-    // Portrait Paths - Mom
-    // =========================================================
+ 
+    // Portrait Paths - Mom 
 
     private static final String MOM_DEFAULT = "/assets/textures/characters/mom/mom_chat.png";
 
@@ -26,10 +24,8 @@ public final class DialogueDatabase {
 
     private static final String MOM_RAGE_SPEAKING = "/assets/textures/characters/mom/mom_chat_rage_speak.png";
 
-
-    // =========================================================
-    // Constructor
-    // =========================================================
+ 
+    // Constructor 
 
     /**
      * 工具類別不允許建立實例。
@@ -37,10 +33,8 @@ public final class DialogueDatabase {
     private DialogueDatabase() {
     }
 
-
-    // =========================================================
-    // Public API
-    // =========================================================
+ 
+    // Public API 
 
     /**
      * 建立所有對話資料。
@@ -58,10 +52,8 @@ public final class DialogueDatabase {
         return lines;
     }
 
-
-    // =========================================================
-    // Mom Dialogue
-    // =========================================================
+ 
+    // Mom Dialogue 
 
     /**
      * 註冊媽媽對話。
@@ -150,10 +142,8 @@ public final class DialogueDatabase {
         );
     }
 
-
-    // =========================================================
-    // Helpers
-    // =========================================================
+ 
+    // Helpers 
 
     /**
      * 將 DialogueLine 放入資料表。

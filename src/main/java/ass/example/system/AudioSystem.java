@@ -22,10 +22,8 @@ import java.util.prefs.Preferences;
  * 6. 使用 Preferences 保存設定。
  */
 public final class AudioSystem {
-
-    // =========================================================
-    // Singleton
-    // =========================================================
+ 
+    // Singleton 
 
     /**
      * AudioSystem 單例。
@@ -41,10 +39,8 @@ public final class AudioSystem {
         return INSTANCE;
     }
 
-
-    // =========================================================
-    // Preferences Keys
-    // =========================================================
+ 
+    // Preferences Keys 
 
     private static final String KEY_MASTER_VOLUME = "masterVolume";
     private static final String KEY_MUSIC_VOLUME = "musicVolume";
@@ -56,10 +52,8 @@ public final class AudioSystem {
 
     private static final String KEY_BUTTON_SOUND_ENABLED = "buttonSoundEnabled";
 
-
-    // =========================================================
-    // Default Settings
-    // =========================================================
+ 
+    // Default Settings 
 
     private static final double DEFAULT_MASTER_VOLUME = 1.0;
     private static final double DEFAULT_MUSIC_VOLUME = 0.45;
@@ -71,10 +65,8 @@ public final class AudioSystem {
 
     private static final boolean DEFAULT_BUTTON_SOUND_ENABLED = true;
 
-
-    // =========================================================
-    // Audio Path Settings
-    // =========================================================
+ 
+    // Audio Path Settings 
 
     /**
      * 音效素材根目錄。
@@ -83,10 +75,8 @@ public final class AudioSystem {
      */
     private static final String SOUND_ROOT = "/assets/sounds/";
 
-
-    // =========================================================
-    // Runtime State
-    // =========================================================
+ 
+    // Runtime State 
 
     /**
      * Java  。
@@ -149,10 +139,8 @@ public final class AudioSystem {
      */
     private final Map<SoundId, AudioClip> soundCache = new HashMap<>();
 
-
-    // =========================================================
-    // Constructor
-    // =========================================================
+ 
+    // Constructor 
 
     /**
      * 建立 AudioSystem。
@@ -164,10 +152,8 @@ public final class AudioSystem {
         loadSettings();
     }
 
-
-    // =========================================================
-    // SFX Playback
-    // =========================================================
+ 
+    // SFX Playback 
 
     /**
      * 播放一般音效。
@@ -240,10 +226,8 @@ public final class AudioSystem {
         return clip;
     }
 
-
-    // =========================================================
-    // Effective Volume
-    // =========================================================
+ 
+    // Effective Volume 
 
     /**
      * 取得目前實際音樂音量。
@@ -283,10 +267,8 @@ public final class AudioSystem {
         return clamp01(masterVolume * sfxVolume * builtInVolume);
     }
 
-
-    // =========================================================
-    // Volume Setters
-    // =========================================================
+ 
+    // Volume Setters 
 
     /**
      * 設定主音量。
@@ -339,10 +321,8 @@ public final class AudioSystem {
         saveSettings();
     }
 
-
-    // =========================================================
-    // Mute Setters
-    // =========================================================
+ 
+    // Mute Setters 
 
     /**
      * 設定主靜音。
@@ -384,10 +364,8 @@ public final class AudioSystem {
         saveSettings();
     }
 
-
-    // =========================================================
-    // Toggle Mute
-    // =========================================================
+ 
+    // Toggle Mute 
 
     /**
      * 切換主靜音。
@@ -410,10 +388,8 @@ public final class AudioSystem {
         setSfxMuted(!sfxMuted);
     }
 
-
-    // =========================================================
-    // Reset Settings
-    // =========================================================
+ 
+    // Reset Settings 
 
     /**
      * 重置所有音訊設定為預設值。
@@ -432,10 +408,8 @@ public final class AudioSystem {
         saveSettings();
     }
 
-
-    // =========================================================
-    // Load / Save Settings
-    // =========================================================
+ 
+    // Load / Save Settings 
 
     /**
      * 從 Preferences 讀取音訊設定。
@@ -503,10 +477,8 @@ public final class AudioSystem {
         sfxVolume = clamp01(sfxVolume);
     }
 
-
-    // =========================================================
-    // Getters - Volume
-    // =========================================================
+ 
+    // Getters - Volume 
 
     public double getMasterVolume() {
         return masterVolume;
@@ -520,10 +492,8 @@ public final class AudioSystem {
         return sfxVolume;
     }
 
-
-    // =========================================================
-    // Getters - Mute
-    // =========================================================
+ 
+    // Getters - Mute 
 
     public boolean isMasterMuted() {
         return masterMuted;
@@ -541,10 +511,8 @@ public final class AudioSystem {
         return buttonSoundEnabled;
     }
 
-
-    // =========================================================
-    // Internal Helpers
-    // =========================================================
+ 
+    // Internal Helpers 
 
     /**
      * 將數值限制在 0.0 ~ 1.0。

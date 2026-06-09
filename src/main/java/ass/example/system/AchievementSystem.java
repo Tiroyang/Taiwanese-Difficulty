@@ -23,10 +23,8 @@ import java.util.Set;
  * 7. 支援重置全部成就。
  */
 public final class AchievementSystem {
-
-    // =========================================================
-    // Singleton
-    // =========================================================
+ 
+    // Singleton 
 
     /**
      * AchievementSystem 單例。
@@ -42,10 +40,8 @@ public final class AchievementSystem {
         return INSTANCE;
     }
 
-
-    // =========================================================
-    // Save File Constants
-    // =========================================================
+ 
+    // Save File Constants 
 
     /**
      * 遊戲資料資料夾名稱。
@@ -60,10 +56,8 @@ public final class AchievementSystem {
      */
     private static final String SAVE_FILE_NAME = "achievements.txt";
 
-
-    // =========================================================
-    // Runtime State
-    // =========================================================
+ 
+    // Runtime State 
 
     /**
      * 已解鎖死亡成就 ID 集合。
@@ -77,10 +71,8 @@ public final class AchievementSystem {
      */
     private final Path saveFilePath;
 
-
-    // =========================================================
-    // Constructor
-    // =========================================================
+ 
+    // Constructor 
 
     /**
      * 建立成就系統。
@@ -101,10 +93,8 @@ public final class AchievementSystem {
         load();
     }
 
-
-    // =========================================================
-    // Query
-    // =========================================================
+ 
+    // Query 
 
     /**
      * 判斷指定死亡原因是否已解鎖。
@@ -140,10 +130,8 @@ public final class AchievementSystem {
         return DeathReason.values().length;
     }
 
-
-    // =========================================================
-    // Unlock
-    // =========================================================
+ 
+    // Unlock 
 
     /**
      * 解鎖指定死亡原因成就。
@@ -167,10 +155,8 @@ public final class AchievementSystem {
         return newlyUnlocked;
     }
 
-
-    // =========================================================
-    // Reset
-    // =========================================================
+ 
+    // Reset 
 
     /**
      * 重置全部成就。
@@ -184,10 +170,8 @@ public final class AchievementSystem {
         save();
     }
 
-
-    // =========================================================
-    // Load / Save
-    // =========================================================
+ 
+    // Load / Save 
 
     /**
      * 從檔案讀取成就資料。

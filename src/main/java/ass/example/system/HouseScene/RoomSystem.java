@@ -33,10 +33,8 @@ import static com.almasb.fxgl.dsl.FXGL.*;
  * 6. 支援房間遮罩淡出與立即移除。
  */
 public class RoomSystem {
-
-    // =========================================================
-    // Room Boundaries
-    // =========================================================
+ 
+    // Room Boundaries 
 
     /**
      * 玄關範圍。
@@ -68,10 +66,8 @@ public class RoomSystem {
     private static final double TOILET_MIN_X = 2788.0;
     private static final double TOILET_MAX_X = 3200.0;
 
-
-    // =========================================================
-    // Room Cover Settings
-    // =========================================================
+ 
+    // Room Cover Settings 
 
     /**
      * 房間遮罩 zIndex。
@@ -90,10 +86,8 @@ public class RoomSystem {
      */
     private static final double ROOM_REVEAL_FADE_SECONDS = 0.4;
 
-
-    // =========================================================
-    // Dependencies
-    // =========================================================
+ 
+    // Dependencies 
 
     /**
      * 目前 HouseScene 的玩家 Entity。
@@ -102,10 +96,8 @@ public class RoomSystem {
      */
     private final Entity player;
 
-
-    // =========================================================
-    // Runtime State - Room Tracking
-    // =========================================================
+ 
+    // Runtime State - Room Tracking 
 
     /**
      * 玩家目前所在房間。
@@ -119,10 +111,8 @@ public class RoomSystem {
      */
     private RoomType previousRoom = RoomType.NONE;
 
-
-    // =========================================================
-    // Runtime State - Room Covers
-    // =========================================================
+ 
+    // Runtime State - Room Covers 
 
     /**
      * 每個房間對應的遮罩 Entity。
@@ -136,10 +126,8 @@ public class RoomSystem {
      */
     private final Map<RoomType, Group> roomCoverViews = new HashMap<>();
 
-
-    // =========================================================
-    // Constructor
-    // =========================================================
+ 
+    // Constructor 
 
     /**
      * 建立房間系統。
@@ -153,10 +141,8 @@ public class RoomSystem {
         this.previousRoom = currentRoom;
     }
 
-
-    // =========================================================
-    // Update
-    // =========================================================
+ 
+    // Update 
 
     /**
      * 每幀更新房間系統。
@@ -190,10 +176,8 @@ public class RoomSystem {
         currentRoom = getRoomByPlayerX();
     }
 
-
-    // =========================================================
-    // Room Detection
-    // =========================================================
+ 
+    // Room Detection 
 
     /**
      * 根據玩家中心 X 座標判斷所在房間。
@@ -273,10 +257,8 @@ public class RoomSystem {
                 .isOnGround();
     }
 
-
-    // =========================================================
-    // Room Rule Checks
-    // =========================================================
+ 
+    // Room Rule Checks 
 
     /**
      * 檢查離開臥室規則。
@@ -344,10 +326,8 @@ public class RoomSystem {
         DeathSystem.getInstance().die(reason);
     }
 
-
-    // =========================================================
-    // Room Cover - Public API
-    // =========================================================
+ 
+    // Room Cover - Public API 
 
     /**
      * 新增指定房間遮罩。
@@ -449,10 +429,8 @@ public class RoomSystem {
         roomCoverViews.clear();
     }
 
-
-    // =========================================================
-    // Room Cover - Internal Operations
-    // =========================================================
+ 
+    // Room Cover - Internal Operations 
 
     /**
      * 淡出並移除指定房間遮罩。
@@ -621,10 +599,8 @@ public class RoomSystem {
         return right;
     }
 
-
-    // =========================================================
-    // Helpers
-    // =========================================================
+ 
+    // Helpers 
 
     /**
      * 取得房間揭露狀態的 game var key。
@@ -647,10 +623,8 @@ public class RoomSystem {
         }
     }
 
-
-    // =========================================================
-    // Getters
-    // =========================================================
+ 
+    // Getters 
 
     /**
      * 取得目前玩家所在房間。

@@ -37,10 +37,8 @@ import static com.almasb.fxgl.dsl.FXGL.*;
  * - 切換場景或重生時，這些狀態都必須跟著場景重新建立或清除。
  */
 public class OneWayPlatformSystem {
-
-    // =========================================================
-    // Constants
-    // =========================================================
+ 
+    // Constants 
 
     /**
      * 玩家按下 Shift 下落後，短時間內忽略平台吸附。
@@ -73,20 +71,16 @@ public class OneWayPlatformSystem {
      */
     private static final double STANDING_VERTICAL_TOLERANCE = 8.0;
 
-
-    // =========================================================
-    // Dependencies
-    // =========================================================
+ 
+    // Dependencies 
 
     /**
      * 目前場景的玩家 Entity。
      */
     private final Entity player;
 
-
-    // =========================================================
-    // Runtime State
-    // =========================================================
+ 
+    // Runtime State 
 
     /**
      * 玩家目前站上的 one_way_platform。
@@ -115,10 +109,8 @@ public class OneWayPlatformSystem {
      */
     private double dropThroughTimer = 0.0;
 
-
-    // =========================================================
-    // Constructor
-    // =========================================================
+ 
+    // Constructor 
 
     /**
      * 建立普通單向平台系統。
@@ -130,10 +122,8 @@ public class OneWayPlatformSystem {
         this.previousPlayerBottom = getPlayerBottom();
     }
 
-
-    // =========================================================
-    // Update
-    // =========================================================
+ 
+    // Update 
 
     /**
      * 每幀更新單向平台系統。
@@ -212,10 +202,8 @@ public class OneWayPlatformSystem {
         playerComponent.setOnOneWayPlatform(false);
     }
 
-
-    // =========================================================
-    // Platform Search
-    // =========================================================
+ 
+    // Platform Search 
 
     /**
      * 尋找玩家目前可以落上的單向平台。
@@ -277,10 +265,8 @@ public class OneWayPlatformSystem {
         return xOverlap && crossedPlatformTop;
     }
 
-
-    // =========================================================
-    // Land / Leave Platform
-    // =========================================================
+ 
+    // Land / Leave Platform 
 
     /**
      * 讓玩家站上指定平台。
@@ -373,10 +359,8 @@ public class OneWayPlatformSystem {
         currentSolidCollider = null;
     }
 
-
-    // =========================================================
-    // Current Platform Checks
-    // =========================================================
+ 
+    // Current Platform Checks 
 
     /**
      * 判斷玩家是否正在從目前平台往上跳。
@@ -432,10 +416,8 @@ public class OneWayPlatformSystem {
         return xOverlap && nearPlatformTop;
     }
 
-
-    // =========================================================
-    // Player Input Hooks
-    // =========================================================
+ 
+    // Player Input Hooks 
 
     /**
      * 玩家按下跳躍鍵時呼叫。
@@ -484,10 +466,8 @@ public class OneWayPlatformSystem {
         physics.setVelocityY(DROP_THROUGH_VELOCITY_Y);
     }
 
-
-    // =========================================================
-    // Drop Through Timer
-    // =========================================================
+ 
+    // Drop Through Timer 
 
     /**
      * 更新 Shift 下落忽略計時。
@@ -515,10 +495,8 @@ public class OneWayPlatformSystem {
         return dropThroughTimer > 0;
     }
 
-
-    // =========================================================
-    // Reset
-    // =========================================================
+ 
+    // Reset 
 
     /**
      * 重設普通單向平台系統。
@@ -566,10 +544,8 @@ public class OneWayPlatformSystem {
                 });
     }
 
-
-    // =========================================================
-    // Geometry Helpers
-    // =========================================================
+ 
+    // Geometry Helpers 
 
     /**
      * 判斷玩家與平台是否在 X 軸上重疊。
@@ -634,10 +610,8 @@ public class OneWayPlatformSystem {
                 .getMaxXWorld();
     }
 
-
-    // =========================================================
-    // Component Helpers
-    // =========================================================
+ 
+    // Component Helpers 
 
     /**
      * 取得 PlayerComponent。
@@ -665,10 +639,8 @@ public class OneWayPlatformSystem {
         return player.getComponent(PhysicsComponent.class);
     }
 
-
-    // =========================================================
-    // Game State Helpers
-    // =========================================================
+ 
+    // Game State Helpers 
 
     /**
      * 判斷玩家是否死亡。

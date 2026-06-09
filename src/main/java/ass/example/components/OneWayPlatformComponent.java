@@ -41,10 +41,8 @@ import com.almasb.fxgl.entity.component.Component;
  * 此 Component 只提供平台資料。
  */
 public class OneWayPlatformComponent extends Component {
-
-    // =========================================================
-    // Platform Settings
-    // =========================================================
+ 
+    // Platform Settings 
 
     /**
      * 平台 ID。
@@ -87,10 +85,8 @@ public class OneWayPlatformComponent extends Component {
      */
     private final int playerZIndexOnTop;
 
-
-    // =========================================================
-    // Constructor
-    // =========================================================
+ 
+    // Constructor 
 
     /**
      * 建立單向平台 Component。
@@ -112,10 +108,8 @@ public class OneWayPlatformComponent extends Component {
         this.playerZIndexOnTop = playerZIndexOnTop;
     }
 
-
-    // =========================================================
-    // Getters
-    // =========================================================
+ 
+    // Getters 
 
     /**
      * 取得平台 ID。

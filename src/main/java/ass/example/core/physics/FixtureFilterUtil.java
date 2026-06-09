@@ -38,10 +38,8 @@ import com.almasb.fxgl.physics.box2d.dynamics.FixtureDef;
  * - 代表「這個物件要跟哪些類別碰撞」。
  */
 public final class FixtureFilterUtil {
-
-    // =========================================================
-    // Constructor
-    // =========================================================
+ 
+    // Constructor 
 
     /**
      * 工具類別不允許建立實例。
@@ -49,10 +47,8 @@ public final class FixtureFilterUtil {
     private FixtureFilterUtil() {
     }
 
-
-    // =========================================================
-    // Public API
-    // =========================================================
+ 
+    // Public API 
 
     /**
      * 將 Box2D Filter 套用到 FixtureDef。

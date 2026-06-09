@@ -20,10 +20,8 @@ import java.net.URL;
  * 6. 根據 AudioSystem 的音樂音量套用目前音量。
  */
 public final class MusicSystem {
-
-    // =========================================================
-    // Singleton
-    // =========================================================
+ 
+    // Singleton 
 
     /**
      * MusicSystem 單例。
@@ -39,10 +37,8 @@ public final class MusicSystem {
         return INSTANCE;
     }
 
-
-    // =========================================================
-    // Dependencies
-    // =========================================================
+ 
+    // Dependencies 
 
     /**
      * 音訊設定系統。
@@ -51,10 +47,8 @@ public final class MusicSystem {
      */
     private final AudioSystem audioSystem = AudioSystem.getInstance();
 
-
-    // =========================================================
-    // Runtime State
-    // =========================================================
+ 
+    // Runtime State 
 
     /**
      * 目前播放中的 MediaPlayer。
@@ -68,10 +62,8 @@ public final class MusicSystem {
      */
     private String currentPath;
 
-
-    // =========================================================
-    // Constructor
-    // =========================================================
+ 
+    // Constructor 
 
     /**
      * private constructor。
@@ -81,10 +73,8 @@ public final class MusicSystem {
     private MusicSystem() {
     }
 
-
-    // =========================================================
-    // Public API - Play BGM
-    // =========================================================
+ 
+    // Public API - Play BGM 
 
     /**
      * 播放背景音樂。
@@ -205,10 +195,8 @@ public final class MusicSystem {
         currentMusic.setOnEndOfMedia(() -> restartAsLoop(loopStartSeconds));
     }
 
-
-    // =========================================================
-    // Public API - Control BGM
-    // =========================================================
+ 
+    // Public API - Control BGM 
 
     /**
      * 停止目前背景音樂。
@@ -267,10 +255,8 @@ public final class MusicSystem {
         currentMusic.setVolume(audioSystem.getEffectiveMusicVolume());
     }
 
-
-    // =========================================================
-    // Internal Playback Helpers
-    // =========================================================
+ 
+    // Internal Playback Helpers 
 
     /**
      * 如果目前已經是同一首音樂，嘗試直接恢復或維持播放。
@@ -375,10 +361,8 @@ public final class MusicSystem {
         currentMusic.play();
     }
 
-
-    // =========================================================
-    // Getters
-    // =========================================================
+ 
+    // Getters 
 
     /**
      * 取得目前音樂路徑。

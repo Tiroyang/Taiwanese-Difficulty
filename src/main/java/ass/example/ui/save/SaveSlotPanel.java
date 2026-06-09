@@ -48,10 +48,8 @@ import java.util.function.Consumer;
  * 7. 支援顯示存檔詳細資訊 Tooltip。
  */
 public class SaveSlotPanel extends VBox {
-
-    // =========================================================
-    // Layout Constants
-    // =========================================================
+ 
+    // Layout Constants 
 
     /**
      * 面板 padding。
@@ -89,10 +87,8 @@ public class SaveSlotPanel extends VBox {
      */
     private static final double SCROLL_HEIGHT = 520.0;
 
-
-    // =========================================================
-    // Slot Card Constants
-    // =========================================================
+ 
+    // Slot Card Constants 
 
     private static final double CARD_WIDTH = 360.0;
     private static final double CARD_HEIGHT = 250.0;
@@ -103,10 +99,8 @@ public class SaveSlotPanel extends VBox {
     private static final double CARD_ARC = 18.0;
     private static final double THUMBNAIL_ARC = 12.0;
 
-
-    // =========================================================
-    // Dependencies
-    // =========================================================
+ 
+    // Dependencies 
 
     /**
      * 目前存檔面板模式。
@@ -156,20 +150,16 @@ public class SaveSlotPanel extends VBox {
      */
     private final Node nodeToHideBeforeScreenshot;
 
-
-    // =========================================================
-    // UI Nodes
-    // =========================================================
+ 
+    // UI Nodes 
 
     /**
      * 存檔槽位 Grid。
      */
     private final GridPane grid = new GridPane();
 
-
-    // =========================================================
-    // Constructor
-    // =========================================================
+ 
+    // Constructor 
 
     public SaveSlotPanel(
             SaveMenuMode mode,
@@ -203,10 +193,8 @@ public class SaveSlotPanel extends VBox {
         refreshSlots();
     }
 
-
-    // =========================================================
-    // Setup
-    // =========================================================
+ 
+    // Setup 
 
     /**
      * 建立整體面板 UI。
@@ -288,10 +276,8 @@ public class SaveSlotPanel extends VBox {
         };
     }
 
-
-    // =========================================================
-    // Refresh Slots
-    // =========================================================
+ 
+    // Refresh Slots 
 
     /**
      * 重新讀取並顯示所有存檔槽。
@@ -313,10 +299,8 @@ public class SaveSlotPanel extends VBox {
         }
     }
 
-
-    // =========================================================
-    // Slot Card
-    // =========================================================
+ 
+    // Slot Card 
 
     /**
      * 建立單一存檔槽位卡片。
@@ -447,10 +431,8 @@ public class SaveSlotPanel extends VBox {
         return scene;
     }
 
-
-    // =========================================================
-    // Card Style
-    // =========================================================
+ 
+    // Card Style 
 
     /**
      * 套用卡片正常樣式。
@@ -511,10 +493,8 @@ public class SaveSlotPanel extends VBox {
         });
     }
 
-
-    // =========================================================
-    // Thumbnail
-    // =========================================================
+ 
+    // Thumbnail 
 
     /**
      * 建立存檔縮圖區。
@@ -653,10 +633,8 @@ public class SaveSlotPanel extends VBox {
         return empty;
     }
 
-
-    // =========================================================
-    // Tooltip
-    // =========================================================
+ 
+    // Tooltip 
 
     /**
      * 建立存檔槽 Tooltip。
@@ -684,10 +662,8 @@ public class SaveSlotPanel extends VBox {
                 text("save.lastOpenedAt") + formatTime(slot.getLastOpenedAt());
     }
 
-
-    // =========================================================
-    // Slot Click Handling
-    // =========================================================
+ 
+    // Slot Click Handling 
 
     /**
      * 根據目前模式處理槽位點擊。
@@ -788,10 +764,8 @@ public class SaveSlotPanel extends VBox {
         saveAction.run();
     }
 
-
-    // =========================================================
-    // Edit Actions
-    // =========================================================
+ 
+    // Edit Actions 
 
     /**
      * 建立編輯存檔用 ContextMenu。
@@ -853,10 +827,8 @@ public class SaveSlotPanel extends VBox {
         });
     }
 
-
-    // =========================================================
-    // Save Actions
-    // =========================================================
+ 
+    // Save Actions 
 
     /**
      * 顯示輸入存檔名稱對話框，並儲存到指定槽位。
@@ -893,10 +865,8 @@ public class SaveSlotPanel extends VBox {
         return "Save " + (slot.getSlotIndex() + 1);
     }
 
-
-    // =========================================================
-    // Dialog Helpers
-    // =========================================================
+ 
+    // Dialog Helpers 
 
     /**
      * 顯示確認視窗。
@@ -930,10 +900,8 @@ public class SaveSlotPanel extends VBox {
         }
     }
 
-
-    // =========================================================
-    // Text / Format Helpers
-    // =========================================================
+ 
+    // Text / Format Helpers 
 
     /**
      * 取得翻譯文字。

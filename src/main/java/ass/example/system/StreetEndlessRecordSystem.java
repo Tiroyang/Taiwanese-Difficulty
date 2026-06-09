@@ -17,10 +17,8 @@ import java.util.Properties;
  * 4. 支援重置最高紀錄。
  */
 public final class StreetEndlessRecordSystem {
-
-    // =========================================================
-    // Singleton
-    // =========================================================
+ 
+    // Singleton 
 
     /**
      * StreetEndlessRecordSystem 單例。
@@ -37,10 +35,8 @@ public final class StreetEndlessRecordSystem {
         return INSTANCE;
     }
 
-
-    // =========================================================
-    // Save File Constants
-    // =========================================================
+ 
+    // Save File Constants 
 
     /**
      * 遊戲資料資料夾名稱。
@@ -58,10 +54,8 @@ public final class StreetEndlessRecordSystem {
      */
     private static final String KEY_BEST_DISTANCE = "bestDistance";
 
-
-    // =========================================================
-    // Runtime State
-    // =========================================================
+ 
+    // Runtime State 
 
     /**
      * 紀錄檔完整路徑。
@@ -77,10 +71,8 @@ public final class StreetEndlessRecordSystem {
      */
     private double bestDistance = 0.0;
 
-
-    // =========================================================
-    // Constructor
-    // =========================================================
+ 
+    // Constructor 
 
     /**
      * 建立 Street Endless 紀錄系統。
@@ -93,10 +85,8 @@ public final class StreetEndlessRecordSystem {
         load();
     }
 
-
-    // =========================================================
-    // Query
-    // =========================================================
+ 
+    // Query 
 
     /**
      * 取得目前最高距離。
@@ -107,10 +97,8 @@ public final class StreetEndlessRecordSystem {
         return bestDistance;
     }
 
-
-    // =========================================================
-    // Update Record
-    // =========================================================
+ 
+    // Update Record 
 
     /**
      * 嘗試更新最高距離。
@@ -136,10 +124,8 @@ public final class StreetEndlessRecordSystem {
         return true;
     }
 
-
-    // =========================================================
-    // Reset
-    // =========================================================
+ 
+    // Reset 
 
     /**
      * 重置最高紀錄。
@@ -160,10 +146,8 @@ public final class StreetEndlessRecordSystem {
         }
     }
 
-
-    // =========================================================
-    // Load / Save
-    // =========================================================
+ 
+    // Load / Save 
 
     /**
      * 從本地檔案讀取最高距離。

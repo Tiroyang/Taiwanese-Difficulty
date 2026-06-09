@@ -48,10 +48,8 @@ import static com.almasb.fxgl.dsl.FXGL.*;
  * - 玩家控制、動畫、跳躍、衝刺邏輯交給 PlayerComponent。
  */
 public class PlayerFactory implements EntityFactory {
-
-    // =========================================================
-    // Player View Settings
-    // =========================================================
+ 
+    // Player View Settings 
 
     /**
      * 玩家圖片顯示高度。
@@ -66,10 +64,8 @@ public class PlayerFactory implements EntityFactory {
      */
     private static final int PLAYER_Z_INDEX = 0;
 
-
-    // =========================================================
-    // Player HitBox Settings
-    // =========================================================
+ 
+    // Player HitBox Settings 
 
     /**
      * 玩家主碰撞箱名稱。
@@ -96,10 +92,8 @@ public class PlayerFactory implements EntityFactory {
      */
     private static final double PLAYER_BODY_HEIGHT = 242.0;
 
-
-    // =========================================================
-    // Player Physics Settings
-    // =========================================================
+ 
+    // Player Physics Settings 
 
     /**
      * 玩家密度。
@@ -118,10 +112,8 @@ public class PlayerFactory implements EntityFactory {
      */
     private static final float PLAYER_RESTITUTION = 0.0f;
 
-
-    // =========================================================
-    // Ground Sensor Settings
-    // =========================================================
+ 
+    // Ground Sensor Settings 
 
     /**
      * 腳底感測器 zIndex。
@@ -136,10 +128,8 @@ public class PlayerFactory implements EntityFactory {
     private static final Color GROUND_SENSOR_DEBUG_COLOR =
             Color.rgb(37, 255, 0, 0.5);
 
-
-    // =========================================================
-    // Spawn - Player
-    // =========================================================
+ 
+    // Spawn - Player 
 
     /**
      * 生成玩家 Entity。
@@ -178,10 +168,8 @@ public class PlayerFactory implements EntityFactory {
                 .build();
     }
 
-
-    // =========================================================
-    // Spawn - Ground Sensor
-    // =========================================================
+ 
+    // Spawn - Ground Sensor 
 
     /**
      * 生成玩家腳底感測器。
@@ -213,10 +201,8 @@ public class PlayerFactory implements EntityFactory {
                 .build();
     }
 
-
-    // =========================================================
-    // Player Component Creation
-    // =========================================================
+ 
+    // Player Component Creation 
 
     /**
      * 建立 PlayerComponent。
@@ -250,10 +236,8 @@ public class PlayerFactory implements EntityFactory {
         );
     }
 
-
-    // =========================================================
-    // Player View Creation
-    // =========================================================
+ 
+    // Player View Creation 
 
     /**
      * 建立玩家 ImageView。
@@ -298,10 +282,8 @@ public class PlayerFactory implements EntityFactory {
         );
     }
 
-
-    // =========================================================
-    // Player Physics Creation
-    // =========================================================
+ 
+    // Player Physics Creation 
 
     /**
      * 建立玩家 PhysicsComponent。
@@ -368,10 +350,7 @@ public class PlayerFactory implements EntityFactory {
         return fixtureDef;
     }
 
-
-    // =========================================================
-    // Player Image Loading
-    // =========================================================
+    // Player Image Loading 
 
     /**
      * 載入所有玩家圖片。
@@ -469,10 +448,7 @@ public class PlayerFactory implements EntityFactory {
         );
     }
 
-
-    // =========================================================
-    // Debug View Helpers
-    // =========================================================
+    // Debug View Helpers 
 
     /**
      * 建立 devMode 用 debug 顯示框。
@@ -500,10 +476,8 @@ public class PlayerFactory implements EntityFactory {
         return new Rectangle(0, 0, Color.TRANSPARENT);
     }
 
-
-    // =========================================================
-    // Image Data Holder
-    // =========================================================
+ 
+    // Image Data Holder 
 
     /**
      * PlayerImages
@@ -516,9 +490,7 @@ public class PlayerFactory implements EntityFactory {
      */
     private static class PlayerImages {
 
-        // =====================================================
         // Images - With Shoes
-        // =====================================================
 
         private final Image stand;
         private final Image[] walkRight;
@@ -526,10 +498,7 @@ public class PlayerFactory implements EntityFactory {
         private final Image[] dashRight;
         private final Image[] dashLeft;
 
-
-        // =====================================================
         // Images - Shoeless
-        // =====================================================
 
         private final Image standShoeless;
         private final Image[] walkRightShoeless;
@@ -537,10 +506,7 @@ public class PlayerFactory implements EntityFactory {
         private final Image[] dashRightShoeless;
         private final Image[] dashLeftShoeless;
 
-
-        // =====================================================
         // Images - Special
-        // =====================================================
 
         private final Image dead;
 

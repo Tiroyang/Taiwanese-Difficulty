@@ -28,10 +28,8 @@ import static com.almasb.fxgl.dsl.FXGL.*;
  * 9. 讀檔時根據 shoesWorn 還原鞋櫃與玩家狀態。
  */
 public class ShoeComponent extends Component implements LoadSaveComponent {
-
-    // =========================================================
-    // Game Var Keys
-    // =========================================================
+ 
+    // Game Var Keys 
 
     /**
      * 玩家是否穿鞋的 game var key。
@@ -40,10 +38,8 @@ public class ShoeComponent extends Component implements LoadSaveComponent {
      */
     private static final String VAR_SHOES_WORN = "shoesWorn";
 
-
-    // =========================================================
-    // Dependencies
-    // =========================================================
+ 
+    // Dependencies 
 
     /**
      * 鞋櫃或鞋子視覺 Entity。
@@ -65,10 +61,8 @@ public class ShoeComponent extends Component implements LoadSaveComponent {
      */
     private final AudioSystem audioSystem = AudioSystem.getInstance();
 
-
-    // =========================================================
-    // Texture Settings
-    // =========================================================
+ 
+    // Texture Settings 
 
     /**
      * 預設鞋櫃貼圖。
@@ -84,10 +78,8 @@ public class ShoeComponent extends Component implements LoadSaveComponent {
      */
     private final String wornTexture;
 
-
-    // =========================================================
-    // Runtime State
-    // =========================================================
+ 
+    // Runtime State 
 
     /**
      * 玩家目前是否穿鞋。
@@ -104,10 +96,8 @@ public class ShoeComponent extends Component implements LoadSaveComponent {
      */
     private boolean worn = false;
 
-
-    // =========================================================
-    // Constructor
-    // =========================================================
+ 
+    // Constructor 
 
     /**
      * 建立鞋櫃穿脫鞋 Component。
@@ -129,10 +119,8 @@ public class ShoeComponent extends Component implements LoadSaveComponent {
         this.wornTexture = wornTexture;
     }
 
-
-    // =========================================================
-    // FXGL Lifecycle
-    // =========================================================
+ 
+    // FXGL Lifecycle 
 
     /**
      * Component 被加入 Entity 時呼叫。
@@ -148,10 +136,8 @@ public class ShoeComponent extends Component implements LoadSaveComponent {
         applySavedState();
     }
 
-
-    // =========================================================
-    // Save / Load
-    // =========================================================
+ 
+    // Save / Load 
 
     /**
      * 套用存檔中的穿鞋狀態。
@@ -175,10 +161,8 @@ public class ShoeComponent extends Component implements LoadSaveComponent {
         }
     }
 
-
-    // =========================================================
-    // Public API
-    // =========================================================
+ 
+    // Public API 
 
     /**
      * 切換穿鞋狀態。
@@ -255,10 +239,8 @@ public class ShoeComponent extends Component implements LoadSaveComponent {
         playEquipSound();
     }
 
-
-    // =========================================================
-    // Restore State
-    // =========================================================
+ 
+    // Restore State 
 
     /**
      * 還原為穿鞋狀態。
@@ -298,10 +280,8 @@ public class ShoeComponent extends Component implements LoadSaveComponent {
         syncPlayerShoesState();
     }
 
-
-    // =========================================================
-    // State
-    // =========================================================
+ 
+    // State 
 
     /**
      * 設定內部穿鞋狀態。
@@ -315,10 +295,8 @@ public class ShoeComponent extends Component implements LoadSaveComponent {
         this.worn = worn;
     }
 
-
-    // =========================================================
-    // Quest / Audio
-    // =========================================================
+ 
+    // Quest / Audio 
 
     /**
      * 完成穿鞋任務。
@@ -338,10 +316,8 @@ public class ShoeComponent extends Component implements LoadSaveComponent {
         }
     }
 
-
-    // =========================================================
-    // View Management
-    // =========================================================
+ 
+    // View Management 
 
     /**
      * 顯示未穿鞋時的鞋櫃貼圖。
@@ -374,10 +350,8 @@ public class ShoeComponent extends Component implements LoadSaveComponent {
         shoeVisual.getViewComponent().addChild(texture(texturePath));
     }
 
-
-    // =========================================================
-    // Player Visual Sync
-    // =========================================================
+ 
+    // Player Visual Sync 
 
     /**
      * 同步玩家的穿鞋狀態。
@@ -392,10 +366,8 @@ public class ShoeComponent extends Component implements LoadSaveComponent {
         player.getComponent(PlayerComponent.class).setShoesWorn(worn);
     }
 
-
-    // =========================================================
-    // Getters
-    // =========================================================
+ 
+    // Getters 
 
     /**
      * 取得玩家目前是否穿鞋。

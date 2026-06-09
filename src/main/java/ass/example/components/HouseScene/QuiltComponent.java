@@ -25,10 +25,8 @@ import static com.almasb.fxgl.dsl.FXGL.*;
  * 7. 讀檔時根據 quiltFolded 還原棉被狀態。
  */
 public class QuiltComponent extends Component implements LoadSaveComponent {
-
-    // =========================================================
-    // Game Var Keys
-    // =========================================================
+ 
+    // Game Var Keys 
 
     /**
      * 棉被是否已折好的 game var key。
@@ -37,10 +35,8 @@ public class QuiltComponent extends Component implements LoadSaveComponent {
      */
     private static final String VAR_QUILT_FOLDED = "quiltFolded";
 
-
-    // =========================================================
-    // Dependencies
-    // =========================================================
+ 
+    // Dependencies 
 
     /**
      * 棉被的視覺 Entity。
@@ -54,10 +50,8 @@ public class QuiltComponent extends Component implements LoadSaveComponent {
      */
     private final AudioSystem audioSystem = AudioSystem.getInstance();
 
-
-    // =========================================================
-    // Texture Settings
-    // =========================================================
+ 
+    // Texture Settings 
 
     /**
      * 棉被尚未折好時的貼圖。
@@ -69,10 +63,8 @@ public class QuiltComponent extends Component implements LoadSaveComponent {
      */
     private final String foldedTexture;
 
-
-    // =========================================================
-    // Runtime State
-    // =========================================================
+ 
+    // Runtime State 
 
     /**
      * 棉被目前是否已折好。
@@ -87,10 +79,8 @@ public class QuiltComponent extends Component implements LoadSaveComponent {
      */
     private boolean folded = false;
 
-
-    // =========================================================
-    // Constructor
-    // =========================================================
+ 
+    // Constructor 
 
     /**
      * 建立棉被 Component。
@@ -109,10 +99,8 @@ public class QuiltComponent extends Component implements LoadSaveComponent {
         this.foldedTexture = foldedTexture;
     }
 
-
-    // =========================================================
-    // FXGL Lifecycle
-    // =========================================================
+ 
+    // FXGL Lifecycle 
 
     /**
      * Component 被加入 Entity 時呼叫。
@@ -126,10 +114,8 @@ public class QuiltComponent extends Component implements LoadSaveComponent {
         restoreMessyState();
     }
 
-
-    // =========================================================
-    // Save / Load
-    // =========================================================
+ 
+    // Save / Load 
 
     /**
      * 套用存檔中的棉被狀態。
@@ -154,10 +140,8 @@ public class QuiltComponent extends Component implements LoadSaveComponent {
         }
     }
 
-
-    // =========================================================
-    // Public API
-    // =========================================================
+ 
+    // Public API 
 
     /**
      * 玩家執行折棉被互動時呼叫。
@@ -188,10 +172,8 @@ public class QuiltComponent extends Component implements LoadSaveComponent {
         removeTriggerFromWorld();
     }
 
-
-    // =========================================================
-    // Restore State
-    // =========================================================
+ 
+    // Restore State 
 
     /**
      * 還原為未折棉被狀態。
@@ -220,10 +202,8 @@ public class QuiltComponent extends Component implements LoadSaveComponent {
         removeTriggerFromWorld();
     }
 
-
-    // =========================================================
-    // Quest / Audio
-    // =========================================================
+ 
+    // Quest / Audio 
 
     /**
      * 完成折棉被任務。
@@ -241,10 +221,8 @@ public class QuiltComponent extends Component implements LoadSaveComponent {
         }
     }
 
-
-    // =========================================================
-    // View Management
-    // =========================================================
+ 
+    // View Management 
 
     /**
      * 顯示未折棉被貼圖。
@@ -276,10 +254,8 @@ public class QuiltComponent extends Component implements LoadSaveComponent {
         visualEntity.getViewComponent().addChild(texture(texturePath));
     }
 
-
-    // =========================================================
-    // Entity Management
-    // =========================================================
+ 
+    // Entity Management 
 
     /**
      * 移除目前掛載 QuiltComponent 的 trigger Entity。
@@ -290,10 +266,8 @@ public class QuiltComponent extends Component implements LoadSaveComponent {
         entity.removeFromWorld();
     }
 
-
-    // =========================================================
-    // Getters
-    // =========================================================
+ 
+    // Getters 
 
     /**
      * 取得棉被目前是否已折好。

@@ -39,18 +39,14 @@ package ass.example.core.physics;
  * (short) (CollisionCategory.PLAYER | CollisionCategory.FALLING_OBJECT)
  */
 public final class CollisionCategory {
-
-    // =========================================================
-    // Constructor
-    // =========================================================
+ 
+    // Constructor 
 
     private CollisionCategory() {
     }
 
-
-    // =========================================================
-    // Collision Categories
-    // =========================================================
+ 
+    // Collision Categories 
 
     /**
      * 玩家分類。

@@ -42,10 +42,8 @@ import static java.lang.Math.min;
  * 7. 提供街道區塊與障礙物的存檔 / 讀檔字串。
  */
 public class StreetScene {
-
-    // =========================================================
-    // Scene Dependencies
-    // =========================================================
+ 
+    // Scene Dependencies 
 
     /**
      * 場景設定。
@@ -68,10 +66,8 @@ public class StreetScene {
      */
     private final Random random = new Random();
 
-
-    // =========================================================
-    // Runtime Entities / Systems
-    // =========================================================
+ 
+    // Runtime Entities / Systems 
 
     /**
      * 玩家 Entity。
@@ -92,10 +88,8 @@ public class StreetScene {
      */
     private QuestHUD questHUD;
 
-
-    // =========================================================
-    // Screen / Map Constants
-    // =========================================================
+ 
+    // Screen / Map Constants 
 
     private static final double SCREEN_WIDTH = 1280.0;
     private static final double SCREEN_HEIGHT = 720.0;
@@ -119,10 +113,8 @@ public class StreetScene {
      */
     private static final int MAX_SEGMENT_COUNT = 12;
 
-
-    // =========================================================
-    // Camera Constants / State
-    // =========================================================
+ 
+    // Camera Constants / State 
 
     /**
      * 攝影機最右邊界。
@@ -136,10 +128,8 @@ public class StreetScene {
      */
     private double lockedCameraX = 0.0;
 
-
-    // =========================================================
-    // Far Background Constants / State
-    // =========================================================
+ 
+    // Far Background Constants / State 
 
     private static final double FAR_BACKGROUND_WIDTH = 1983.0;
     private static final double FAR_BACKGROUND_HEIGHT = 793.0;
@@ -158,10 +148,8 @@ public class StreetScene {
      */
     private final List<FarBackgroundSegment> farBackgrounds = new ArrayList<>();
 
-
-    // =========================================================
-    // Segment Generation State
-    // =========================================================
+ 
+    // Segment Generation State 
 
     /**
      * 已生成到最左側的街道區塊 X。
@@ -187,10 +175,8 @@ public class StreetScene {
      */
     private final List<StreetSegment> segments = new ArrayList<>();
 
-
-    // =========================================================
-    // Floor Collider
-    // =========================================================
+ 
+    // Floor Collider 
 
     /**
      * 長地板碰撞箱。
@@ -203,10 +189,8 @@ public class StreetScene {
     private static final double ENDLESS_FLOOR_COLLIDER_WIDTH = 6000.0;
     private static final double ENDLESS_FLOOR_COLLIDER_HEIGHT = 70.0;
 
-
-    // =========================================================
-    // Obstacle Constants / State
-    // =========================================================
+ 
+    // Obstacle Constants / State 
 
     /**
      * 街道障礙物清單。
@@ -248,10 +232,8 @@ public class StreetScene {
      */
     private static final double OBSTACLE_GENERATE_AHEAD_DISTANCE = 2600.0;
 
-
-    // =========================================================
-    // Scooter Constants / State
-    // =========================================================
+ 
+    // Scooter Constants / State 
 
     /**
      * 場上目前存在的機車。
@@ -307,10 +289,8 @@ public class StreetScene {
     private StackPane leftWarningIcon;
     private StackPane rightWarningIcon;
 
-
-    // =========================================================
-    // Falling Object Constants / State
-    // =========================================================
+ 
+    // Falling Object Constants / State 
 
     /**
      * 場上目前存在的墜落物。
@@ -341,10 +321,8 @@ public class StreetScene {
     private static final double FALLING_WARNING_DISTANCE = 620.0;
     private static final double FALLING_WARNING_ICON_SIZE = 72.0;
 
-
-    // =========================================================
-    // Constructor
-    // =========================================================
+ 
+    // Constructor 
 
     public StreetScene(
             SceneConfig config,
@@ -354,10 +332,8 @@ public class StreetScene {
         this.sceneManager = sceneManager;
     }
 
-
-    // =========================================================
-    // Load / Cleanup
-    // =========================================================
+ 
+    // Load / Cleanup 
 
     /**
      * 載入 StreetScene。
@@ -500,10 +476,8 @@ public class StreetScene {
         rightMostFarBaseX = 0;
     }
 
-
-    // =========================================================
-    // Public Runtime API
-    // =========================================================
+ 
+    // Public Runtime API 
 
     /**
      * 每幀更新。
@@ -594,10 +568,8 @@ public class StreetScene {
         }
     }
 
-
-    // =========================================================
-    // Scene Spawning - Interactable Props
-    // =========================================================
+ 
+    // Scene Spawning - Interactable Props 
 
     /**
      * 生成街道中的互動物件。
@@ -621,10 +593,8 @@ public class StreetScene {
                 .put("sceneManager", sceneManager));
     }
 
-
-    // =========================================================
-    // Scene Spawning - Floor / Boundary
-    // =========================================================
+ 
+    // Scene Spawning - Floor / Boundary 
 
     /**
      * 生成長地板碰撞箱。
@@ -679,10 +649,8 @@ public class StreetScene {
                 .put("height", SCREEN_HEIGHT));
     }
 
-
-    // =========================================================
-    // Segment Generation
-    // =========================================================
+ 
+    // Segment Generation 
 
     /**
      * 生成初始街道區塊。
@@ -837,10 +805,8 @@ public class StreetScene {
         segmentLimitReached = false;
     }
 
-
-    // =========================================================
-    // Obstacle Generation
-    // =========================================================
+ 
+    // Obstacle Generation 
 
     /**
      * 重設障礙物生成器。
@@ -989,10 +955,8 @@ public class StreetScene {
                 leftMostObstacleX - RAISED_TILE_CHECK_MAX_DISTANCE;
     }
 
-
-    // =========================================================
-    // Scooter System
-    // =========================================================
+ 
+    // Scooter System 
 
     /**
      * 重設機車計時器與警告狀態。
@@ -1207,10 +1171,8 @@ public class StreetScene {
         return randomRange(SCOOTER_MIN_INTERVAL, SCOOTER_MAX_INTERVAL);
     }
 
-
-    // =========================================================
-    // Warning UI
-    // =========================================================
+ 
+    // Warning UI 
 
     /**
      * 建立左右機車警告 UI。
@@ -1242,7 +1204,7 @@ public class StreetScene {
         ImageView dangerView = new ImageView();
 
         try {
-            var url = getClass().getResource("/assets/textures/Scene2/UI/danger.png");
+            var url = getClass().getResource("/assets/textures/scene2/UI/danger.png");
 
             if (url != null) {
                 dangerView.setImage(new Image(url.toExternalForm()));
@@ -1323,10 +1285,8 @@ public class StreetScene {
         icon.setScaleY(1);
     }
 
-
-    // =========================================================
-    // Falling Object System
-    // =========================================================
+ 
+    // Falling Object System 
 
     /**
      * 重設墜落物計時器。
@@ -1597,7 +1557,7 @@ public class StreetScene {
         ImageView view = new ImageView();
 
         try {
-            var url = getClass().getResource("/assets/textures/Scene2/UI/danger.png");
+            var url = getClass().getResource("/assets/textures/scene2/UI/danger.png");
 
             if (url != null) {
                 view.setImage(new Image(url.toExternalForm()));
@@ -1699,10 +1659,8 @@ public class StreetScene {
         fallingObjects.clear();
     }
 
-
-    // =========================================================
-    // Far Background / Parallax
-    // =========================================================
+ 
+    // Far Background / Parallax 
 
     /**
      * 生成初始遠景背景。
@@ -1836,10 +1794,8 @@ public class StreetScene {
                 .orElse(0);
     }
 
-
-    // =========================================================
-    // Camera
-    // =========================================================
+ 
+    // Camera 
 
     /**
      * 設定攝影機。
@@ -1899,10 +1855,8 @@ public class StreetScene {
         return leftMostGeneratedX;
     }
 
-
-    // =========================================================
-    // Save / Load - Segments
-    // =========================================================
+ 
+    // Save / Load - Segments 
 
     /**
      * 建立街道區塊存檔字串。
@@ -2001,10 +1955,8 @@ public class StreetScene {
         return savedSegments;
     }
 
-
-    // =========================================================
-    // Save / Load - Obstacles
-    // =========================================================
+ 
+    // Save / Load - Obstacles 
 
     /**
      * 建立障礙物存檔字串。
@@ -2074,10 +2026,8 @@ public class StreetScene {
         }
     }
 
-
-    // =========================================================
-    // Common Helpers
-    // =========================================================
+ 
+    // Common Helpers 
 
     private double randomRange(double min, double max) {
         return min + random.nextDouble() * (max - min);
@@ -2089,10 +2039,8 @@ public class StreetScene {
         }
     }
 
-
-    // =========================================================
-    // Data Records / Inner Classes
-    // =========================================================
+ 
+    // Data Records / Inner Classes 
 
     private enum StreetObstacleType {
         TRANSFORMER,

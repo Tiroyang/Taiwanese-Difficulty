@@ -52,10 +52,8 @@ import static com.almasb.fxgl.dsl.FXGL.*;
  * 7. 每幀轉交 update 給 SceneManager。
  */
 public class Main extends GameApplication {
-
-    // =========================================================
-    // Constants
-    // =========================================================
+ 
+    // Constants 
 
     private static final int WINDOW_WIDTH = 1280;
     private static final int WINDOW_HEIGHT = 720;
@@ -63,10 +61,8 @@ public class Main extends GameApplication {
     private static final String GAME_TITLE = "Taiwanese Difficulty";
     private static final String GAME_VERSION = "2.1";
 
-
-    // =========================================================
-    // Global Runtime Flags
-    // =========================================================
+ 
+    // Global Runtime Flags 
 
     /**
      * 開發模式。
@@ -76,10 +72,8 @@ public class Main extends GameApplication {
      */
     public static boolean devMode = false;
 
-
-    // =========================================================
-    // Core Systems
-    // =========================================================
+ 
+    // Core Systems 
 
     private SceneManager sceneManager;
     private DeathSystem deathSystem;
@@ -87,10 +81,8 @@ public class Main extends GameApplication {
     private SaveSystem saveSystem;
     private AchievementSystem achievementSystem;
 
-
-    // =========================================================
-    // Input State
-    // =========================================================
+ 
+    // Input State 
 
     /**
      * 跳躍鍵同時綁定 Space / W / Up。
@@ -101,10 +93,8 @@ public class Main extends GameApplication {
      */
     private int jumpKeyHoldCount = 0;
 
-
-    // =========================================================
-    // FXGL Settings
-    // =========================================================
+ 
+    // FXGL Settings 
 
     /**
      * 設定遊戲視窗、標題、版本與選單。
@@ -135,10 +125,8 @@ public class Main extends GameApplication {
         });
     }
 
-
-    // =========================================================
-    // FXGL Save / Load Hook
-    // =========================================================
+ 
+    // FXGL Save / Load Hook 
 
     /**
      * 註冊 FXGL 內建 SaveLoadService 的處理器。
@@ -173,10 +161,8 @@ public class Main extends GameApplication {
         });
     }
 
-
-    // =========================================================
-    // Game Initialization
-    // =========================================================
+ 
+    // Game Initialization 
 
     /**
      * 初始化遊戲內容。
@@ -280,10 +266,8 @@ public class Main extends GameApplication {
         CursorManager.install(getGameScene().getRoot());
     }
 
-
-    // =========================================================
-    // Game Variables
-    // =========================================================
+ 
+    // Game Variables 
 
     /**
      * 初始化 FXGL 全域 vars。
@@ -350,10 +334,8 @@ public class Main extends GameApplication {
         vars.put("achievementDisabled", false);
     }
 
-
-    // =========================================================
-    // Physics
-    // =========================================================
+ 
+    // Physics 
 
     /**
      * 初始化物理世界與碰撞事件。
@@ -432,10 +414,8 @@ public class Main extends GameApplication {
         });
     }
 
-
-    // =========================================================
-    // Input
-    // =========================================================
+ 
+    // Input 
 
     /**
      * 註冊玩家輸入。
@@ -630,10 +610,8 @@ public class Main extends GameApplication {
         withPlayerComponent(PlayerComponent::jumpReleased);
     }
 
-
-    // =========================================================
-    // Player Helpers
-    // =========================================================
+ 
+    // Player Helpers 
 
     /**
      * 安全取得目前玩家的 PlayerComponent。
@@ -664,10 +642,8 @@ public class Main extends GameApplication {
 
         action.accept(playerComponent);
     }
-
-    // =========================================================
-    // Update
-    // =========================================================
+ 
+    // Update 
 
     /**
      * 每幀更新。
@@ -679,19 +655,15 @@ public class Main extends GameApplication {
         }
     }
 
-
-    // =========================================================
-    // Public Accessors
-    // =========================================================
+ 
+    // Public Accessors 
 
     public DeathSystem getDeathSystem() {
         return deathSystem;
     }
 
-
-    // =========================================================
-    // Main Entry
-    // =========================================================
+ 
+    // Main Entry 
 
     public static void main(String[] args) {
         launch(args);

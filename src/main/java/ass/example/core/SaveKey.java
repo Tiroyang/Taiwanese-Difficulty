@@ -11,10 +11,8 @@ package ass.example.core;
  * 3. 讓所有存檔欄位集中管理。
  */
 public final class SaveKey {
-
-    // =========================================================
-    // Constructor
-    // =========================================================
+ 
+    // Constructor 
 
     /**
      * 工具類別不允許建立實例。
@@ -22,30 +20,24 @@ public final class SaveKey {
     private SaveKey() {
     }
 
-
-    // =========================================================
-    // Bundle
-    // =========================================================
+ 
+    // Bundle 
 
     /**
      * FXGL Bundle 名稱。
      */
     public static final String BUNDLE_NAME = "storySaveData";
 
-
-    // =========================================================
-    // Scene
-    // =========================================================
+ 
+    // Scene 
 
     /**
      * 目前場景類型。
      */
     public static final String SCENE_TYPE = "sceneType";
 
-
-    // =========================================================
-    // Player
-    // =========================================================
+ 
+    // Player 
 
     /**
      * 玩家 X 座標。
@@ -72,10 +64,8 @@ public final class SaveKey {
      */
     public static final String DEATH_COUNT = "deathCount";
 
-
-    // =========================================================
-    // Thumbnail / Metadata
-    // =========================================================
+ 
+    // Thumbnail / Metadata 
 
     /**
      * 存檔縮圖 Base64。
@@ -87,10 +77,8 @@ public final class SaveKey {
      */
     public static final String SAVED_AT = "savedAt";
 
-
-    // =========================================================
-    // Quest
-    // =========================================================
+ 
+    // Quest 
 
     /**
      * 任務 HUD 目前可見起始 index。
@@ -121,10 +109,8 @@ public final class SaveKey {
      */
     public static final String QUEST_ANIM_PLAYED_PREFIX = "quest_anim_played_";
 
-
-    // =========================================================
-    // HouseScene - Props / Interactions
-    // =========================================================
+ 
+    // HouseScene - Props / Interactions 
 
     /**
      * 棉被是否已折。
@@ -151,10 +137,8 @@ public final class SaveKey {
      */
     public static final String PLAYER_ON_BED_COLLIDER = "playerOnBedCollider";
 
-
-    // =========================================================
-    // HouseScene - Rooms
-    // =========================================================
+ 
+    // HouseScene - Rooms 
 
     /**
      * 客廳是否已揭露。
@@ -166,10 +150,8 @@ public final class SaveKey {
      */
     public static final String ROOM_TOILET_REVEALED = "room_TOILET_revealed";
 
-
-    // =========================================================
-    // HouseScene - Doors
-    // =========================================================
+ 
+    // HouseScene - Doors 
 
     /**
      * Door1 是否開啟。
@@ -181,10 +163,8 @@ public final class SaveKey {
      */
     public static final String DOOR_2_OPENED = "door_Door2_opened";
 
-
-    // =========================================================
-    // StreetScene
-    // =========================================================
+ 
+    // StreetScene 
 
     /**
      * 街道區段資料。
@@ -206,10 +186,8 @@ public final class SaveKey {
      */
     public static final String STREET_OBSTACLES = "streetObstacles";
 
-
-    // =========================================================
-    // Helper Methods
-    // =========================================================
+ 
+    // Helper Methods 
 
     /**
      * 取得指定任務的進度 key。

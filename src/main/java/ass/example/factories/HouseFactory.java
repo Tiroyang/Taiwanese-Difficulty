@@ -77,28 +77,22 @@ import static com.almasb.fxgl.dsl.FXGL.*;
  * - 重複的 devMode 碰撞框、SpawnData 預設值讀取集中成共用方法。
  */
 public class HouseFactory implements EntityFactory {
-
-    // =========================================================
-    // System
-    // =========================================================
+ 
+    // System 
 
     private final AudioSystem audioSystem = AudioSystem.getInstance();
     private final LanguageSystem languageSystem = LanguageSystem.getInstance();
     private final QuestSystem questSystem = QuestSystem.getInstance();
-
-    // =========================================================
-    // Texture Paths - Map
-    // =========================================================
+ 
+    // Texture Paths - Map 
 
     private static final String TEXTURE_HOUSE_BACKGROUND = "/Scene1/map/Background.png";
     private static final String TEXTURE_HOUSE_FLOOR = "/Scene1/map/Floor.png";
     private static final String TEXTURE_HOUSE_CEILING = "/Scene1/map/Ceiling.png";
     private static final String TEXTURE_HOUSE_FOREGROUND = "/Scene1/map/Foreground.png";
 
-
-    // =========================================================
-    // Texture Paths - Props
-    // =========================================================
+ 
+    // Texture Paths - Props 
 
     private static final String TEXTURE_QUILT_DEFAULT = "Scene1/props/Quilt.png";
     private static final String TEXTURE_QUILT_FOLDED = "Scene1/props/Quilt_folded.png";
@@ -115,19 +109,15 @@ public class HouseFactory implements EntityFactory {
 
     private static final String TEXTURE_MOM = "/assets/textures/characters/mom/mom.png";
 
-
-    // =========================================================
-    // Default Interaction Settings
-    // =========================================================
+ 
+    // Default Interaction Settings 
 
     private static final double DEFAULT_INTERACT_RANGE = 180.0;
     private static final boolean DEFAULT_PROMPT_ON_ENTITY = true;
     private static final double DEFAULT_PROMPT_OFFSET_Y = 20.0;
 
-
-    // =========================================================
-    // Z Index
-    // =========================================================
+ 
+    // Z Index 
 
     private static final int Z_WINDOW_VIEW = -300;
     private static final int Z_BACKGROUND = -200;
@@ -145,10 +135,8 @@ public class HouseFactory implements EntityFactory {
     private static final int Z_KITCHEN = -100;
     private static final int Z_MOM = -150;
 
-
-    // =========================================================
-    // Dev View Colors
-    // =========================================================
+ 
+    // Dev View Colors 
 
     private static final Color COLOR_TRIGGER_DEBUG = Color.rgb(255, 255, 0, 0.35);
     private static final Color COLOR_DOOR_COLLIDER_DEBUG = Color.rgb(37, 255, 0, 0.5);
@@ -156,10 +144,8 @@ public class HouseFactory implements EntityFactory {
     private static final Color COLOR_BED_COLLIDER_DEBUG = Color.rgb(0, 255, 196, 0.35);
     private static final Color COLOR_BATHTUB_SENSOR_DEBUG = Color.rgb(0, 180, 255, 0.32);
 
-
-    // =========================================================
-    // Spawn - Map Background
-    // =========================================================
+ 
+    // Spawn - Map Background 
 
     /**
      * 生成家中背景底圖。
@@ -237,10 +223,8 @@ public class HouseFactory implements EntityFactory {
                 .build();
     }
 
-
-    // =========================================================
-    // Spawn - Doors
-    // =========================================================
+ 
+    // Spawn - Doors 
 
     /**
      * 生成一般房間門。
@@ -382,10 +366,8 @@ public class HouseFactory implements EntityFactory {
         );
     }
 
-
-    // =========================================================
-    // Spawn - Quilt
-    // =========================================================
+ 
+    // Spawn - Quilt 
 
     /**
      * 生成棉被視覺物件。
@@ -441,10 +423,8 @@ public class HouseFactory implements EntityFactory {
                 .build();
     }
 
-
-    // =========================================================
-    // Spawn - Bed
-    // =========================================================
+ 
+    // Spawn - Bed 
 
     /**
      * 生成床視覺物件。
@@ -584,10 +564,8 @@ public class HouseFactory implements EntityFactory {
         );
     }
 
-
-    // =========================================================
-    // Spawn - Water / Bathtub / Toothbrush
-    // =========================================================
+ 
+    // Spawn - Water / Bathtub / Toothbrush 
 
     /**
      * 生成過夜水的視覺物件。
@@ -712,10 +690,8 @@ public class HouseFactory implements EntityFactory {
 
         QuestSystem.getInstance().completeQuest(QuestType.BRUSH_TEETH);
     }
-
-    // =========================================================
-    // Spawn - Shoes
-    // =========================================================
+ 
+    // Spawn - Shoes 
 
     /**
      * 生成鞋櫃視覺物件。
@@ -777,10 +753,8 @@ public class HouseFactory implements EntityFactory {
                 .build();
     }
 
-
-    // =========================================================
-    // Spawn - Static Visual Props
-    // =========================================================
+ 
+    // Spawn - Static Visual Props 
 
     /**
      * 生成櫃子視覺物件。
@@ -806,10 +780,8 @@ public class HouseFactory implements EntityFactory {
                 .build();
     }
 
-
-    // =========================================================
-    // Spawn - Mom / Dialogue
-    // =========================================================
+ 
+    // Spawn - Mom / Dialogue 
 
     /**
      * 生成媽媽角色視覺物件。
@@ -884,10 +856,8 @@ public class HouseFactory implements EntityFactory {
         );
     }
 
-
-    // =========================================================
-    // Shared View Helpers
-    // =========================================================
+ 
+    // Shared View Helpers 
 
     /**
      * 建立互動 trigger 的 devMode 顯示框。
@@ -934,10 +904,8 @@ public class HouseFactory implements EntityFactory {
         return view;
     }
 
-
-    // =========================================================
-    // Shared SpawnData Helpers
-    // =========================================================
+ 
+    // Shared SpawnData Helpers 
 
     /**
      * 從 SpawnData 讀取 double。
@@ -992,10 +960,8 @@ public class HouseFactory implements EntityFactory {
     ) {
         return data.hasKey(key) ? data.get(key) : defaultValue;
     }
-
-    // =========================================================
-    // Physics Helpers
-    // =========================================================
+ 
+    // Physics Helpers 
 
     /**
      * 建立靜態 PhysicsComponent。
@@ -1070,10 +1036,8 @@ public class HouseFactory implements EntityFactory {
         return fixtureDef;
     }
 
-
-    // =========================================================
-    // Notification Helpers
-    // =========================================================
+ 
+    // Notification Helpers 
 
     /**
      * 顯示出口尚未解鎖提示。

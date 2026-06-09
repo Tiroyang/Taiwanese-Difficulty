@@ -36,30 +36,24 @@ import static com.almasb.fxgl.dsl.FXGL.*;
  * 9. 支援起床過場與特殊強制外觀動畫。
  */
 public class PlayerComponent extends Component {
-
-    // =========================================================
-    // Game Var Keys
-    // =========================================================
+ 
+    // Game Var Keys 
 
     /**
      * 玩家是否穿鞋的 game var key。
      */
     private static final String VAR_SHOES_WORN = "shoesWorn";
 
-
-    // =========================================================
-    // Movement Constants
-    // =========================================================
+ 
+    // Movement Constants 
 
     /**
      * 玩家一般水平移動速度。
      */
     private static final double MOVE_SPEED = 260.0;
 
-
-    // =========================================================
-    // Jump Constants
-    // =========================================================
+ 
+    // Jump Constants 
 
     /**
      * 玩家起跳瞬間的向上速度。
@@ -82,10 +76,8 @@ public class PlayerComponent extends Component {
      */
     private static final double CUT_JUMP_POWER = 0.45;
 
-
-    // =========================================================
-    // Dash Constants
-    // =========================================================
+ 
+    // Dash Constants 
 
     /**
      * 衝刺持續時間。
@@ -112,10 +104,8 @@ public class PlayerComponent extends Component {
      */
     private static final double DASH_CHARGE_HEIGHT = 16.0;
 
-
-    // =========================================================
-    // Animation Constants
-    // =========================================================
+ 
+    // Animation Constants 
 
     /**
      * 一般走路動畫每張圖的切換時間。
@@ -132,10 +122,8 @@ public class PlayerComponent extends Component {
      */
     private static final double MOM_DANCE_FRAME_DURATION = 0.35;
 
-
-    // =========================================================
-    // Ground Sensor Constants
-    // =========================================================
+ 
+    // Ground Sensor Constants 
 
     /**
      * 腳底感測器寬度相對玩家寬度的比例。
@@ -152,10 +140,8 @@ public class PlayerComponent extends Component {
      */
     private static final double SENSOR_Y_OFFSET = 2.0;
 
-
-    // =========================================================
-    // UI Constants
-    // =========================================================
+ 
+    // UI Constants 
 
     /**
      * 衝刺 UI 的畫面 X 位置。
@@ -167,10 +153,8 @@ public class PlayerComponent extends Component {
      */
     private static final double DASH_UI_Y = 36.0;
 
-
-    // =========================================================
-    // Wake Up Intro Constants
-    // =========================================================
+ 
+    // Wake Up Intro Constants 
 
     /**
      * 起床過場中，玩家圖片旋轉角度。
@@ -197,10 +181,8 @@ public class PlayerComponent extends Component {
      */
     private static final int NORMAL_VIEW_Z_INDEX = 0;
 
-
-    // =========================================================
-    // Enums
-    // =========================================================
+ 
+    // Enums 
 
     /**
      * 玩家目前水平面向或移動方向。
@@ -223,10 +205,8 @@ public class PlayerComponent extends Component {
         DEAD
     }
 
-
-    // =========================================================
-    // Dependencies
-    // =========================================================
+ 
+    // Dependencies 
 
     /**
      * FXGL PhysicsComponent。
@@ -238,20 +218,16 @@ public class PlayerComponent extends Component {
      */
     private final AudioSystem audioSystem = AudioSystem.getInstance();
 
-
-    // =========================================================
-    // View References
-    // =========================================================
+ 
+    // View References 
 
     /**
      * 玩家圖片顯示用 ImageView。
      */
     private final ImageView playerView;
 
-
-    // =========================================================
-    // Images - With Shoes
-    // =========================================================
+ 
+    // Images - With Shoes 
 
     private final Image standImage;
     private final Image[] walkRightImages;
@@ -259,10 +235,8 @@ public class PlayerComponent extends Component {
     private final Image[] dashRightImages;
     private final Image[] dashLeftImages;
 
-
-    // =========================================================
-    // Images - Shoeless
-    // =========================================================
+ 
+    // Images - Shoeless 
 
     private final Image standShoelessImage;
     private final Image[] walkRightShoelessImages;
@@ -270,20 +244,16 @@ public class PlayerComponent extends Component {
     private final Image[] dashRightShoelessImages;
     private final Image[] dashLeftShoelessImages;
 
-
-    // =========================================================
-    // Images - Special
-    // =========================================================
+ 
+    // Images - Special 
 
     /**
      * 玩家死亡圖片。
      */
     private final Image deadImage;
 
-
-    // =========================================================
-    // Control State
-    // =========================================================
+ 
+    // Control State 
 
     /**
      * 玩家是否可被操作。
@@ -304,10 +274,8 @@ public class PlayerComponent extends Component {
      */
     private boolean movingRight = false;
 
-
-    // =========================================================
-    // Movement / Visual State
-    // =========================================================
+ 
+    // Movement / Visual State 
 
     /**
      * 玩家目前方向。
@@ -334,20 +302,16 @@ public class PlayerComponent extends Component {
      */
     private double walkAnimationTimer = 0;
 
-
-    // =========================================================
-    // Shoes State
-    // =========================================================
+ 
+    // Shoes State 
 
     /**
      * 玩家目前是否穿鞋。
      */
     private boolean shoesWorn = true;
 
-
-    // =========================================================
-    // Jump State
-    // =========================================================
+ 
+    // Jump State 
 
     /**
      * 跳躍鍵是否仍被按住。
@@ -364,10 +328,8 @@ public class PlayerComponent extends Component {
      */
     private double jumpHoldTimer = 0;
 
-
-    // =========================================================
-    // Dash State
-    // =========================================================
+ 
+    // Dash State 
 
     /**
      * 玩家是否正在衝刺。
@@ -384,10 +346,8 @@ public class PlayerComponent extends Component {
      */
     private double dashCooldownTimer = 0;
 
-
-    // =========================================================
-    // Dash UI
-    // =========================================================
+ 
+    // Dash UI 
 
     /**
      * 衝刺冷卻 UI 容器。
@@ -399,10 +359,8 @@ public class PlayerComponent extends Component {
      */
     private Rectangle dashChargeFill;
 
-
-    // =========================================================
-    // Ground Sensor
-    // =========================================================
+ 
+    // Ground Sensor 
 
     /**
      * 腳底感測器 Entity。
@@ -422,10 +380,8 @@ public class PlayerComponent extends Component {
      */
     private boolean onOneWayPlatform = false;
 
-
-    // =========================================================
-    // Forced Visual Animation
-    // =========================================================
+ 
+    // Forced Visual Animation 
 
     /**
      * 強制外觀動畫 Timeline。
@@ -437,10 +393,8 @@ public class PlayerComponent extends Component {
      */
     private boolean forcedVisualPlaying = false;
 
-
-    // =========================================================
-    // Constructor
-    // =========================================================
+ 
+    // Constructor 
 
     /**
      * 建立 PlayerComponent。
@@ -492,10 +446,8 @@ public class PlayerComponent extends Component {
         this.deadImage = deadImage;
     }
 
-
-    // =========================================================
-    // FXGL Lifecycle
-    // =========================================================
+ 
+    // FXGL Lifecycle 
 
     /**
      * Component 被加入 Entity 時呼叫。
@@ -555,10 +507,8 @@ public class PlayerComponent extends Component {
         updateDashChargeUI();
     }
 
-
-    // =========================================================
-    // Movement Input
-    // =========================================================
+ 
+    // Movement Input 
 
     /**
      * 玩家按下左移。
@@ -604,10 +554,8 @@ public class PlayerComponent extends Component {
         movingRight = false;
     }
 
-
-    // =========================================================
-    // Movement Update
-    // =========================================================
+ 
+    // Movement Update 
 
     /**
      * 根據目前左右輸入更新玩家水平速度。
@@ -639,10 +587,8 @@ public class PlayerComponent extends Component {
         return MOVE_SPEED * (dashing ? DASH_SPEED_SCALE : 1.0);
     }
 
-
-    // =========================================================
-    // Jump Input / Update
-    // =========================================================
+ 
+    // Jump Input / Update 
 
     /**
      * 玩家按下跳躍鍵。
@@ -719,10 +665,8 @@ public class PlayerComponent extends Component {
         }
     }
 
-
-    // =========================================================
-    // Dash Input / Update
-    // =========================================================
+ 
+    // Dash Input / Update 
 
     /**
      * 玩家按下衝刺鍵。
@@ -810,10 +754,8 @@ public class PlayerComponent extends Component {
         resetWalkAnimation();
     }
 
-
-    // =========================================================
-    // Dash UI
-    // =========================================================
+ 
+    // Dash UI 
 
     /**
      * 建立衝刺冷卻 UI。
@@ -897,10 +839,8 @@ public class PlayerComponent extends Component {
         dashChargeFill.setWidth(DASH_CHARGE_WIDTH * ratio);
     }
 
-
-    // =========================================================
-    // Animation Update
-    // =========================================================
+ 
+    // Animation Update 
 
     /**
      * 更新玩家圖片動畫。
@@ -1067,10 +1007,8 @@ public class PlayerComponent extends Component {
         playerView.setImage(image);
     }
 
-
-    // =========================================================
-    // Shoes State
-    // =========================================================
+ 
+    // Shoes State 
 
     /**
      * 設定玩家是否穿鞋。
@@ -1101,10 +1039,8 @@ public class PlayerComponent extends Component {
         return shoesWorn;
     }
 
-
-    // =========================================================
-    // Wake Up Intro / Special Visuals
-    // =========================================================
+ 
+    // Wake Up Intro / Special Visuals 
 
     /**
      * 顯示起床過場中躺在床上的姿勢。
@@ -1232,10 +1168,8 @@ public class PlayerComponent extends Component {
         return images[index];
     }
 
-
-    // =========================================================
-    // Ground Detection
-    // =========================================================
+ 
+    // Ground Detection 
 
     /**
      * 判斷玩家是否在地上。
@@ -1376,10 +1310,8 @@ public class PlayerComponent extends Component {
         return xOverlap && yOverlap;
     }
 
-
-    // =========================================================
-    // One Way Platform
-    // =========================================================
+ 
+    // One Way Platform 
 
     /**
      * 設定玩家是否站在單向平台上。
@@ -1399,10 +1331,8 @@ public class PlayerComponent extends Component {
         return onOneWayPlatform;
     }
 
-
-    // =========================================================
-    // Death / Respawn / Teleport
-    // =========================================================
+ 
+    // Death / Respawn / Teleport 
 
     /**
      * 設定玩家是否可控制。
@@ -1563,10 +1493,8 @@ public class PlayerComponent extends Component {
         }
     }
 
-
-    // =========================================================
-    // Cleanup
-    // =========================================================
+ 
+    // Cleanup 
 
     /**
      * 清理 PlayerComponent 建立的執行期節點。
@@ -1609,10 +1537,8 @@ public class PlayerComponent extends Component {
         groundSensor = null;
     }
 
-
-    // =========================================================
-    // Utility
-    // =========================================================
+ 
+    // Utility 
 
     /**
      * 將數值限制在 0 到 1。

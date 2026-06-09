@@ -22,26 +22,13 @@ import static com.almasb.fxgl.dsl.FXGL.getPrimaryStage;
  * 4. 支援全螢幕。
  * 5. 偵測玩家手動拖曳視窗大小，並自動保存成 CUSTOM。
  * 6. 使用 Preferences 保存視窗設定。
- *
- * 單例判斷：
- * WindowSystem 適合做成單例。
- *
- * 原因：
- * - 遊戲只有一個 primary stage。
- * - 視窗模式與大小是全遊戲共用設定。
- * - MainMenu、PauseMenu、SettingsPage 都應該操作同一份 WindowSystem。
  */
 public final class WindowSystem {
-
-    // =========================================================
-    // Singleton
-    // =========================================================
+ 
+    // Singleton 
 
     /**
      * WindowSystem 單例。
-     *
-     * 此系統不需要外部依賴，
-     * 因此可以使用 static final 建立。
      */
     private static final WindowSystem INSTANCE = new WindowSystem();
 
@@ -54,19 +41,15 @@ public final class WindowSystem {
         return INSTANCE;
     }
 
-
-    // =========================================================
-    // Preferences Keys
-    // =========================================================
+ 
+    // Preferences Keys 
 
     private static final String KEY_WINDOW_MODE = "windowMode";
     private static final String KEY_CUSTOM_WIDTH = "customWidth";
     private static final String KEY_CUSTOM_HEIGHT = "customHeight";
 
-
-    // =========================================================
-    // Default Settings
-    // =========================================================
+ 
+    // Default Settings 
 
     /**
      * 預設視窗寬度。
@@ -91,22 +74,19 @@ public final class WindowSystem {
     /**
      * 使用者停止拖曳視窗後，延遲多久才保存尺寸。
      *
-     * 這樣可以避免每一幀都寫入 Preferences。
+     * 可以避免每一幀都寫入 Preferences。
      */
     private static final double RESIZE_SAVE_DELAY_SECONDS = 0.25;
 
     /**
      * 程式主動改變視窗大小後，延遲多久才解除 programmatic resize flag。
      *
-     * 避免 stage.setWidth / setHeight 觸發 listener，
-     * 被誤判成玩家手動拖曳視窗。
+     * 避免 stage.setWidth / setHeight 觸發 listener，被誤判成玩家手動拖曳視窗。
      */
     private static final double PROGRAMMATIC_RESIZE_RELEASE_SECONDS = 0.35;
 
-
-    // =========================================================
-    // Runtime State
-    // =========================================================
+ 
+    // Runtime State 
 
     /**
      * Java Preferences。
@@ -150,10 +130,8 @@ public final class WindowSystem {
      */
     private PauseTransition resizeSaveDelay;
 
-
-    // =========================================================
-    // Constructor
-    // =========================================================
+ 
+    // Constructor 
 
     /**
      * 建立視窗設定系統。
@@ -166,10 +144,8 @@ public final class WindowSystem {
         loadSettings();
     }
 
-
-    // =========================================================
-    // Initialization
-    // =========================================================
+ 
+    // Initialization 
 
     /**
      * 套用已保存的視窗設定。
@@ -188,8 +164,7 @@ public final class WindowSystem {
     /**
      * 安裝視窗大小變更監聽器。
      *
-     * 用於偵測玩家手動拖曳視窗大小，
-     * 並將新大小保存成 CUSTOM。
+     * 用於偵測玩家手動拖曳視窗大小，並將新大小保存成 CUSTOM。
      */
     public void installResizeListener() {
         if (resizeListenerInstalled) {
@@ -215,10 +190,8 @@ public final class WindowSystem {
         );
     }
 
-
-    // =========================================================
-    // Apply Window Mode
-    // =========================================================
+ 
+    // Apply Window Mode 
 
     /**
      * 套用指定視窗模式。
@@ -243,9 +216,6 @@ public final class WindowSystem {
 
     /**
      * 套用視窗模式。
-     *
-     * 注意：
-     * 這裡只是套用大小，不會覆蓋 customWidth / customHeight。
      *
      * @param width 視窗寬度
      * @param height 視窗高度
@@ -303,10 +273,8 @@ public final class WindowSystem {
         delay.play();
     }
 
-
-    // =========================================================
-    // Manual Resize Handling
-    // =========================================================
+ 
+    // Manual Resize Handling 
 
     /**
      * 當 Stage 寬高改變時呼叫。
@@ -394,10 +362,8 @@ public final class WindowSystem {
                 height >= MIN_CUSTOM_HEIGHT;
     }
 
-
-    // =========================================================
-    // Reset
-    // =========================================================
+ 
+    // Reset 
 
     /**
      * 重置視窗設定。
@@ -417,10 +383,8 @@ public final class WindowSystem {
         applySavedSettings();
     }
 
-
-    // =========================================================
-    // Load / Save Settings
-    // =========================================================
+ 
+    // Load / Save Settings 
 
     /**
      * 從 Preferences 讀取視窗設定。
@@ -468,10 +432,8 @@ public final class WindowSystem {
         prefs.putInt(KEY_CUSTOM_HEIGHT, customHeight);
     }
 
-
-    // =========================================================
-    // Getters
-    // =========================================================
+ 
+    // Getters 
 
     /**
      * 取得目前視窗模式。
@@ -502,11 +464,6 @@ public final class WindowSystem {
 
     /**
      * 取得目前視窗設定顯示文字。
-     *
-     * 注意：
-     * 若你想讓「全螢幕」也支援多語系，
-     * 可以改成讓 UI 用 LanguageSystem 處理，
-     * 不建議 WindowSystem 直接依賴 LanguageSystem。
      *
      * @return 顯示文字
      */

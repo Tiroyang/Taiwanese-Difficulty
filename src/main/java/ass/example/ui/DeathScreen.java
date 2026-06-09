@@ -42,10 +42,8 @@ import static com.almasb.fxgl.dsl.FXGLForKtKt.getd;
  * 7. 播放死亡畫面進場動畫。
  */
 public class DeathScreen extends StackPane {
-
-    // =========================================================
-    // Layout Constants
-    // =========================================================
+ 
+    // Layout Constants 
 
     private static final double SCREEN_WIDTH = 1280.0;
     private static final double SCREEN_HEIGHT = 720.0;
@@ -63,10 +61,8 @@ public class DeathScreen extends StackPane {
 
     private static final double BUTTON_START_TRANSLATE_X = -220.0;
 
-
-    // =========================================================
-    // Animation Constants
-    // =========================================================
+ 
+    // Animation Constants 
 
     private static final double DEATH_TITLE_FADE_SECONDS = 1.0;
     private static final double DEATH_TITLE_SCALE_SECONDS = 0.55;
@@ -82,10 +78,8 @@ public class DeathScreen extends StackPane {
 
     private static final double SEQUENCE_PAUSE_SECONDS = 0.18;
 
-
-    // =========================================================
-    // Asset Constants
-    // =========================================================
+ 
+    // Asset Constants 
 
     private static final String FONT_PATH =
             "/assets/fonts/OptimusPrinceps.ttf";
@@ -93,20 +87,16 @@ public class DeathScreen extends StackPane {
     private static final String RESPAWN_BUTTON_IMAGE_PATH =
             "/assets/textures/ui/respawn_button.png";
 
-
-    // =========================================================
-    // Dependencies
-    // =========================================================
+ 
+    // Dependencies 
 
     private final LanguageSystem languageSystem =
             LanguageSystem.getInstance();
 
     private final Runnable onRespawn;
 
-
-    // =========================================================
-    // UI Nodes
-    // =========================================================
+ 
+    // UI Nodes 
 
     private final Rectangle background =
             new Rectangle(SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -134,10 +124,8 @@ public class DeathScreen extends StackPane {
     private final AchievementToast achievementToast =
             new AchievementToast();
 
-
-    // =========================================================
-    // Runtime State
-    // =========================================================
+ 
+    // Runtime State 
 
     /**
      * 目前播放中的進場動畫。
@@ -147,10 +135,8 @@ public class DeathScreen extends StackPane {
      */
     private SequentialTransition currentShowAnimation;
 
-
-    // =========================================================
-    // Constructor
-    // =========================================================
+ 
+    // Constructor 
 
     /**
      * 建議使用的新建構子。
@@ -178,10 +164,8 @@ public class DeathScreen extends StackPane {
         CursorManager.install(this);
     }
 
-
-    // =========================================================
-    // Setup
-    // =========================================================
+ 
+    // Setup 
 
     /**
      * 設定根節點。
@@ -319,10 +303,8 @@ public class DeathScreen extends StackPane {
         );
     }
 
-
-    // =========================================================
-    // Public API
-    // =========================================================
+ 
+    // Public API 
 
     /**
      * 顯示死亡畫面。
@@ -368,10 +350,8 @@ public class DeathScreen extends StackPane {
         achievementToast.showUnlock(reason);
     }
 
-
-    // =========================================================
-    // Content Update
-    // =========================================================
+ 
+    // Content Update 
 
     /**
      * 更新死亡原因文字。
@@ -430,10 +410,8 @@ public class DeathScreen extends StackPane {
         );
     }
 
-
-    // =========================================================
-    // Button Creation
-    // =========================================================
+ 
+    // Button Creation 
 
     /**
      * 建立圖片文字按鈕。
@@ -615,10 +593,8 @@ public class DeathScreen extends StackPane {
         }
     }
 
-
-    // =========================================================
-    // Animation State
-    // =========================================================
+ 
+    // Animation State 
 
     /**
      * 重置死亡畫面動畫前狀態。
@@ -682,10 +658,8 @@ public class DeathScreen extends StackPane {
         }
     }
 
-
-    // =========================================================
-    // Show Animation
-    // =========================================================
+ 
+    // Show Animation 
 
     /**
      * 播放死亡畫面進場動畫。
@@ -868,10 +842,8 @@ public class DeathScreen extends StackPane {
         );
     }
 
-
-    // =========================================================
-    // Game Var Helpers
-    // =========================================================
+ 
+    // Game Var Helpers 
 
     /**
      * 判斷目前是否為 Street Endless 模式。
@@ -908,10 +880,8 @@ public class DeathScreen extends StackPane {
         }
     }
 
-
-    // =========================================================
-    // Text Helper
-    // =========================================================
+ 
+    // Text Helper 
 
     /**
      * 取得目前語言文字。

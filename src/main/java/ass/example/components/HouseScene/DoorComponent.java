@@ -40,10 +40,8 @@ import static com.almasb.fxgl.dsl.FXGL.*;
  * door_{id}_opened
  */
 public class DoorComponent extends Component implements LoadSaveComponent {
-
-    // =========================================================
-    // Game Var Keys
-    // =========================================================
+ 
+    // Game Var Keys 
 
     /**
      * 門狀態存檔 key 的前綴。
@@ -55,10 +53,8 @@ public class DoorComponent extends Component implements LoadSaveComponent {
      */
     private static final String DOOR_VAR_SUFFIX_OPENED = "_opened";
 
-
-    // =========================================================
-    // Spawn Names
-    // =========================================================
+ 
+    // Spawn Names 
 
     /**
      * 門關閉時生成的碰撞箱 spawn name。
@@ -67,10 +63,8 @@ public class DoorComponent extends Component implements LoadSaveComponent {
      */
     private static final String SPAWN_DOOR_COLLIDER = "door_collider";
 
-
-    // =========================================================
-    // Basic Door Settings
-    // =========================================================
+ 
+    // Basic Door Settings 
 
     /**
      * 門的唯一 ID。
@@ -91,10 +85,8 @@ public class DoorComponent extends Component implements LoadSaveComponent {
      */
     private final String openTexture;
 
-
-    // =========================================================
-    // Collider Settings
-    // =========================================================
+ 
+    // Collider Settings 
 
     /**
      * 門碰撞箱相對於門 Entity 的 X 偏移。
@@ -116,10 +108,8 @@ public class DoorComponent extends Component implements LoadSaveComponent {
      */
     private final double colliderHeight;
 
-
-    // =========================================================
-    // Dependencies
-    // =========================================================
+ 
+    // Dependencies 
 
     /**
      * 音效系統。
@@ -128,10 +118,8 @@ public class DoorComponent extends Component implements LoadSaveComponent {
      */
     private final AudioSystem audioSystem = AudioSystem.getInstance();
 
-
-    // =========================================================
-    // Runtime State
-    // =========================================================
+ 
+    // Runtime State 
 
     /**
      * 門目前是否開啟。
@@ -167,10 +155,8 @@ public class DoorComponent extends Component implements LoadSaveComponent {
      */
     private Runnable onOpen = () -> {};
 
-
-    // =========================================================
-    // Constructor
-    // =========================================================
+ 
+    // Constructor 
 
     /**
      * 建立門 Component。
@@ -201,10 +187,8 @@ public class DoorComponent extends Component implements LoadSaveComponent {
         this.colliderHeight = colliderHeight;
     }
 
-
-    // =========================================================
-    // FXGL Lifecycle
-    // =========================================================
+ 
+    // FXGL Lifecycle 
 
     /**
      * Component 被加入 Entity 時呼叫。
@@ -219,10 +203,8 @@ public class DoorComponent extends Component implements LoadSaveComponent {
         restoreClosedState();
     }
 
-
-    // =========================================================
-    // Save / Load
-    // =========================================================
+ 
+    // Save / Load 
 
     /**
      * 套用存檔中的門狀態。
@@ -255,10 +237,8 @@ public class DoorComponent extends Component implements LoadSaveComponent {
         return DOOR_VAR_PREFIX + id + DOOR_VAR_SUFFIX_OPENED;
     }
 
-
-    // =========================================================
-    // Public API
-    // =========================================================
+ 
+    // Public API 
 
     /**
      * 切換門的開關狀態。
@@ -337,10 +317,8 @@ public class DoorComponent extends Component implements LoadSaveComponent {
         playDoorCloseSound();
     }
 
-
-    // =========================================================
-    // Restore State
-    // =========================================================
+ 
+    // Restore State 
 
     /**
      * 直接還原為開門狀態。
@@ -380,10 +358,8 @@ public class DoorComponent extends Component implements LoadSaveComponent {
         createColliderIfAbsent();
     }
 
-
-    // =========================================================
-    // Collider Management
-    // =========================================================
+ 
+    // Collider Management 
 
     /**
      * 若目前沒有門 collider，則建立新的阻擋 collider。
@@ -424,10 +400,8 @@ public class DoorComponent extends Component implements LoadSaveComponent {
         collider = null;
     }
 
-
-    // =========================================================
-    // View Management
-    // =========================================================
+ 
+    // View Management 
 
     /**
      * 顯示開門貼圖。
@@ -456,10 +430,8 @@ public class DoorComponent extends Component implements LoadSaveComponent {
         entity.getViewComponent().addChild(texture(texturePath));
     }
 
-
-    // =========================================================
-    // Audio
-    // =========================================================
+ 
+    // Audio 
 
     /**
      * 播放開門音效。
@@ -479,10 +451,8 @@ public class DoorComponent extends Component implements LoadSaveComponent {
         }
     }
 
-
-    // =========================================================
-    // Getters
-    // =========================================================
+ 
+    // Getters 
 
     /**
      * 取得門目前是否開啟。

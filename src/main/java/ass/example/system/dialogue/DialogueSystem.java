@@ -35,10 +35,8 @@ import static com.almasb.fxgl.dsl.FXGL.removeUINode;
  * 8. 處理特殊對話事件，例如媽媽 Boss 戰、媽媽跳舞制裁。
  */
 public class DialogueSystem {
-
-    // =========================================================
-    // Singleton
-    // =========================================================
+ 
+    // Singleton 
 
     /**
      * DialogueSystem 單例。
@@ -54,10 +52,8 @@ public class DialogueSystem {
         return INSTANCE;
     }
 
-
-    // =========================================================
-    // Dialogue Data
-    // =========================================================
+ 
+    // Dialogue Data 
 
     /**
      * 所有對話資料。
@@ -70,10 +66,8 @@ public class DialogueSystem {
      */
     private final Map<String, DialogueLine> lines;
 
-
-    // =========================================================
-    // Runtime References
-    // =========================================================
+ 
+    // Runtime References 
 
     /**
      * 目前顯示中的 DialogueUI。
@@ -90,20 +84,16 @@ public class DialogueSystem {
      */
     private String sceneBgmPath;
 
-
-    // =========================================================
-    // Runtime State
-    // =========================================================
+ 
+    // Runtime State 
 
     /**
      * 目前是否正在對話。
      */
     private boolean active = false;
 
-
-    // =========================================================
-    // Dependencies
-    // =========================================================
+ 
+    // Dependencies 
 
     /**
      * 音效系統。
@@ -112,10 +102,8 @@ public class DialogueSystem {
      */
     private final AudioSystem audioSystem = AudioSystem.getInstance();
 
-
-    // =========================================================
-    // Constructor
-    // =========================================================
+ 
+    // Constructor 
 
     /**
      * 建立對話系統。
@@ -127,10 +115,8 @@ public class DialogueSystem {
         this.lines = DialogueDatabase.create(this);
     }
 
-
-    // =========================================================
-    // Start Dialogue
-    // =========================================================
+ 
+    // Start Dialogue 
 
     /**
      * 開始對話。
@@ -195,10 +181,8 @@ public class DialogueSystem {
         }
     }
 
-
-    // =========================================================
-    // Dialogue Flow
-    // =========================================================
+ 
+    // Dialogue Flow 
 
     /**
      * 切換到指定對話行。
@@ -261,10 +245,8 @@ public class DialogueSystem {
         return lines.get(id);
     }
 
-
-    // =========================================================
-    // End Dialogue
-    // =========================================================
+ 
+    // End Dialogue 
 
     /**
      * 立即結束對話。
@@ -336,10 +318,8 @@ public class DialogueSystem {
         }
     }
 
-
-    // =========================================================
-    // Player Control
-    // =========================================================
+ 
+    // Player Control 
 
     /**
      * 禁用玩家控制。
@@ -382,10 +362,8 @@ public class DialogueSystem {
         return player.getComponent(PlayerComponent.class);
     }
 
-
-    // =========================================================
-    // Special Dialogue Events
-    // =========================================================
+ 
+    // Special Dialogue Events 
 
     /**
      * 開始媽媽 Boss 戰小遊戲。
@@ -424,10 +402,8 @@ public class DialogueSystem {
         );
     }
 
-
-    // =========================================================
-    // State Getter
-    // =========================================================
+ 
+    // State Getter 
 
     /**
      * 取得目前是否正在對話。

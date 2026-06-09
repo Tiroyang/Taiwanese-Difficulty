@@ -50,10 +50,8 @@ import static com.almasb.fxgl.dsl.FXGL.entityBuilder;
  * - 物理碰撞分類統一透過 CollisionCategory 與 FixtureFilterUtil 設定。
  */
 public class CommonFactory implements EntityFactory {
-
-    // =========================================================
-    // Z Index
-    // =========================================================
+ 
+    // Z Index 
 
     /**
      * Debug 碰撞框與觸發區的顯示層級。
@@ -62,10 +60,8 @@ public class CommonFactory implements EntityFactory {
      */
     private static final int Z_DEBUG_COLLIDER = 1000;
 
-
-    // =========================================================
-    // Default Physics Settings
-    // =========================================================
+ 
+    // Default Physics Settings 
 
     /**
      * 地板摩擦力。
@@ -100,10 +96,8 @@ public class CommonFactory implements EntityFactory {
      */
     private static final float ONE_WAY_PLATFORM_RESTITUTION = 0.0f;
 
-
-    // =========================================================
-    // Default Spawn Settings
-    // =========================================================
+ 
+    // Default Spawn Settings 
 
     /**
      * 單向平台預設玩家 zIndex。
@@ -113,10 +107,8 @@ public class CommonFactory implements EntityFactory {
      */
     private static final int DEFAULT_PLAYER_Z_INDEX_ON_PLATFORM = 10;
 
-
-    // =========================================================
-    // Dev View Colors
-    // =========================================================
+ 
+    // Dev View Colors 
 
     private static final Color COLOR_FLOOR_DEBUG = Color.rgb(0, 255, 120, 0.35);
     private static final Color COLOR_WALL_DEBUG = Color.rgb(255, 0, 0, 0.5);
@@ -126,10 +118,8 @@ public class CommonFactory implements EntityFactory {
     private static final Color COLOR_ONE_WAY_PLATFORM_DEBUG = Color.rgb(0, 180, 255, 0.35);
     private static final Color COLOR_ONE_WAY_PLATFORM_COLLIDER_DEBUG = Color.rgb(0, 255, 196, 0.35);
 
-
-    // =========================================================
-    // Spawn - Floor / Walls
-    // =========================================================
+ 
+    // Spawn - Floor / Walls 
 
     /**
      * 生成地板。
@@ -252,10 +242,8 @@ public class CommonFactory implements EntityFactory {
                 .build();
     }
 
-
-    // =========================================================
-    // Spawn - Death Zones
-    // =========================================================
+ 
+    // Spawn - Death Zones 
 
     /**
      * 生成不阻擋玩家的死亡觸發區。
@@ -347,10 +335,8 @@ public class CommonFactory implements EntityFactory {
                 .build();
     }
 
-
-    // =========================================================
-    // Spawn - One Way Platform
-    // =========================================================
+ 
+    // Spawn - One Way Platform 
 
     /**
      * 生成單向平台入口。
@@ -431,10 +417,8 @@ public class CommonFactory implements EntityFactory {
         );
     }
 
-
-    // =========================================================
-    // Shared Entity Builders
-    // =========================================================
+ 
+    // Shared Entity Builders 
 
     /**
      * 建立具有實體碰撞的矩形 Entity。
@@ -476,10 +460,8 @@ public class CommonFactory implements EntityFactory {
                 .build();
     }
 
-
-    // =========================================================
-    // Physics Helpers
-    // =========================================================
+ 
+    // Physics Helpers 
 
     /**
      * 建立 STATIC PhysicsComponent。
@@ -566,10 +548,8 @@ public class CommonFactory implements EntityFactory {
                 .restitution(ONE_WAY_PLATFORM_RESTITUTION);
     }
 
-
-    // =========================================================
-    // SpawnData Helpers
-    // =========================================================
+ 
+    // SpawnData Helpers 
 
     /**
      * 從 SpawnData 讀取 int。
@@ -616,10 +596,8 @@ public class CommonFactory implements EntityFactory {
         return ((Number) data.get(key)).shortValue();
     }
 
-
-    // =========================================================
-    // Debug View Helpers
-    // =========================================================
+ 
+    // Debug View Helpers 
 
     /**
      * 建立 devMode 用的矩形顯示。

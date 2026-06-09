@@ -42,10 +42,8 @@ import static java.lang.Math.clamp;
  * 7. 處理起床開場動畫。
  */
 public class HouseScene {
-
-    // =========================================================
-    // Screen Constants
-    // =========================================================
+ 
+    // Screen Constants 
 
     /**
      * 遊戲視窗寬度。
@@ -71,10 +69,8 @@ public class HouseScene {
      */
     private static final double CAMERA_FOLLOW_Y = 360.0;
 
-
-    // =========================================================
-    // Music Paths
-    // =========================================================
+ 
+    // Music Paths 
 
     /**
      * 起床開場時播放的早晨環境音。
@@ -91,10 +87,8 @@ public class HouseScene {
      */
     private static final String BGM_MOM_DIALOGUE = "/assets/music/dialogue/MiSide OST.mp3";
 
-
-    // =========================================================
-    // Wake Up Intro Constants
-    // =========================================================
+ 
+    // Wake Up Intro Constants 
 
     /**
      * 起床動畫第一段，從黑畫面淡入的時間。
@@ -123,10 +117,8 @@ public class HouseScene {
      */
     private static final double WAKE_FADE_BACK_IN_DURATION = 0.75;
 
-
-    // =========================================================
-    // Bathtub Constants
-    // =========================================================
+ 
+    // Bathtub Constants 
 
     /**
      * 浴缸外框牆壁厚度。
@@ -158,10 +150,8 @@ public class HouseScene {
      */
     private static final double BATHTUB_DEATH_SPEED_THRESHOLD = 520.0;
 
-
-    // =========================================================
-    // Scene Dependencies
-    // =========================================================
+ 
+    // Scene Dependencies 
 
     /**
      * 場景設定。
@@ -184,10 +174,8 @@ public class HouseScene {
      */
     private final SceneManager sceneManager;
 
-
-    // =========================================================
-    // Runtime Entities
-    // =========================================================
+ 
+    // Runtime Entities 
 
     /**
      * 玩家 Entity。
@@ -196,10 +184,8 @@ public class HouseScene {
      */
     private Entity player;
 
-
-    // =========================================================
-    // Runtime Systems
-    // =========================================================
+ 
+    // Runtime Systems 
 
     /**
      * 互動系統。
@@ -233,10 +219,8 @@ public class HouseScene {
      */
     private BedSystem bedSystem;
 
-
-    // =========================================================
-    // UI
-    // =========================================================
+ 
+    // UI 
 
     /**
      * 任務 HUD。
@@ -273,10 +257,8 @@ public class HouseScene {
         questHUD.setMouseTransparent(false);
     }
 
-
-    // =========================================================
-    // Wake Up Intro State
-    // =========================================================
+ 
+    // Wake Up Intro State 
 
     /**
      * 是否正在播放起床開場動畫。
@@ -293,10 +275,8 @@ public class HouseScene {
      */
     private Rectangle wakeUpBlackOverlay;
 
-
-    // =========================================================
-    // Constructor
-    // =========================================================
+ 
+    // Constructor 
 
     /**
      * 建立 HouseScene。
@@ -312,10 +292,8 @@ public class HouseScene {
         this.sceneManager = sceneManager;
     }
 
-
-    // =========================================================
-    // Load / Cleanup
-    // =========================================================
+ 
+    // Load / Cleanup 
 
     /**
      * 載入 HouseScene。
@@ -404,10 +382,8 @@ public class HouseScene {
         getGameScene().getViewport().setLazy(false);
     }
 
-
-    // =========================================================
-    // Public Runtime API
-    // =========================================================
+ 
+    // Public Runtime API 
 
     /**
      * 每幀更新 HouseScene。
@@ -499,10 +475,8 @@ public class HouseScene {
         }
     }
 
-
-    // =========================================================
-    // Save / Load State
-    // =========================================================
+ 
+    // Save / Load State 
 
     /**
      * 套用存檔狀態。
@@ -563,10 +537,8 @@ public class HouseScene {
         }
     }
 
-
-    // =========================================================
-    // System Initialization
-    // =========================================================
+ 
+    // System Initialization 
 
     /**
      * 初始化 HouseScene 運行時系統。
@@ -588,10 +560,8 @@ public class HouseScene {
         addUINode(questHUD, 0, 0);
     }
 
-
-    // =========================================================
-    // Update Helpers
-    // =========================================================
+ 
+    // Update Helpers 
 
     private void updateInteractionSystem(double tpf) {
         if (interactionSystem != null) {
@@ -623,10 +593,8 @@ public class HouseScene {
         }
     }
 
-
-    // =========================================================
-    // Scene Spawning - Background / Collisions
-    // =========================================================
+ 
+    // Scene Spawning - Background / Collisions 
 
     /**
      * 生成測試用物件。
@@ -781,10 +749,8 @@ public class HouseScene {
                 .put("deathReason", deathReason));
     }
 
-
-    // =========================================================
-    // Scene Spawning - Room Covers
-    // =========================================================
+ 
+    // Scene Spawning - Room Covers 
 
     /**
      * 生成房間黑色遮罩。
@@ -811,10 +777,8 @@ public class HouseScene {
         );
     }
 
-
-    // =========================================================
-    // Scene Spawning - Interactable Props
-    // =========================================================
+ 
+    // Scene Spawning - Interactable Props 
 
     /**
      * 生成 HouseScene 中所有互動物件與主要視覺物件。
@@ -1044,10 +1008,8 @@ public class HouseScene {
         // 循環動畫物件可放在這裡。
     }
 
-
-    // =========================================================
-    // Scene Spawning - Bathtub
-    // =========================================================
+ 
+    // Scene Spawning - Bathtub 
 
     /**
      * 生成浴缸測試碰撞。
@@ -1209,10 +1171,8 @@ public class HouseScene {
                 .put("deathSpeedThreshold", BATHTUB_DEATH_SPEED_THRESHOLD));
     }
 
-
-    // =========================================================
-    // Wake Up Intro
-    // =========================================================
+ 
+    // Wake Up Intro 
 
     /**
      * 播放起床開場動畫。
@@ -1401,10 +1361,8 @@ public class HouseScene {
         wakeUpBlackOverlay = null;
     }
 
-
-    // =========================================================
-    // Camera
-    // =========================================================
+ 
+    // Camera 
 
     /**
      * 設定橫向卷軸攝影機。

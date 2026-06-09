@@ -56,39 +56,16 @@ import static com.almasb.fxgl.dsl.FXGLForKtKt.getb;
  *    - Save Page
  *    - Settings Page
  * 5. 子頁按鈕可維持 pressed / selected 狀態。
- *
- * 單例判斷：
- * PauseMenu 不建議做成 Singleton。
- *
- * 原因：
- * - PauseMenu 是 FXGLMenu。
- * - 生命週期由 FXGL 選單系統管理。
- * - 若自行做單例，容易和 FXGL 的 menu scene 生命週期衝突。
- *
- * 適合單例的是依賴系統：
- * - MusicSystem
- * - AudioSystem
- * - LanguageSystem
- * - WindowSystem
- * - SaveSystem
- * - SaveSlotManager
- *
- * 注意：
- * 本整理版沒有更改 PauseMenu 的外觀、Node 位置、padding、主要動畫位移與按鈕形狀。
  */
 public class PauseMenu extends FXGLMenu {
-
-    // =========================================================
-    // Screen Constants
-    // =========================================================
+ 
+    // Screen Constants 
 
     private static final double SCREEN_WIDTH = 1280;
     private static final double SCREEN_HEIGHT = 720;
 
-
-    // =========================================================
-    // Root Nodes
-    // =========================================================
+ 
+    // Root Nodes 
 
     private final StackPane root = new StackPane();
 
@@ -100,10 +77,8 @@ public class PauseMenu extends FXGLMenu {
 
     private final StackPane buttonStack = new StackPane();
 
-
-    // =========================================================
-    // Main Pause Buttons
-    // =========================================================
+ 
+    // Main Pause Buttons 
 
     private final List<StackPane> pauseButtons = new ArrayList<>();
 
@@ -111,10 +86,8 @@ public class PauseMenu extends FXGLMenu {
 
     private boolean animating = false;
 
-
-    // =========================================================
-    // Sub Page Selection State
-    // =========================================================
+ 
+    // Sub Page Selection State 
 
     /**
      * 子頁左側按鈕目前被選中的按鈕。
@@ -124,10 +97,8 @@ public class PauseMenu extends FXGLMenu {
      */
     private StackPane selectedSubPageButton;
 
-
-    // =========================================================
-    // Systems
-    // =========================================================
+ 
+    // Systems 
 
     private final MusicSystem musicSystem =
             MusicSystem.getInstance();
@@ -141,10 +112,8 @@ public class PauseMenu extends FXGLMenu {
     private final WindowSystem windowSystem =
             WindowSystem.getInstance();
 
-
-    // =========================================================
-    // Constructor / FXGL Lifecycle
-    // =========================================================
+ 
+    // Constructor / FXGL Lifecycle 
 
     public PauseMenu() {
         super(MenuType.GAME_MENU);
@@ -175,10 +144,8 @@ public class PauseMenu extends FXGLMenu {
         playOpenAnimation();
     }
 
-
-    // =========================================================
-    // Basic Helpers
-    // =========================================================
+ 
+    // Basic Helpers 
 
     private String text(String key) {
         return languageSystem.text(key);
@@ -192,10 +159,8 @@ public class PauseMenu extends FXGLMenu {
         }
     }
 
-
-    // =========================================================
-    // Root Setup
-    // =========================================================
+ 
+    // Root Setup 
 
     private void setupRoot() {
         root.setPrefSize(SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -205,9 +170,6 @@ public class PauseMenu extends FXGLMenu {
 
     /**
      * 暫停時覆蓋整個畫面的黑色遮罩。
-     *
-     * 注意：
-     * 透明度、顏色、mouseTransparent 保持原本設定。
      */
     private void setupOverlay() {
         overlay.setFill(Color.rgb(0, 0, 0, 0.66));
@@ -224,9 +186,6 @@ public class PauseMenu extends FXGLMenu {
      * 包含：
      * - PAUSED 標題
      * - 4 顆主按鈕
-     *
-     * 注意：
-     * 這裡保留原本 menuBox padding、translateX、buttonStack 尺寸。
      */
     private void setupMenuButtons() {
         menuBox.setAlignment(Pos.CENTER_LEFT);
@@ -275,10 +234,8 @@ public class PauseMenu extends FXGLMenu {
         StackPane.setAlignment(pageLayer, Pos.CENTER);
     }
 
-
-    // =========================================================
-    // Open / Close Animation
-    // =========================================================
+ 
+    // Open / Close Animation 
 
     /**
      * 每次打開 PauseMenu 前重設狀態。
@@ -339,9 +296,6 @@ public class PauseMenu extends FXGLMenu {
 
     /**
      * 主按鈕由疊在一起，往上下對稱展開。
-     *
-     * 注意：
-     * gap = 74 保持原值。
      */
     private void playButtonExpandAnimation() {
         ParallelTransition allButtonsAnim = new ParallelTransition();
@@ -427,10 +381,8 @@ public class PauseMenu extends FXGLMenu {
         close.play();
     }
 
-
-    // =========================================================
-    // Main Pause Button Rebuild / Language Refresh
-    // =========================================================
+ 
+    // Main Pause Button Rebuild / Language Refresh 
 
     /**
      * 重新建立主暫停按鈕。
@@ -518,18 +470,13 @@ public class PauseMenu extends FXGLMenu {
         }
     }
 
-
-    // =========================================================
-    // Sub Page Open / Close
-    // =========================================================
+ 
+    // Sub Page Open / Close 
 
     /**
      * 開啟子頁。
      *
      * Save Page 和 Settings Page 使用同一段動畫。
-     *
-     * 注意：
-     * 動畫秒數、menuSlide 目標位置 -260 保持原本設定。
      */
     private void openSubPage(BorderPane page) {
         pageLayer.getChildren().clear();
@@ -596,10 +543,8 @@ public class PauseMenu extends FXGLMenu {
         transition.play();
     }
 
-
-    // =========================================================
-    // Save Page
-    // =========================================================
+ 
+    // Save Page 
 
     private void showSaveMenuPage() {
         if (isSaveDisabled()) {
@@ -674,10 +619,8 @@ public class PauseMenu extends FXGLMenu {
         return box;
     }
 
-
-    // =========================================================
-    // Settings Page
-    // =========================================================
+ 
+    // Settings Page 
 
     private void showSettingsPage() {
         selectedSubPageButton = null;
@@ -735,10 +678,8 @@ public class PauseMenu extends FXGLMenu {
         return box;
     }
 
-
-    // =========================================================
-    // Settings - Key Config
-    // =========================================================
+ 
+    // Settings - Key Config 
 
     private VBox createKeyConfigPanel() {
         VBox box = createPanelBox();
@@ -837,10 +778,8 @@ public class PauseMenu extends FXGLMenu {
         return text;
     }
 
-
-    // =========================================================
-    // Settings - Volume
-    // =========================================================
+ 
+    // Settings - Volume 
 
     private VBox createVolumePanel() {
         VBox box = createPanelBox();
@@ -920,10 +859,8 @@ public class PauseMenu extends FXGLMenu {
         return row;
     }
 
-
-    // =========================================================
-    // Settings - Window
-    // =========================================================
+ 
+    // Settings - Window 
 
     private VBox createWindowPanel() {
         VBox box = createPanelBox();
@@ -985,10 +922,8 @@ public class PauseMenu extends FXGLMenu {
         return box;
     }
 
-
-    // =========================================================
-    // Settings - Language
-    // =========================================================
+ 
+    // Settings - Language 
 
     private VBox createLanguagePanel() {
         VBox box = createPanelBox();
@@ -1030,10 +965,8 @@ public class PauseMenu extends FXGLMenu {
         return box;
     }
 
-
-    // =========================================================
-    // Exit To Main Menu
-    // =========================================================
+ 
+    // Exit To Main Menu 
 
     private void exitToMainMenu() {
         showExitToMainConfirm();
@@ -1041,9 +974,6 @@ public class PauseMenu extends FXGLMenu {
 
     /**
      * 顯示回主畫面確認視窗。
-     *
-     * 注意：
-     * 這裡保留原本 popupLayer、dim、card 的尺寸與位置。
      */
     private void showExitToMainConfirm() {
         StackPane popupLayer = new StackPane();
@@ -1144,10 +1074,8 @@ public class PauseMenu extends FXGLMenu {
         new ParallelTransition(fade, scale).play();
     }
 
-
-    // =========================================================
-    // Selectable Sub Page Pause Buttons
-    // =========================================================
+ 
+    // Selectable Sub Page Pause Buttons 
 
     /**
      * 建立可維持 selected / pressed 外觀的 PauseButton。
@@ -1256,10 +1184,8 @@ public class PauseMenu extends FXGLMenu {
                 : null;
     }
 
-
-    // =========================================================
-    // Main / Sub Page Shared UI
-    // =========================================================
+ 
+    // Main / Sub Page Shared UI 
 
     private BorderPane createSubPageBase() {
         BorderPane page = new BorderPane();
@@ -1270,12 +1196,6 @@ public class PauseMenu extends FXGLMenu {
 
     /**
      * 建立子頁左側 VBox。
-     *
-     * 注意：
-     * 保留原本 showSaveMenuPage / showSettingsPage 使用的：
-     * - spacing = 14
-     * - padding = new Insets(120, 0, 60, 56)
-     * - prefWidth = 340
      */
     private VBox createSubPageLeftMenu() {
         VBox left = new VBox(14);
@@ -1366,16 +1286,11 @@ public class PauseMenu extends FXGLMenu {
         sequence.play();
     }
 
-
-    // =========================================================
-    // Pause Button Factory
-    // =========================================================
+ 
+    // Pause Button Factory 
 
     /**
-     * 建立 PauseMenu 梯形按鈕。
-     *
-     * 注意：
-     * 按鈕尺寸、cut、文字 margin、hover / pressed 外觀都保留原本設定。
+     * 建立 PauseMenu 按鈕。
      */
     private StackPane createPauseButton(
             String text,
@@ -1530,16 +1445,11 @@ public class PauseMenu extends FXGLMenu {
         button.setScaleY(1.0);
     }
 
-
-    // =========================================================
-    // Rectangle Sub Button Factory
-    // =========================================================
+ 
+    // Rectangle Sub Button Factory 
 
     /**
      * 建立一般子頁按鈕。
-     *
-     * 注意：
-     * 這是矩形按鈕，不是 PauseMenu 主梯形按鈕。
      */
     private StackPane createSubButton(String text, Runnable action) {
         return createSubButton(text, action, false);
@@ -1638,10 +1548,8 @@ public class PauseMenu extends FXGLMenu {
         return button;
     }
 
-
-    // =========================================================
-    // Popup Button Factory
-    // =========================================================
+ 
+    // Popup Button Factory 
 
     private StackPane createPopupButton(
             String text,
@@ -1736,10 +1644,8 @@ public class PauseMenu extends FXGLMenu {
         return button;
     }
 
-
-    // =========================================================
-    // Button Style
-    // =========================================================
+ 
+    // Button Style 
 
     private enum PauseButtonType {
         NORMAL,
@@ -1804,10 +1710,8 @@ public class PauseMenu extends FXGLMenu {
         };
     }
 
-
-    // =========================================================
-    // Functional Interfaces
-    // =========================================================
+ 
+    // Functional Interfaces 
 
     @FunctionalInterface
     private interface VolumeSetter {

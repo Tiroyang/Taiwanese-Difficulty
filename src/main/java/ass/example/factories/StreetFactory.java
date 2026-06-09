@@ -59,10 +59,8 @@ import static com.almasb.fxgl.dsl.FXGL.getb;
  * - 致命判定透過 LethalComponent 保存 DeathReason。
  */
 public class StreetFactory implements EntityFactory {
-
-    // =========================================================
-    // Texture Paths
-    // =========================================================
+ 
+    // Texture Paths 
 
     /**
      * 街道遠景背景貼圖。
@@ -70,10 +68,8 @@ public class StreetFactory implements EntityFactory {
     private static final String TEXTURE_STREET_BACKGROUND =
             "/Scene2/map/Background.png";
 
-
-    // =========================================================
-    // Z Index
-    // =========================================================
+ 
+    // Z Index 
 
     /**
      * 遠景背景圖層。
@@ -120,19 +116,15 @@ public class StreetFactory implements EntityFactory {
      */
     private static final int Z_DEBUG_TRIGGER = 1000;
 
-
-    // =========================================================
-    // Default Interaction Settings
-    // =========================================================
+ 
+    // Default Interaction Settings 
 
     private static final double DEFAULT_INTERACT_RANGE = 180.0;
     private static final boolean DEFAULT_PROMPT_ON_ENTITY = false;
     private static final double DEFAULT_PROMPT_OFFSET_Y = 35.0;
 
-
-    // =========================================================
-    // Physics Settings - Falling Object
-    // =========================================================
+ 
+    // Physics Settings - Falling Object 
 
     /**
      * 掉落物密度。
@@ -149,10 +141,8 @@ public class StreetFactory implements EntityFactory {
      */
     private static final float FALLING_OBJECT_RESTITUTION = 0.0f;
 
-
-    // =========================================================
-    // Dev View Colors
-    // =========================================================
+ 
+    // Dev View Colors 
 
     private static final Color COLOR_DEBUG_INTERACTABLE =
             Color.rgb(255, 255, 0, 0.35);
@@ -163,10 +153,8 @@ public class StreetFactory implements EntityFactory {
     private static final Color COLOR_DEBUG_FALLING_OBJECT_TRIGGER =
             Color.rgb(255, 0, 0, 0.35);
 
-
-    // =========================================================
-    // Visual Colors - Temporary Props
-    // =========================================================
+ 
+    // Visual Colors - Temporary Props 
 
     private static final Color COLOR_STREET_FLOOR =
             Color.rgb(52, 52, 52);
@@ -189,10 +177,8 @@ public class StreetFactory implements EntityFactory {
     private static final Color COLOR_SCOOTER_STROKE =
             Color.rgb(255, 80, 80, 0.95);
 
-
-    // =========================================================
-    // Spawn - Background / Floor
-    // =========================================================
+ 
+    // Spawn - Background / Floor 
 
     /**
      * 生成街道遠景背景。
@@ -240,10 +226,8 @@ public class StreetFactory implements EntityFactory {
                 .build();
     }
 
-
-    // =========================================================
-    // Spawn - Apartment Layers
-    // =========================================================
+ 
+    // Spawn - Apartment Layers 
 
     /**
      * 生成街道公寓背景層。
@@ -301,10 +285,8 @@ public class StreetFactory implements EntityFactory {
                 .build();
     }
 
-
-    // =========================================================
-    // Spawn - Street Props Visuals
-    // =========================================================
+ 
+    // Spawn - Street Props Visuals 
 
     /**
      * 生成街道變電箱視覺。
@@ -404,10 +386,8 @@ public class StreetFactory implements EntityFactory {
                 .build();
     }
 
-
-    // =========================================================
-    // Spawn - Death Zones
-    // =========================================================
+ 
+    // Spawn - Death Zones 
 
     /**
      * 生成機車死亡牆。
@@ -469,10 +449,8 @@ public class StreetFactory implements EntityFactory {
         );
     }
 
-
-    // =========================================================
-    // Spawn - Falling Objects
-    // =========================================================
+ 
+    // Spawn - Falling Objects 
 
     /**
      * 生成街道掉落物。
@@ -507,10 +485,8 @@ public class StreetFactory implements EntityFactory {
                 .build();
     }
 
-
-    // =========================================================
-    // Spawn - Entrance Door
-    // =========================================================
+ 
+    // Spawn - Entrance Door 
 
     /**
      * 生成街道進屋入口互動區。
@@ -584,10 +560,8 @@ public class StreetFactory implements EntityFactory {
         sceneManager.playStreetToHouseTransition(null);
     }
 
-
-    // =========================================================
-    // Shared Entity Builders
-    // =========================================================
+ 
+    // Shared Entity Builders 
 
     /**
      * 建立不阻擋玩家的死亡 trigger。
@@ -620,10 +594,8 @@ public class StreetFactory implements EntityFactory {
                 .build();
     }
 
-
-    // =========================================================
-    // Physics Helpers
-    // =========================================================
+ 
+    // Physics Helpers 
 
     /**
      * 建立掉落物 PhysicsComponent。
@@ -666,10 +638,8 @@ public class StreetFactory implements EntityFactory {
         return fixtureDef;
     }
 
-
-    // =========================================================
-    // View Helpers
-    // =========================================================
+ 
+    // View Helpers 
 
     /**
      * 建立一般純填色矩形。
@@ -784,10 +754,8 @@ public class StreetFactory implements EntityFactory {
         return new Rectangle(0, 0, Color.TRANSPARENT);
     }
 
-
-    // =========================================================
-    // SpawnData Helpers
-    // =========================================================
+ 
+    // SpawnData Helpers 
 
     /**
      * 從 SpawnData 讀取 double。
@@ -835,10 +803,8 @@ public class StreetFactory implements EntityFactory {
         return FallingObjectVariant.valueOf(data.get("variant"));
     }
 
-
-    // =========================================================
-    // Apartment Color Helpers
-    // =========================================================
+ 
+    // Apartment Color Helpers 
 
     /**
      * 取得公寓背景層顏色。

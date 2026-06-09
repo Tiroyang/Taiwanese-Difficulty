@@ -32,10 +32,8 @@ import static com.almasb.fxgl.dsl.FXGL.*;
  * 因此 drink() 不是單純喝水，而是完整處理死亡前的演出流程。
  */
 public class WaterComponent extends Component implements LoadSaveComponent {
-
-    // =========================================================
-    // Game Var Keys
-    // =========================================================
+ 
+    // Game Var Keys 
 
     /**
      * 水是否已經被喝掉的 game var key。
@@ -44,10 +42,8 @@ public class WaterComponent extends Component implements LoadSaveComponent {
      */
     private static final String VAR_WATER_DRUNK = "waterDrunk";
 
-
-    // =========================================================
-    // Timing
-    // =========================================================
+ 
+    // Timing 
 
     /**
      * 喝水後延遲死亡的秒數。
@@ -56,20 +52,16 @@ public class WaterComponent extends Component implements LoadSaveComponent {
      */
     private static final double DEATH_DELAY_SECONDS = 1.6;
 
-
-    // =========================================================
-    // Death Settings
-    // =========================================================
+ 
+    // Death Settings 
 
     /**
      * 喝水後觸發的死亡原因。
      */
     private static final DeathReason WATER_DEATH_REASON = DeathReason.DRINK_WATER;
 
-
-    // =========================================================
-    // Dependencies
-    // =========================================================
+ 
+    // Dependencies 
 
     /**
      * 水的視覺 Entity。
@@ -97,10 +89,8 @@ public class WaterComponent extends Component implements LoadSaveComponent {
      */
     private final AudioSystem audioSystem = AudioSystem.getInstance();
 
-
-    // =========================================================
-    // Runtime State
-    // =========================================================
+ 
+    // Runtime State 
 
     /**
      * 水是否已被使用。
@@ -116,10 +106,8 @@ public class WaterComponent extends Component implements LoadSaveComponent {
      */
     private boolean used = false;
 
-
-    // =========================================================
-    // Constructor
-    // =========================================================
+ 
+    // Constructor 
 
     /**
      * 建立喝水 Component。
@@ -135,10 +123,8 @@ public class WaterComponent extends Component implements LoadSaveComponent {
         this.player = player;
     }
 
-
-    // =========================================================
-    // Save / Load
-    // =========================================================
+ 
+    // Save / Load 
 
     /**
      * 套用存檔中的喝水狀態。
@@ -158,10 +144,8 @@ public class WaterComponent extends Component implements LoadSaveComponent {
         }
     }
 
-
-    // =========================================================
-    // Public API
-    // =========================================================
+ 
+    // Public API 
 
     /**
      * 玩家執行喝水互動時呼叫。
@@ -192,10 +176,8 @@ public class WaterComponent extends Component implements LoadSaveComponent {
         scheduleWaterDeath();
     }
 
-
-    // =========================================================
-    // Restore State
-    // =========================================================
+ 
+    // Restore State 
 
     /**
      * 還原為已喝水狀態。
@@ -215,10 +197,8 @@ public class WaterComponent extends Component implements LoadSaveComponent {
         removeWaterEntities();
     }
 
-
-    // =========================================================
-    // State
-    // =========================================================
+ 
+    // State 
 
     /**
      * 設定內部使用狀態。
@@ -231,10 +211,8 @@ public class WaterComponent extends Component implements LoadSaveComponent {
         this.used = used;
     }
 
-
-    // =========================================================
-    // Player Control
-    // =========================================================
+ 
+    // Player Control 
 
     /**
      * 停止玩家移動並禁用控制。
@@ -254,10 +232,8 @@ public class WaterComponent extends Component implements LoadSaveComponent {
         playerComponent.setControlEnabled(false);
     }
 
-
-    // =========================================================
-    // Death
-    // =========================================================
+ 
+    // Death 
 
     /**
      * 排程喝水後的延遲死亡。
@@ -285,10 +261,8 @@ public class WaterComponent extends Component implements LoadSaveComponent {
         }
     }
 
-
-    // =========================================================
-    // Entity Management
-    // =========================================================
+ 
+    // Entity Management 
 
     /**
      * 移除水相關 Entity。
@@ -318,10 +292,8 @@ public class WaterComponent extends Component implements LoadSaveComponent {
         entity.removeFromWorld();
     }
 
-
-    // =========================================================
-    // Audio
-    // =========================================================
+ 
+    // Audio 
 
     /**
      * 播放喝水音效。
@@ -335,10 +307,8 @@ public class WaterComponent extends Component implements LoadSaveComponent {
         }
     }
 
-
-    // =========================================================
-    // Getters
-    // =========================================================
+ 
+    // Getters 
 
     /**
      * 取得水是否已被使用。
