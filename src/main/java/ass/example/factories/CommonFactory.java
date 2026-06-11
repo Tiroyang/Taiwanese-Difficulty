@@ -43,11 +43,6 @@ import static com.almasb.fxgl.dsl.FXGL.entityBuilder;
  * 4. 單向平台：
  *    - one_way_platform
  *    - one_way_platform_collider
- *
- * 設計原則：
- * - CommonFactory 只負責建立通用物件。
- * - 場景專用物件應放到各自的 Factory，例如 HouseFactory、StreetFactory。
- * - 物理碰撞分類統一透過 CollisionCategory 與 FixtureFilterUtil 設定。
  */
 public class CommonFactory implements EntityFactory {
  

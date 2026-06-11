@@ -1407,7 +1407,7 @@ public class PlayerComponent extends Component {
 
         resetGroundState();
 
-        movePhysicsOrEntityTo(x, y);
+        moveTo(x, y);
 
         updateGroundSensorPosition();
         refreshGroundContacts();
@@ -1435,7 +1435,7 @@ public class PlayerComponent extends Component {
         stopAllMovement();
         resetGroundState();
 
-        movePhysicsOrEntityTo(x, y);
+        moveTo(x, y);
 
         entity.setVisible(true);
 
@@ -1483,7 +1483,7 @@ public class PlayerComponent extends Component {
      * 若 physics 存在，使用 overwritePosition。
      * 否則直接設定 Entity 位置。
      */
-    private void movePhysicsOrEntityTo(double x, double y) {
+    private void moveTo(double x, double y) {
         if (physics != null) {
             physics.setVelocityX(0);
             physics.setVelocityY(0);

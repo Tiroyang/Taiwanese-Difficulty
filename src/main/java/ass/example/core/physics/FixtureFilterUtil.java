@@ -13,9 +13,9 @@ import com.almasb.fxgl.physics.box2d.dynamics.FixtureDef;
  * 2. 將 maskBits 套用到 FixtureDef。
  * 3. 回傳同一個 FixtureDef，方便鏈式使用。
  *
- * ------------------------------------------------------------
+ *   ----
  * 使用範例
- * ------------------------------------------------------------
+ *   ----
  *
  * FixtureDef fixtureDef = new FixtureDef()
  *         .friction(0.8f)
@@ -27,9 +27,9 @@ import com.almasb.fxgl.physics.box2d.dynamics.FixtureDef;
  *         (short) (CollisionCategory.PLAYER | CollisionCategory.FALLING_OBJECT)
  * );
  *
- * ------------------------------------------------------------
+ *   ----
  * categoryBits / maskBits 說明
- * ------------------------------------------------------------
+ *   ----
  *
  * categoryBits：
  * - 代表「這個物件屬於哪一類」。

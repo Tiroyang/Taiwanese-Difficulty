@@ -22,19 +22,6 @@ import static com.almasb.fxgl.dsl.FXGL.*;
  * 2. 玩家從上方落下時，可以站在平台上。
  * 3. 玩家站上平台後，系統會生成一個實體 collider 讓玩家真正踩住。
  * 4. 玩家跳起、離開平台、或按 Shift 下落時，移除這個實體 collider。
- *
- * 注意：
- * 此系統只處理普通 one_way_platform。
- * 床的特殊平台邏輯由 BedSystem 處理。
- *
- * 單例判斷：
- * OneWayPlatformSystem 不適合做成單例。
- *
- * 原因：
- * - 它持有目前場景的 player Entity。
- * - 它持有目前站上的平台 currentPlatform。
- * - 它會動態生成 currentSolidCollider。
- * - 切換場景或重生時，這些狀態都必須跟著場景重新建立或清除。
  */
 public class OneWayPlatformSystem {
  
@@ -422,8 +409,7 @@ public class OneWayPlatformSystem {
     /**
      * 玩家按下跳躍鍵時呼叫。
      *
-     * 如果玩家目前站在普通單向平台上，
-     * 立刻移除 solid collider，讓玩家可以往上跳離平台。
+     * 如果玩家目前站在普通單向平台上，立刻移除 solid collider，讓玩家可以往上跳離平台。
      */
     public void onPlayerJumpPressed() {
         if (currentPlatform == null) {
